@@ -145,6 +145,12 @@
   .banner.err { background: rgba(224,106,90,.1); border: 1px solid rgba(224,106,90,.35); color: #f0b6ad; }
   .banner.note{ background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.28); color: #bcd9f1; }
   .banner.warnb{ background: rgba(224,164,74,.09); border: 1px solid rgba(224,164,74,.3); color: #f0d3a2; }
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 4px 0 6px; }
+  @media (max-width: 680px) { .stats { grid-template-columns: repeat(2,1fr); } }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .tile .tv { font-family: var(--mono); font-size: 26px; letter-spacing: -.02em; color: var(--signal); }
+  .tile .tl { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+              color: var(--dim); margin-top: 6px; }
   code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
   footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line);
            font-family: var(--mono); font-size: 11px; color: var(--dim); }
@@ -352,6 +358,10 @@ function compCard(comp, tx){
     '</div>';
 }
 
+function statTile(label, val){
+  return '<div class="tile"><div class="tv">'+escapeHtml(val)+'</div><div class="tl">'+escapeHtml(label)+'</div></div>';
+}
+
 function renderResults(d){
   const t = d.target, tx = t.xray;
   let html = "";
@@ -366,9 +376,21 @@ function renderResults(d){
   if(d.gsc){
     if(d.gsc.error){
       html += '<div class="banner warnb"><b>GSC:</b> '+escapeHtml(d.gsc.error)+'</div>';
-    } else if(d.gsc.findings){
-      html += '<h3 class="section">Search Console quick-wins</h3>';
-      html += d.gsc.findings.map(findingHTML).join("");
+    } else {
+      html += '<h3 class="section">Search Console — your page ('+(d.gsc.days||90)+'d)</h3>';
+      if(d.gsc.totals && d.gsc.totals.hasData){
+        const tt=d.gsc.totals;
+        html += '<div class="stats">'+
+          statTile('Clicks', tt.clicks)+
+          statTile('Impressions', tt.impressions)+
+          statTile('CTR', tt.ctr+'%')+
+          statTile('Avg position', tt.position)+
+        '</div>';
+      } else {
+        html += '<div class="banner note">No impressions recorded for this exact URL in the window. '+
+          'Check the property URL and that the page has search traffic.</div>';
+      }
+      if(d.gsc.findings){ html += d.gsc.findings.map(findingHTML).join(""); }
     }
   }
 
