@@ -408,8 +408,11 @@ function aiSection(ai){
     '<div class="f-detail"><b>How:</b> '+escapeHtml(a.how||'')+'</div></div></div>'
   ).join("");
 
+  if(ai.faqAssessment){
+    html += '<div class="banner note" style="margin-top:14px"><b>FAQ coverage:</b> '+escapeHtml(ai.faqAssessment)+'</div>';
+  }
   if((ai.faqSuggestions||[]).length){
-    html += '<h3 class="section">AI — FAQ questions to add</h3><div class="finding"><span class="tag info">FAQ</span><div class="f-msg">'+
+    html += '<h3 class="section">AI — NEW FAQ questions (not already on your page)</h3><div class="finding"><span class="tag info">NEW FAQ</span><div class="f-msg">'+
       ai.faqSuggestions.map(q=>escapeHtml(q)).join('<br>')+'</div></div>';
   }
 
