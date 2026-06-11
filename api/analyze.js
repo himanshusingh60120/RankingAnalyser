@@ -28,7 +28,11 @@ export async function POST(request) {
   try { body = await request.json(); }
   catch { return json({ error: "Invalid JSON body" }, 400); }
 
-  const { url, competitors, gscRefreshToken, gscSiteUrl, gscDays = 90 } = body;
+  const { url, competitors, gscDays = 90 } = body;
+  // GSC creds: use request values if provided, else fall back to env vars so
+  // the tool pulls GSC automatically on every run without pasting a token.
+  const gscRefreshToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
+  const gscSiteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
   const wantAi = body.ai !== false;
   let keyword = body.keyword;
 
