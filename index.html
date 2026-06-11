@@ -151,6 +151,14 @@
   .tile .tv { font-family: var(--mono); font-size: 26px; letter-spacing: -.02em; color: var(--signal); }
   .tile .tl { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
               color: var(--dim); margin-top: 6px; }
+  .draft { position: relative; background: var(--panel); border: 1px solid var(--signal-dim);
+           border-radius: 12px; padding: 18px; }
+  .draft pre { white-space: pre-wrap; font-family: var(--sans); font-size: 14px; line-height: 1.65;
+               margin: 0; color: var(--ink); }
+  .copybtn { position: absolute; top: 12px; right: 12px; background: var(--signal); color: #04130d;
+             border: 0; padding: 7px 14px; border-radius: 7px; font-weight: 600; font-size: 12px;
+             cursor: pointer; font-family: var(--sans); }
+  .copybtn:hover { filter: brightness(1.08); }
   code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
   footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line);
            font-family: var(--mono); font-size: 11px; color: var(--dim); }
@@ -309,8 +317,13 @@ function linksDetails(title, links){
 
 function compCard(comp, tx){
   if(!comp.found) return '<div class="comp"><div class="comp-head"><span class="comp-dom">'+
-    escapeHtml(comp.site)+'</span></div><div class="banner warnb">No matching report found by auto-search. '+
+    escapeHtml(comp.site)+'</span></div><div class="banner warnb">No keyword-matched report found by auto-search. '+
     'Add a search provider (GOOGLE_CSE_KEY / BING_SEARCH_KEY) or pass this competitor URL manually.</div></div>';
+  if(comp.keywordMatch===false) return '<div class="comp"><div class="comp-head">'+
+    '<span class="comp-dom">'+escapeHtml(comp.site)+'</span>'+
+    '<span class="comp-dom"><a href="'+escapeHtml(comp.url)+'" target="_blank">'+escapeHtml(comp.url)+'</a></span></div>'+
+    '<div class="banner warnb"><b>Excluded — wrong topic.</b> The page found ("'+escapeHtml(comp.pageTitle||comp.url)+
+    '") does not match your keyword, so it was rejected from the comparison. Pass the correct URL manually in Advanced.</div></div>';
   if(comp.found && comp.fetched===false) return '<div class="comp"><div class="comp-head">'+
     '<span class="comp-dom">'+escapeHtml(comp.site)+'</span>'+
     '<span class="comp-dom"><a href="'+escapeHtml(comp.url)+'" target="_blank">'+escapeHtml(comp.url)+'</a></span></div>'+
@@ -355,7 +368,65 @@ function compCard(comp, tx){
     '<h3 class="section">Source-level X-ray</h3>'+table+
     linksDetails("Their in-content internal links", cx.inContentInternal)+
     linksDetails("Their in-content external citations", cx.inContentExternal)+
+    schemaBlock("Their JSON-LD schema blocks", cx)+
     '</div>';
+}
+
+function schemaBlock(title, x){
+  const det = x.schemaDetail||[];
+  if(!det.length){
+    return '<details class="links"><summary>'+escapeHtml(title)+' (0 blocks)</summary>'+
+      '<div class="banner warnb" style="margin-top:8px">No JSON-LD structured data found in source.</div></details>';
+  }
+  const items = det.map(d=>{
+    let extra = [];
+    if(d.faqItems) extra.push(d.faqItems+' FAQ items');
+    if(d.author) extra.push('author: '+d.author);
+    if(d.datePublished) extra.push('published: '+d.datePublished);
+    if(d.dateModified) extra.push('modified: '+d.dateModified);
+    return '<li><span class="a"><b>'+escapeHtml(d.type)+'</b>'+
+      (extra.length? ' — '+escapeHtml(extra.join(' · ')):'')+'</span>'+
+      '<span class="h">props: '+escapeHtml((d.props||[]).join(', '))+'</span></li>';
+  }).join("");
+  return '<details class="links" open><summary>'+escapeHtml(title)+' ('+det.length+' blocks)</summary>'+
+    '<ul class="linklist">'+items+'</ul></details>';
+}
+
+function aiSection(ai){
+  if(!ai) return '';
+  if(ai.skipped) return '<h3 class="section">AI recommendations</h3>'+
+    '<div class="banner note">AI step skipped: '+escapeHtml(ai.reason||'')+
+    ' Add <code>OPENAI_API_KEY</code> in Vercel env vars and redeploy to enable.</div>';
+  if(ai.error) return '<h3 class="section">AI recommendations</h3>'+
+    '<div class="banner warnb"><b>AI error:</b> '+escapeHtml(ai.error)+'</div>';
+
+  let html = '<h3 class="section">AI — what to add (synthesized across all sites)</h3>';
+  html += (ai.additions||[]).map((a,i)=>
+    '<div class="finding"><span class="tag info">ADD</span>'+
+    '<div><div class="f-msg"><b>'+escapeHtml(a.what||'')+'</b></div>'+
+    '<div class="f-detail"><b>Why:</b> '+escapeHtml(a.why||'')+'</div>'+
+    '<div class="f-detail"><b>How:</b> '+escapeHtml(a.how||'')+'</div></div></div>'
+  ).join("");
+
+  if((ai.faqSuggestions||[]).length){
+    html += '<h3 class="section">AI — FAQ questions to add</h3><div class="finding"><span class="tag info">FAQ</span><div class="f-msg">'+
+      ai.faqSuggestions.map(q=>escapeHtml(q)).join('<br>')+'</div></div>';
+  }
+
+  if(ai.contentDraft){
+    html += '<h3 class="section">AI — ready-to-use content draft</h3>'+
+      '<div class="draft"><button class="copybtn" onclick="copyDraft()">Copy draft</button>'+
+      '<pre id="draftText">'+escapeHtml(ai.contentDraft)+'</pre></div>';
+  }
+  return html;
+}
+
+function copyDraft(){
+  const el = document.getElementById('draftText');
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    const b=document.querySelector('.copybtn'); if(b){ b.textContent='Copied ✓'; setTimeout(()=>b.textContent='Copy draft',1600);}
+  });
 }
 
 function statTile(label, val){
@@ -398,9 +469,14 @@ function renderResults(d){
   const order = {critical:0,warning:1,info:2,good:3};
   html += [...t.findings].sort((a,b)=>order[a.severity]-order[b.severity]).map(findingHTML).join("");
 
+  html += '<h3 class="section">Your structured data — every block in source</h3>';
+  html += schemaBlock("Your JSON-LD schema blocks", tx);
+
   html += '<h3 class="section">Your in-content links (from source)</h3>';
   html += linksDetails("Internal links in your report body", tx.inContentInternal);
   html += linksDetails("External citations in your report body", tx.inContentExternal);
+
+  html += aiSection(d.ai);
 
   html += '<h3 class="section">Competitors — '+(d.competitors||[]).length+' cross-checked</h3>';
   html += (d.competitors||[]).map(c => compCard(c, tx)).join("");
