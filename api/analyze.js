@@ -154,6 +154,7 @@ function slimXray(x) {
     chromeLinkCount: x.chromeLinkCount, totalLinkCount: x.totalLinkCount,
     headings: x.headingTree.length, headingTree: x.headingTree, paragraphs: x.paragraphs,
     tables: x.tables, lists: x.lists, listItems: x.listItems, faqCount: x.faqCount,
+    faqQuestions: x.faqQuestions || [],
     schemaBlocks: [...new Set(x.schemaBlocks)],
     schemaBlocksAll: x.schemaBlocks,
     schemaDetail: x.schemaDetail || [],
