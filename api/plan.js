@@ -11,6 +11,8 @@
 import { fetchPage } from "../lib/fetcher.js";
 import { xray } from "../lib/xray.js";
 import { findCompetitorUrls, keywordMatches } from "../lib/competitors.js";
+import { suggestInternalLinks } from "../lib/internal-links.js";
+import { refreshAccessToken, queryManyPageMetrics } from "../lib/gsc.js";
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj, null, 2), {
@@ -114,6 +116,41 @@ export async function POST(request) {
     };
   }
 
+  // ---- Sitemap-powered REAL internal links (Kings Research own sitemaps) ----
+  // These are actual live URLs from the site, with real anchor text, matched
+  // to the draft topic — then enriched with GSC position + impressions so the
+  // writer links to pages that are actually ranking / getting impressions.
+  let internalLinkBlock = { suggestions: [], gscEnriched: false };
+  try {
+    const selfUrl = (body.url || "").trim() || null;
+    const { suggestions } = await suggestInternalLinks(
+      keyword, content, selfUrl,
+      Math.max(linkTargets.recommendedInternalLinks + 4, 10) // a few extra to choose from
+    );
+
+    // Enrich with GSC if a token is available (env fallback, same as analyze).
+    const gscToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
+    const gscSite = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
+    if (suggestions.length && gscToken && gscSite) {
+      try {
+        const { access_token } = await refreshAccessToken(gscToken);
+        const metrics = await queryManyPageMetrics(access_token, gscSite, body.gscDays || 90);
+        for (const s of suggestions) {
+          const m = metrics.get(s.url);
+          if (m) { s.position = m.position; s.impressions = m.impressions; s.clicks = m.clicks; s.ctr = m.ctr; }
+        }
+        internalLinkBlock.gscEnriched = true;
+        // Prefer pages that already get impressions (they pass more authority).
+        suggestions.sort((a, b) => (b.impressions || 0) - (a.impressions || 0) || b.score - a.score);
+      } catch (e) {
+        internalLinkBlock.gscError = String(e.message || e);
+      }
+    }
+    internalLinkBlock.suggestions = suggestions.slice(0, linkTargets.recommendedInternalLinks + 3);
+  } catch (e) {
+    internalLinkBlock.error = String(e.message || e);
+  }
+
   // ---- AI: H-tag outline + meta title + meta description vs competitors ----
   let ai = null;
   const key = process.env.OPENAI_API_KEY;
@@ -132,6 +169,7 @@ export async function POST(request) {
     ourWords,
     competitors: comps,
     linkTargets,
+    internalLinks: internalLinkBlock,
     ai,
   });
 }
@@ -176,10 +214,10 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
       "'metaTitleAlternates' = 2 alternates, also 50-60 chars. " +
       "'metaDescription' = ONE description, 140-155 characters, includes the keyword and a concrete value proposition. " +
       "'metaDescriptionAlternates' = 2 alternates, 140-155 chars. " +
-      "'linkPlan' = object {internalSuggestions: array of {anchorText, why} using anchors relevant to a market-research " +
-      `publisher's other pages (suggest ${linkTargets.recommendedInternalLinks} items), externalSuggestions: array of ` +
-      `{anchorText, sourceType, why} (suggest ${linkTargets.recommendedExternalLinks} items, sourceType like 'government/regulator', ` +
+      `'linkPlan' = object {externalSuggestions: array of {anchorText, sourceType, why} ` +
+      `(suggest ${linkTargets.recommendedExternalLinks} items, sourceType like 'government/regulator', ` +
       "'standards body', 'primary research', 'industry association' — name the type, not invented URLs)}. " +
+      "Do NOT suggest internal links — those are provided separately from the site's own sitemaps. " +
       "Anchor texts must come from or fit naturally into the draft. " +
       "'notes' = 2-4 short editorial notes on what to strengthen before publishing.",
     keyword,
