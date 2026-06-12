@@ -252,7 +252,10 @@ function render(d){
   html += '<h3 class="section">Internal links — '+(lt.recommendedInternalLinks||ilSugs.length)+' to add (from your sitemaps)</h3>';
   if(ilSugs.length){
     const showGsc = il.gscEnriched;
-    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Anchor text</th><th>Target page (live URL)</th>'+
+    // Stash the suggestions so the copy button can build anchor tags.
+    window.__ilSugs = ilSugs;
+    html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copyAllAnchors()">📋 Copy all as HTML anchor tags</button></div>';
+    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Anchor text (from your draft)</th><th>Target page (live URL)</th>'+
       (showGsc?'<th>Avg pos</th><th>Impr</th>':'')+'<th>Type</th></tr>';
     for(const s of ilSugs){
       const posCell = s.position!=null
@@ -269,7 +272,7 @@ function render(d){
         '</tr>';
     }
     html += '</table></div>';
-    html += '<div class="banner note">These are real, live pages from kingsresearch.com matched to your draft topic. '+
+    html += '<div class="banner note">Each anchor is a phrase that already appears in your pasted draft, linked to the matching live kingsresearch.com page — so you can place the link directly in your text. '+
       (showGsc
         ? 'Avg position &amp; impressions are from Search Console (last 90 days) — prioritise linking to pages with impressions, they pass more authority.'
         : 'Connect GSC (env vars) to also see each page\'s avg position &amp; impressions here.')+'</div>';
@@ -353,6 +356,16 @@ function copyText(id, btn){
   if(!t) return;
   navigator.clipboard.writeText(t.textContent).then(()=>{
     btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy', 1500);
+  });
+}
+
+function copyAllAnchors(){
+  const sugs = window.__ilSugs || [];
+  const lines = sugs.map(s => '<a href="'+s.url+'">'+s.anchor+'</a>');
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    const b = event.target; const o = b.textContent;
+    b.textContent='Copied '+lines.length+' anchor tags ✓'; setTimeout(()=>b.textContent=o, 1800);
   });
 }
 </script>
