@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content Planner · Ranking X-Ray</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #121922; --panel-2: #0e141b; --line: #1f2a36;
+    --ink: #e7edf3; --muted: #8298ad; --dim: #5b7186;
+    --signal: #4dd0a7; --signal-dim: #1f3a33;
+    --warn: #e0a44a; --crit: #e06a5a; --good: #4dd0a7; --info: #5aa9e0;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  body {
+    background-image:
+      linear-gradient(transparent 0 96%, rgba(90,169,224,0.035) 96% 100%),
+      radial-gradient(900px 500px at 80% -10%, rgba(90,169,224,0.06), transparent 70%);
+    background-size: 100% 26px, 100% 100%;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 90px; }
+  header { padding: 40px 0 26px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
+             text-transform: uppercase; color: var(--info); margin: 0 0 12px; }
+  h1 { font-size: clamp(28px, 4vw, 42px); margin: 0; letter-spacing: -0.02em; font-weight: 650; }
+  h1 .x { color: var(--info); }
+  .lede { color: var(--muted); margin: 12px 0 0; max-width: 64ch; font-size: 15px; }
+  .back { font-family: var(--mono); font-size: 11.5px; color: var(--dim); text-decoration: none; }
+  .back:hover { color: var(--signal); }
+
+  .console { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+             padding: 22px; margin: 28px 0; }
+  label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+          text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
+  input[type=text], textarea {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+    padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(90,169,224,.15); }
+  textarea { min-height: 280px; resize: vertical; line-height: 1.55; font-size: 13px; }
+  .field { margin-bottom: 16px; }
+  .wc { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 6px; }
+  .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line);
+         border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg-btn { background: transparent; border: 0; color: var(--muted); font-family: var(--mono);
+             font-size: 12px; letter-spacing: .06em; padding: 9px 18px; border-radius: 8px;
+             cursor: pointer; transition: all .15s; }
+  .seg-btn:hover { color: var(--ink); }
+  .seg-btn.active { background: var(--info); color: #04101a; font-weight: 600; }
+  .row-actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  button.run {
+    background: var(--info); color: #04101a; border: 0; border-radius: 10px;
+    padding: 13px 28px; font-size: 14.5px; font-weight: 650; cursor: pointer;
+    font-family: var(--sans); letter-spacing: .01em;
+  }
+  button.run:hover { filter: brightness(1.08); }
+  button.run:disabled { opacity: .5; cursor: wait; }
+  .status { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+         background: var(--info); margin-right: 8px; animation: pulse 1.1s infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+
+  .results { display: none; }
+  .results.show { display: block; }
+  .section { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
+             color: var(--info); margin: 38px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+  .banner { border-radius: 10px; padding: 13px 16px; font-size: 13.5px; margin-bottom: 12px; }
+  .banner.note { background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.35); color: var(--ink); }
+  .banner.err { background: rgba(224,106,90,.08); border: 1px solid rgba(224,106,90,.4); }
+
+  /* Stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .tile .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  .tile .v { font-size: 26px; font-weight: 700; margin-top: 6px; color: var(--ink); }
+  .tile .v.accent { color: var(--signal); }
+  .tile .s { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+  /* Outline */
+  .outline { font-family: var(--mono); font-size: 13px; }
+  .ol-row { display: flex; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .ol-row:last-child { border-bottom: 0; }
+  .ol-lvl { flex: 0 0 36px; font-weight: 700; }
+  .ol-lvl.h1 { color: var(--signal); }
+  .ol-lvl.h2 { color: var(--info); }
+  .ol-lvl.h3 { color: var(--muted); padding-left: 14px; }
+  .ol-text { color: var(--ink); }
+  .ol-text .addtag { color: var(--warn); font-weight: 700; }
+  .ol-map { color: var(--dim); font-size: 11px; margin-top: 2px; }
+
+  /* Meta cards */
+  .meta-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+               padding: 13px 14px; margin-bottom: 9px; position: relative; }
+  .meta-card .txt { font-size: 14px; padding-right: 70px; }
+  .meta-card .len { font-family: var(--mono); font-size: 10.5px; color: var(--dim); margin-top: 5px; }
+  .meta-card .len.ok { color: var(--good); }
+  .meta-card .len.off { color: var(--warn); }
+  .meta-card .primary-tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--signal); }
+  .copybtn { position: absolute; top: 11px; right: 11px; background: var(--info); color: #04101a;
+             border: 0; border-radius: 7px; font-family: var(--mono); font-size: 10.5px;
+             padding: 5px 10px; cursor: pointer; }
+  .copybtn:hover { filter: brightness(1.1); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+       color: var(--dim); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.site { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .why { color: var(--muted); font-size: 12px; }
+  footer { margin-top: 70px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+  code { color: var(--signal); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Kings Research · New-Content Mode</p>
+    <h1>Content <span class="x">Planner</span></h1>
+    <p class="lede">Paste your draft before publishing. The planner benchmarks the same 4 competitors on your keyword, then returns the H-tag structure, meta title &amp; description, and the internal/external link counts your content length warrants.</p>
+    <p style="margin-top:14px"><a class="back" href="/" >← back to Ranking X-Ray (existing pages)</a></p>
+  </header>
+
+  <div class="console">
+    <div class="field">
+      <label>Content type</label>
+      <div class="seg">
+        <button type="button" class="seg-btn active" data-type="blog" onclick="setType('blog')">Blog post</button>
+        <button type="button" class="seg-btn" data-type="report" onclick="setType('report')">Report page</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="keyword">Primary keyword</label>
+      <input type="text" id="keyword" placeholder="software asset management" />
+    </div>
+    <div class="field">
+      <label for="content">Your draft content (plain text — paste the full article body)</label>
+      <textarea id="content" placeholder="Paste the full text of the article you're about to publish…"></textarea>
+      <div class="wc" id="wc">0 words</div>
+    </div>
+    <div class="row-actions">
+      <button class="run" id="runBtn" onclick="plan()">Plan Content</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <footer>Content Planner · API at <code>/api/plan</code></footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+let contentType = 'blog';
+function setType(t){
+  contentType = t;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  $("content").addEventListener('input', e=>{
+    const w = e.target.value.split(/\s+/).filter(Boolean).length;
+    $("wc").textContent = w + " words";
+  });
+});
+
+async function plan(){
+  const keyword = $("keyword").value.trim();
+  const content = $("content").value.trim();
+  if(!keyword){ $("status").textContent = "Enter the primary keyword."; return; }
+  if(content.length < 200){ $("status").textContent = "Paste your draft content (at least ~200 characters)."; return; }
+
+  const btn = $("runBtn");
+  btn.disabled = true;
+  $("results").className = "results";
+  $("results").innerHTML = "";
+  let secs = 0;
+  $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; planning… 0s';
+  const timer = setInterval(()=>{ secs++; $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; planning… '+secs+'s'; }, 1000);
+
+  try {
+    const res = await fetch("/api/plan", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ keyword, content, contentType })
+    });
+    const data = await res.json();
+    clearInterval(timer);
+    $("status").textContent = "";
+    btn.disabled = false;
+    if(data.error){ renderError(data.error); return; }
+    render(data);
+  } catch(e) {
+    clearInterval(timer);
+    $("status").textContent = "";
+    btn.disabled = false;
+    renderError(String(e && e.message || e));
+  }
+}
+
+function renderError(msg){
+  $("results").className = "results show";
+  $("results").innerHTML = '<div class="banner err"><b>Error:</b> '+escapeHtml(msg)+'</div>';
+}
+
+function render(d){
+  let html = '';
+  const lt = d.linkTargets || {};
+  const ai = d.ai || {};
+
+  // ---- Link targets (the ratio math) ----
+  html += '<h3 class="section">Link targets — derived from competitor ratios</h3>';
+  html += '<div class="tiles">';
+  html += tile('Your draft', (lt.ourWords||d.ourWords||0).toLocaleString(), 'words');
+  if(lt.avgCompetitorWords) html += tile('Competitor avg', lt.avgCompetitorWords.toLocaleString(), 'words');
+  html += tile('Internal links to add', lt.recommendedInternalLinks ?? '—', lt.competitorInternalPer1000Words!=null ? ('they avg '+lt.competitorInternalPer1000Words+'/1000w') : 'editorial ratio', true);
+  html += tile('External links to add', lt.recommendedExternalLinks ?? '—', lt.competitorExternalPer1000Words!=null ? ('they avg '+lt.competitorExternalPer1000Words+'/1000w') : 'editorial ratio', true);
+  html += '</div>';
+  if(lt.note) html += '<div class="banner note" style="margin-top:12px">'+escapeHtml(lt.note)+'</div>';
+
+  // ---- Competitor benchmark table ----
+  const comps = (d.competitors||[]);
+  const matched = comps.filter(c=>c.keywordMatch);
+  html += '<h3 class="section">Competitor benchmarks ('+d.contentType+')</h3>';
+  if(matched.length){
+    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Site</th><th>Words</th><th>Headings</th><th>Internal</th><th>External</th><th>Title</th></tr>';
+    for(const c of matched){
+      html += '<tr><td class="site"><a href="'+escapeHtml(c.url)+'" target="_blank" style="color:var(--muted)">'+escapeHtml(c.site)+'</a></td>'+
+        '<td>'+c.contentWords.toLocaleString()+'</td><td>'+(c.headings||[]).length+'</td>'+
+        '<td>'+c.internalLinks+'</td><td>'+c.externalLinks+'</td>'+
+        '<td style="font-size:12px;color:var(--muted)">'+escapeHtml(c.title||'')+'</td></tr>';
+    }
+    html += '</table></div>';
+  } else {
+    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 4 fixed sites — recommendations below use standard editorial ratios. (Adding GOOGLE_CSE_KEY/CX env vars improves blog discovery.)</div>';
+  }
+  const excluded = comps.filter(c=>c.found && c.keywordMatch===false);
+  if(excluded.length){
+    html += '<div class="banner note">Excluded as wrong-topic: '+excluded.map(c=>escapeHtml(c.site)).join(', ')+'</div>';
+  }
+
+  if(ai.error){
+    html += '<div class="banner err"><b>AI step failed:</b> '+escapeHtml(ai.error)+'</div>';
+  } else if(ai.skipped){
+    html += '<div class="banner note">AI planning skipped: '+escapeHtml(ai.reason||'')+'</div>';
+  } else {
+    // ---- Meta title ----
+    html += '<h3 class="section">Meta title</h3>';
+    html += metaCard(ai.metaTitle, 50, 60, true, 'title-0');
+    (ai.metaTitleAlternates||[]).forEach((t,i)=>{ html += metaCard(t, 50, 60, false, 'title-'+(i+1)); });
+
+    // ---- Meta description ----
+    html += '<h3 class="section">Meta description</h3>';
+    html += metaCard(ai.metaDescription, 140, 155, true, 'desc-0');
+    (ai.metaDescriptionAlternates||[]).forEach((t,i)=>{ html += metaCard(t, 140, 155, false, 'desc-'+(i+1)); });
+
+    // ---- Heading outline ----
+    if((ai.headingOutline||[]).length){
+      html += '<h3 class="section">H-tag structure for your draft</h3>';
+      html += '<div class="panel outline">';
+      for(const h of ai.headingOutline){
+        const lvl = String(h.level||'H2').toLowerCase();
+        const isAdd = /^\[ADD\]/i.test(h.text||'');
+        const text = isAdd ? (h.text||'').replace(/^\[ADD\]\s*/i,'') : (h.text||'');
+        html += '<div class="ol-row"><div class="ol-lvl '+escapeHtml(lvl)+'">'+escapeHtml((h.level||'H2').toUpperCase())+'</div>'+
+          '<div><div class="ol-text">'+(isAdd?'<span class="addtag">[ADD NEW] </span>':'')+escapeHtml(text)+'</div>'+
+          (h.mapsTo?'<div class="ol-map">↳ starts at: “'+escapeHtml(h.mapsTo)+'…”</div>':'')+
+          '</div></div>';
+      }
+      html += '</div>';
+      html += '<div class="banner note"><b>[ADD NEW]</b> = a section competitors cover that your draft doesn\'t yet — write that material before publishing, or drop the heading.</div>';
+    }
+
+    // ---- Link plan ----
+    const lp = ai.linkPlan||{};
+    if((lp.internalSuggestions||[]).length){
+      html += '<h3 class="section">Internal links — '+(lp.internalSuggestions.length)+' placements</h3>';
+      html += '<div class="panel" style="padding:0"><table><tr><th>Anchor text</th><th>Why</th></tr>';
+      for(const s of lp.internalSuggestions){
+        html += '<tr><td style="font-family:var(--mono);font-size:12.5px;color:var(--signal)">'+escapeHtml(s.anchorText||'')+'</td><td class="why">'+escapeHtml(s.why||'')+'</td></tr>';
+      }
+      html += '</table></div>';
+    }
+    if((lp.externalSuggestions||[]).length){
+      html += '<h3 class="section">External links — '+(lp.externalSuggestions.length)+' citations</h3>';
+      html += '<div class="panel" style="padding:0"><table><tr><th>Anchor text</th><th>Source type</th><th>Why</th></tr>';
+      for(const s of lp.externalSuggestions){
+        html += '<tr><td style="font-family:var(--mono);font-size:12.5px;color:var(--info)">'+escapeHtml(s.anchorText||'')+'</td><td style="font-size:12px">'+escapeHtml(s.sourceType||'')+'</td><td class="why">'+escapeHtml(s.why||'')+'</td></tr>';
+      }
+      html += '</table></div>';
+    }
+
+    if((ai.notes||[]).length){
+      html += '<h3 class="section">Editorial notes</h3><div class="panel">'+
+        ai.notes.map(n=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtml(n)+'</div>').join('').replace(/border-bottom:[^"]+"\s*>(?![\s\S]*border-bottom)/,'">')+
+        '</div>';
+    }
+  }
+
+  $("results").className = "results show";
+  $("results").innerHTML = html;
+}
+
+function tile(k, v, s, accent){
+  return '<div class="tile"><div class="k">'+escapeHtml(k)+'</div><div class="v'+(accent?' accent':'')+'">'+escapeHtml(String(v))+'</div><div class="s">'+escapeHtml(s||'')+'</div></div>';
+}
+
+function metaCard(text, min, max, primary, cid){
+  if(!text) return '';
+  const len = text.length;
+  const ok = len>=min && len<=max;
+  return '<div class="meta-card">'+
+    (primary?'<div class="primary-tag">recommended</div>':'')+
+    '<div class="txt" id="'+cid+'">'+escapeHtml(text)+'</div>'+
+    '<div class="len '+(ok?'ok':'off')+'">'+len+' chars '+(ok?'✓ in range':'(target '+min+'–'+max+')')+'</div>'+
+    '<button class="copybtn" onclick="copyText(\''+cid+'\', this)">Copy</button></div>';
+}
+
+function copyText(id, btn){
+  const t = document.getElementById(id);
+  if(!t) return;
+  navigator.clipboard.writeText(t.textContent).then(()=>{
+    btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy', 1500);
+  });
+}
+</script>
+</body>
+</html>
