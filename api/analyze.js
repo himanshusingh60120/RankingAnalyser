@@ -35,6 +35,11 @@ export async function POST(request) {
   const gscSiteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
   const wantAi = body.ai !== false;
   let keyword = body.keyword;
+  // Content type: explicit from request, else auto-detect from the URL path.
+  // /blog/, /insights/, /articles/ => blog; everything else => report.
+  let contentType = body.contentType === "blog" || body.contentType === "report"
+    ? body.contentType
+    : (/\/(blog|insights|articles?)\//i.test(url || "") ? "blog" : "report");
 
   if (!url || !/^https?:\/\//i.test(url)) {
     return json({ error: "Provide a valid 'url'." }, 400);
@@ -58,7 +63,7 @@ export async function POST(request) {
       target.title.split(/[|\-–]/)[0].trim();
   }
   const targetText = tgtFetch.html.replace(/<[^>]+>/g, " ");
-  const targetFindings = auditPage(target, keyword, targetText);
+  const targetFindings = auditPage(target, keyword, targetText, contentType);
   const targetScore = scoreOf(targetFindings);
 
   // ---- 2. Resolve competitor URLs (fixed sites only) ----
@@ -68,7 +73,7 @@ export async function POST(request) {
       .filter((u) => COMPETITOR_SITES.some((s) => u.includes(s)))
       .map((u) => ({ site: domainOf(u), url: u, method: "manual" }));
   } else {
-    compUrls = await findCompetitorUrls(keyword);
+    compUrls = await findCompetitorUrls(keyword, contentType);
   }
 
   // ---- 3. X-ray each competitor, VERIFY keyword match, verdict ----
@@ -99,7 +104,7 @@ export async function POST(request) {
       });
       continue;
     }
-    const verdict = rankingVerdict(target, cx);
+    const verdict = rankingVerdict(target, cx, contentType);
     competitorsOut.push({
       site: c.site, url: c.url, found: true, fetched: true,
       keywordMatch: true, method: c.method,
@@ -128,6 +133,7 @@ export async function POST(request) {
     try {
       ai = await aiRecommendations({
         keyword,
+        contentType,
         target: { url, findings: targetFindings, xray: slimXray(target) },
         competitors: competitorsOut,
       });
@@ -138,6 +144,7 @@ export async function POST(request) {
     generatedAt: new Date().toISOString(),
     updateNote: UPDATE_NOTE,
     keyword,
+    contentType,
     target: { url, score: targetScore, findings: targetFindings, xray: slimXray(target) },
     competitors: competitorsOut,
     gsc,
