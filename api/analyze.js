@@ -154,7 +154,7 @@ export async function POST(request) {
 
 function slimXray(x) {
   return {
-    domain: x.domain, title: x.title, titleLen: x.titleLen, metaDescLen: x.metaDescLen,
+    domain: x.domain, title: x.title, titleLen: x.titleLen, metaDesc: x.metaDesc, metaDescLen: x.metaDescLen,
     canonical: x.canonical,
     h1List: x.h1List || [],
     contentWords: x.contentWords, totalWords: x.totalWords, contentRatio: x.contentRatio,
