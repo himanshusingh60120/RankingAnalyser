@@ -93,8 +93,12 @@ export async function POST(request) {
       continue;
     }
     // STRICT post-fetch verification: the fetched page must actually be about
-    // the keyword (URL slug or page title carries every significant token).
-    const matches = keywordMatches(keyword, c.url, cx.title);
+    // the keyword. The page's own <title> is the reliable signal. A slug-probed
+    // URL is fabricated from the keyword, so it must NOT self-validate; URLs from
+    // real search results (search-api/on-site-search/manual) are valid evidence.
+    const titleMatch = keywordMatches(keyword, "", cx.title);
+    const urlTrustworthy = c.method !== "slug-probe";
+    const matches = titleMatch || (urlTrustworthy && keywordMatches(keyword, c.url, ""));
     if (!matches) {
       competitorsOut.push({
         site: c.site, url: c.url, found: true, fetched: true,
