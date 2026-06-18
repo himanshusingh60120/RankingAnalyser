@@ -15,7 +15,7 @@ curl -X POST https://YOUR-APP.vercel.app/api/analyze \
   }'
 ```
 
-## Analyze with manual competitor URLs (still restricted to the 4 fixed sites)
+## Analyze with manual competitor URLs (still restricted to the 5 fixed sites)
 ```bash
 curl -X POST https://YOUR-APP.vercel.app/api/analyze \
   -H "Content-Type: application/json" \
