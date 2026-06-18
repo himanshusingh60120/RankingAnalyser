@@ -1,7 +1,7 @@
 # SEO Deep X-Ray API
 
 API-only service (deploys to Vercel) that does a **source-level X-ray** of a page,
-auto-finds the matching report on **four fixed market-research competitors**,
+auto-finds the matching report on **five fixed market-research competitors**,
 and returns a weighted **ranking verdict** explaining why each competitor likely
 outranks you. Optional Google Search Console integration via OAuth.
 
@@ -37,7 +37,7 @@ Body:
 ```
 - `url` (required) — your page.
 - `keyword` (optional) — inferred from H1/title if omitted.
-- `competitors` (optional) — manual override; filtered to the four fixed
+- `competitors` (optional) — manual override; filtered to the five fixed
   domains. If omitted, the matching report is auto-found on each fixed site.
 - `gscRefreshToken` + `gscSiteUrl` (optional) — enables GSC quick-win analysis.
 
