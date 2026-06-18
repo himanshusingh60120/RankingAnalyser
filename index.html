@@ -459,7 +459,31 @@ function aiSection(ai){
       '<div class="draft"><button class="copybtn" onclick="copyDraft()">Copy draft</button>'+
       '<pre id="draftText">'+escapeHtml(ai.contentDraft)+'</pre></div>';
   }
+
+  if(ai.schemaAssessment){
+    html += '<div class="banner note" style="margin-top:14px"><b>Schema coverage:</b> '+escapeHtml(ai.schemaAssessment)+'</div>';
+  }
+  if((ai.schemaSuggestions||[]).length){
+    html += '<h3 class="section">AI — structured data to add / improve</h3>';
+    html += (ai.schemaSuggestions||[]).map(s=>{
+      const tag = /improve/i.test(s.status||'') ? '<span class="tag warning">IMPROVE</span>' : '<span class="tag info">ADD SCHEMA</span>';
+      const jsonLd = (s.jsonLd||'').trim();
+      return '<div class="finding">'+tag+
+        '<div style="flex:1"><div class="f-msg"><b>'+escapeHtml(s.type||'Schema')+'</b></div>'+
+        (s.why?'<div class="f-detail"><b>Why:</b> '+escapeHtml(s.why)+'</div>':'')+
+        (jsonLd?'<div class="draft" style="margin-top:8px"><button class="copybtn" onclick="copySchema(this)">Copy JSON-LD</button><pre>'+escapeHtml(jsonLd)+'</pre></div>':'')+
+        '</div></div>';
+    }).join("");
+  }
   return html;
+}
+
+function copySchema(btn){
+  const pre = btn.parentElement.querySelector('pre');
+  if(!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(()=>{
+    btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy JSON-LD',1600);
+  });
 }
 
 function copyDraft(){
