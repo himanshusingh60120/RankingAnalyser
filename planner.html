@@ -303,15 +303,14 @@ function render(d){
       html += '<div class="panel outline">';
       for(const h of ai.headingOutline){
         const lvl = String(h.level||'H2').toLowerCase();
-        const isAdd = /^\[ADD\]/i.test(h.text||'');
-        const text = isAdd ? (h.text||'').replace(/^\[ADD\]\s*/i,'') : (h.text||'');
+        const text = (h.text||'').replace(/^\[ADD\]\s*/i,'');
         html += '<div class="ol-row"><div class="ol-lvl '+escapeHtml(lvl)+'">'+escapeHtml((h.level||'H2').toUpperCase())+'</div>'+
-          '<div><div class="ol-text">'+(isAdd?'<span class="addtag">[ADD NEW] </span>':'')+escapeHtml(text)+'</div>'+
+          '<div><div class="ol-text">'+escapeHtml(text)+'</div>'+
           (h.mapsTo?'<div class="ol-map">↳ starts at: “'+escapeHtml(h.mapsTo)+'…”</div>':'')+
           '</div></div>';
       }
       html += '</div>';
-      html += '<div class="banner note"><b>[ADD NEW]</b> = a section competitors cover that your draft doesn\'t yet — write that material before publishing, or drop the heading.</div>';
+      html += '<div class="banner note">Headings are derived only from sections already present in your draft — each one maps to where that content begins.</div>';
     }
 
     // ---- External link plan (AI; internal links handled separately) ----
