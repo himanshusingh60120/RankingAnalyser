@@ -65,7 +65,7 @@ export async function POST(request) {
       }
       comps.push({
         site: c.site, url: c.url, found: true, fetched: true, keywordMatch: true,
-        title: x.title, titleLen: x.titleLen, metaDescLen: x.metaDescLen,
+        title: x.title, titleLen: x.titleLen, metaDesc: x.metaDesc, metaDescLen: x.metaDescLen,
         contentWords: x.contentWords,
         headings: x.headingTree,
         internalLinks: x.inContentInternal.length,
@@ -83,11 +83,15 @@ export async function POST(request) {
   // ---- Link-ratio math: competitors' links per 1000 content words, applied
   //      to YOUR word count. This is the "ratio must be handled" core. ----
   let linkTargets = null;
+  // Per request: benchmark competitors on the REPORT CONTENT and the INTERNAL
+  // links *inside that content* only. Outbound (external-domain) links are NOT
+  // counted toward the competitor benchmark — external citations are suggested
+  // separately from editorial best practice (E-E-A-T), not from competitor counts.
+  const extBestPracticePer1k = contentType === "blog" ? 2.5 : 2.0;
   if (matched.length) {
     const per1k = (n, w) => (w > 0 ? (n / w) * 1000 : 0);
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
     const internalPer1k = avg(matched.map((c) => per1k(c.internalLinks, c.contentWords)));
-    const externalPer1k = avg(matched.map((c) => per1k(c.externalLinks, c.contentWords)));
     const avgCompWords = Math.round(avg(matched.map((c) => c.contentWords)));
     // Recommend slightly above the competitor average (to win, not tie),
     // with sane floors/ceilings for the content type.
@@ -97,10 +101,9 @@ export async function POST(request) {
       ourWords,
       avgCompetitorWords: avgCompWords,
       competitorInternalPer1000Words: +internalPer1k.toFixed(2),
-      competitorExternalPer1000Words: +externalPer1k.toFixed(2),
       recommendedInternalLinks: rec(internalPer1k, contentType === "blog" ? 3 : 4, 25),
-      recommendedExternalLinks: rec(externalPer1k, contentType === "blog" ? 2 : 1, 12),
-      note: "Recommended counts apply the competitors' links-per-1000-words ratio to your draft length, +15% to lead rather than match.",
+      recommendedExternalLinks: Math.max(contentType === "blog" ? 2 : 1, Math.round((extBestPracticePer1k * ourWords) / 1000)),
+      note: "Internal-link target = competitors' INTERNAL links per 1000 content words applied to your draft (+15% to lead). External citations follow editorial best practice; competitors' outbound links are not counted.",
     };
   } else {
     // No matched competitors — fall back to editorial best-practice ratios.
@@ -188,37 +191,54 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
   const compBrief = matched.map((c) => ({
     site: c.site,
     title: c.title,
+    metaDescription: c.metaDesc || "",
     contentWords: c.contentWords,
     headings: (c.headings || []).map(([l, t]) => `H${l}:${t}`).slice(0, 30),
+    // Only INTERNAL in-content anchors — outbound/external links are excluded
+    // from the competitor benchmark (see linkTargets note).
     internalAnchors: c.internalAnchors,
-    externalDomains: c.externalDomains,
   }));
 
   const sys = isBlog
     ? "You are a senior SEO editor for B2B blog articles at a market-research publisher. " +
       "You structure draft content for maximum ranking: intent-matching H1, question-style " +
       "H2/H3s that win featured snippets and People-Also-Ask, skimmable hierarchy, E-E-A-T. " +
-      "Respond in strict JSON only."
+      "You ONLY structure content that already exists in the supplied draft — you never invent " +
+      "sections or recommend headings for topics the draft does not contain. When no competitor " +
+      "data is supplied, you apply technical-SEO best practice for the content type. Respond in strict JSON only."
     : "You are a senior SEO editor for market-research report pages. You structure content " +
-      "for depth, topical authority, and AI-Overview readiness. Respond in strict JSON only.";
+      "for depth, topical authority, and AI-Overview readiness. You ONLY structure content that " +
+      "already exists in the supplied draft — you never invent sections or recommend headings for " +
+      "topics the draft does not contain. When no competitor data is supplied, you apply technical-SEO " +
+      "best practice for the content type. Respond in strict JSON only.";
 
+  const hasComps = compBrief.length > 0;
   const user = JSON.stringify({
     task:
-      "Given OUR DRAFT content for the keyword, and the competitor pages' titles + heading structures, produce: " +
-      "'headingOutline' = ordered array of objects {level:'H1'|'H2'|'H3', text, mapsTo} covering the WHOLE draft — " +
-      "level/text are the heading to use; mapsTo is the first ~8 words of the draft paragraph that the section starts at, " +
-      "so the writer knows where each heading goes. Exactly one H1. Cover every major topic shift in the draft; " +
-      "add headings competitors have that our draft content could support, marked with text prefix '[ADD] ' if the draft " +
-      "doesn't contain that material yet. Use the keyword naturally in the H1 and 1-2 H2s, no stuffing. " +
-      "'metaTitle' = ONE title, 50-60 characters, keyword near the front, compelling, not clickbait. " +
+      "First READ and UNDERSTAND our draft content below; every suggestion must be grounded in what the draft actually says. " +
+      (hasComps
+        ? "You are also given competitor pages' titles, meta descriptions and heading structures for the same keyword — use them as the benchmark to beat. "
+        : "No competitor pages were available for this keyword — fall back to technical-SEO best practice for this content type. ") +
+      "Produce: " +
+      "'headingOutline' = ordered array of {level:'H1'|'H2'|'H3', text, mapsTo}. CRITICAL CONSTRAINT: build the outline ONLY from " +
+      "material that ALREADY EXISTS in our draft. Every heading must label a block of text that is actually present in the draft, and " +
+      "'mapsTo' MUST be the first ~8 words of the real draft paragraph where that section begins. Do NOT invent, add, or recommend " +
+      "headings for any topic the draft does not already cover, and do NOT output '[ADD]' or placeholder headings. Exactly one H1. " +
+      "Cover every major topic shift that is genuinely in the draft. Use the keyword naturally in the H1 and 1-2 H2s where the draft supports it, no stuffing. " +
+      "'metaTitle' = ONE title, 50-60 characters, keyword near the front, compelling, not clickbait" +
+      (hasComps
+        ? ", differentiated from the competitor titles provided (cover the value they signal without copying their wording). "
+        : ", following title best practice for this content type. ") +
       "'metaTitleAlternates' = 2 alternates, also 50-60 chars. " +
-      "'metaDescription' = ONE description, 140-155 characters, includes the keyword and a concrete value proposition. " +
+      "'metaDescription' = ONE description, 140-155 characters, includes the keyword and a concrete value proposition drawn from the draft" +
+      (hasComps
+        ? ", positioned to stand out against the competitor meta descriptions provided (do not copy their phrasing). "
+        : ". ") +
       "'metaDescriptionAlternates' = 2 alternates, 140-155 chars. " +
       `'linkPlan' = object {externalSuggestions: array of {anchorText, sourceType, why} ` +
-      `(suggest ${linkTargets.recommendedExternalLinks} items, sourceType like 'government/regulator', ` +
-      "'standards body', 'primary research', 'industry association' — name the type, not invented URLs)}. " +
+      `(suggest ${linkTargets.recommendedExternalLinks} items from editorial best practice, sourceType like 'government/regulator', ` +
+      "'standards body', 'primary research', 'industry association' — name the type, not invented URLs; anchor texts must come from or fit naturally into the draft). " +
       "Do NOT suggest internal links — those are provided separately from the site's own sitemaps. " +
-      "Anchor texts must come from or fit naturally into the draft. " +
       "'notes' = 2-4 short editorial notes on what to strengthen before publishing.",
     keyword,
     contentType,
