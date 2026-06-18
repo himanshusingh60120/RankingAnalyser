@@ -123,7 +123,7 @@
   <header>
     <p class="eyebrow">Kings Research · New-Content Mode</p>
     <h1>Content <span class="x">Planner</span></h1>
-    <p class="lede">Paste your draft before publishing. The planner benchmarks the same 4 competitors on your keyword, then returns the H-tag structure, meta title &amp; description, and the internal/external link counts your content length warrants.</p>
+    <p class="lede">Paste your draft before publishing. The planner benchmarks the same 5 competitors on your keyword, then returns the H-tag structure, meta title &amp; description, and the internal/external link counts your content length warrants.</p>
     <p style="margin-top:14px"><a class="back" href="/" >← back to Ranking X-Ray (existing pages)</a></p>
   </header>
 
@@ -239,7 +239,7 @@ function render(d){
     }
     html += '</table></div>';
   } else {
-    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 4 fixed sites — recommendations below use standard editorial ratios. (Adding GOOGLE_CSE_KEY/CX env vars improves blog discovery.)</div>';
+    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios. (Adding GOOGLE_CSE_KEY/CX env vars improves blog discovery.)</div>';
   }
   const excluded = comps.filter(c=>c.found && c.keywordMatch===false);
   if(excluded.length){
