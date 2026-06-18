@@ -5,7 +5,7 @@
 //         meta description, and internal/external link targets derived from
 //         the competitors' links-per-1000-words ratios applied to YOUR length.
 //
-// Uses the same fixed 4 competitors and the same fetch/x-ray pipeline as
+// Uses the same fixed 5 competitors and the same fetch/x-ray pipeline as
 // /api/analyze, so the benchmarks are consistent across the tool.
 
 import { fetchPage } from "../lib/fetcher.js";
@@ -47,7 +47,7 @@ export async function POST(request) {
   // ---- Our draft stats ----
   const ourWords = content.split(/\s+/).filter(Boolean).length;
 
-  // ---- Find + x-ray competitor pages (same fixed 4, same matching rules) ----
+  // ---- Find + x-ray competitor pages (same fixed 5, same matching rules) ----
   const compUrls = await findCompetitorUrls(keyword, contentType);
   const comps = [];
   await Promise.all(
@@ -59,7 +59,11 @@ export async function POST(request) {
         return;
       }
       const x = xray(c.url, f.status, f.html);
-      if (!keywordMatches(keyword, c.url, x.title)) {
+      // Verify against the page's own <title>; a slug-probed URL is fabricated
+      // from the keyword and must not self-validate (real-search/manual URLs may).
+      const titleMatch = keywordMatches(keyword, "", x.title);
+      const urlTrustworthy = c.method !== "slug-probe";
+      if (!(titleMatch || (urlTrustworthy && keywordMatches(keyword, c.url, "")))) {
         comps.push({ site: c.site, url: c.url, found: true, fetched: true, keywordMatch: false });
         return;
       }
