@@ -38,7 +38,25 @@ export async function POST(request) {
 
   const keyword = (body.keyword || "").trim();
   const content = (body.content || "").trim();
-  const contentType = body.contentType === "report" ? "report" : "blog"; // planner default: blog
+  // ---- Content type: auto-detected, NOT hard-defaulted to "blog" ----
+  // The planner used to assume "blog" unless told otherwise, so a report keyword
+  // like "Industrial Gases Market" made it hunt for competitor BLOG posts that
+  // don't exist (and skip the on-site/slug fallbacks that find report pages),
+  // returning "no competitors" — while the analyzer, which auto-detects "report"
+  // from the URL path, found them. Detect the same way here so the two agree.
+  const planUrl = (body.url || "").trim();
+  const reportKeyword = /\b(market|industry|forecast|outlook|market size|market share|analysis)\b/i.test(keyword);
+  const blogUrl = /\/(blog|insights?|articles?|news|resources?)\//i.test(planUrl);
+  let contentType;
+  if (body.contentType === "report") contentType = "report";
+  else if (body.contentType === "blog") {
+    // Honour an explicit blog choice UNLESS the keyword is clearly report-intent
+    // and nothing in the URL says blog — then the only competitor pages that
+    // exist for this term are reports, so report discovery is what finds them.
+    contentType = reportKeyword && !blogUrl ? "report" : "blog";
+  } else {
+    contentType = blogUrl ? "blog" : (reportKeyword ? "report" : "blog");
+  }
 
   if (!keyword) return json({ error: "Provide 'keyword'." }, 400);
   if (!content || content.length < 200)
