@@ -287,6 +287,13 @@ function render(d){
   } else if(ai.skipped){
     html += '<div class="banner note">AI planning skipped: '+escapeHtml(ai.reason||'')+'</div>';
   } else {
+    // ---- Figures used to build the meta (data-driven) ----
+    if (ai.figuresNote) {
+      const usedData = (ai.detectedFigures||{}).hasFigures;
+      html += '<div class="banner note" style="margin-bottom:8px">'+
+        (usedData?'📊 ':'⚠️ ')+escapeHtml(ai.figuresNote)+'</div>';
+    }
+
     // ---- Meta title ----
     html += '<h3 class="section">Meta title</h3>';
     html += metaCard(ai.metaTitle, 50, 60, true, 'title-0');
