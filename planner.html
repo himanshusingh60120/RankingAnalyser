@@ -160,7 +160,18 @@ const $ = (id) => document.getElementById(id);
 function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 let contentType = 'blog';
+let userPickedType = false;
 function setType(t){
+  contentType = t;
+  userPickedType = true;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
+}
+// Auto-detect page type from the keyword until the user picks one manually.
+// "... Market / Industry / Forecast / Outlook" reads as a report; else blog.
+function autoDetectType(){
+  if (userPickedType) return;
+  const kw = ($("keyword").value || '').toLowerCase();
+  const t = /\b(market|industry|forecast|outlook|market size|market share|analysis)\b/.test(kw) ? 'report' : 'blog';
   contentType = t;
   document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
 }
@@ -170,11 +181,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const w = e.target.value.split(/\s+/).filter(Boolean).length;
     $("wc").textContent = w + " words";
   });
+  $("keyword").addEventListener('input', autoDetectType);
 });
 
 async function plan(){
   const keyword = $("keyword").value.trim();
   const content = $("content").value.trim();
+  autoDetectType();
   if(!keyword){ $("status").textContent = "Enter the primary keyword."; return; }
   if(content.length < 200){ $("status").textContent = "Paste your draft content (at least ~200 characters)."; return; }
 
@@ -239,7 +252,8 @@ function render(d){
     }
     html += '</table></div>';
   } else {
-    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios. (Adding GOOGLE_CSE_KEY/CX env vars improves blog discovery.)</div>';
+    const blogHint = d.contentType==='blog' ? ' If you are optimizing a market report, switch “Content type” to “Report page” — competitors publish these as reports, not blog posts, so report mode finds them without an API key.' : '';
+    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios.'+blogHint+' (Blog discovery also needs GOOGLE_CSE_KEY/CX env vars.)</div>';
   }
   const excluded = comps.filter(c=>c.found && c.keywordMatch===false);
   if(excluded.length){
