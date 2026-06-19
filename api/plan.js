@@ -181,6 +181,64 @@ export async function POST(request) {
   });
 }
 
+// Deterministically pull the report's OWN headline figures out of the draft so
+// the meta is built from real data (the way competitors do) and never invented.
+// Values are extracted verbatim and handed to the model with a "use ONLY these"
+// instruction, so nothing is hallucinated. Returns nulls when nothing is found.
+function extractReportFigures(text = "") {
+  const t = String(text).replace(/\s+/g, " ");
+  const VAL =
+    "(?:USD|US\\$|EUR|€|\\$|£|GBP|INR|₹)\\s?\\d[\\d,]*(?:\\.\\d+)?\\s?" +
+    "(?:trillion|billion|million|thousand|tn|bn|mn|k)\\b";
+  const values = [
+    ...new Set(
+      (t.match(new RegExp(VAL, "gi")) || []).map((s) => s.replace(/\s+/g, " ").trim())
+    ),
+  ];
+
+  const cagrs = [];
+  let m;
+  const r1 = /(\d{1,2}(?:\.\d+)?)\s?%\s*CAGR/gi;
+  const r2 = /CAGR\s+(?:of\s+)?(\d{1,2}(?:\.\d+)?)\s?%/gi;
+  const r3 = /compound annual growth rate[^%\d]{0,40}?(\d{1,2}(?:\.\d+)?)\s?%/gi;
+  while ((m = r1.exec(t))) cagrs.push(m[1] + "%");
+  while ((m = r2.exec(t))) cagrs.push(m[1] + "%");
+  while ((m = r3.exec(t))) cagrs.push(m[1] + "%");
+  const cagr = cagrs.length ? cagrs[0] : null;
+
+  // Canonical "from/valued-at X in YEAR to/reach Z by YEAR" pairs value to year.
+  let baseValue = null, forecastValue = null, baseYear = null, forecastYear = null;
+  const fromToRe = new RegExp(
+    "(?:from|valued at|worth|reach(?:ed|ing)?)\\s+(" + VAL + ")\\s+(?:in\\s+)?(20\\d{2})" +
+      "[^.]{0,60}?\\s+(?:to|reach(?:ing)?)\\s+(" + VAL + ")\\s+(?:by\\s+|in\\s+)?(20\\d{2})",
+    "i"
+  );
+  const ft = t.match(fromToRe);
+  if (ft) {
+    baseValue = ft[1].replace(/\s+/g, " ").trim();
+    baseYear = ft[2];
+    forecastValue = ft[3].replace(/\s+/g, " ").trim();
+    forecastYear = ft[4];
+  }
+
+  // Forecast-period range drives the TITLE (e.g. "2026-2034").
+  let forecastPeriod = null;
+  const rm = t.match(/(20\d{2})\s?(?:-|–|—|to)\s?(20\d{2})/);
+  if (rm) forecastPeriod = `${rm[1]}–${rm[2]}`;
+  if (!baseYear && rm) baseYear = rm[1];
+  if (!forecastYear && rm) forecastYear = rm[2];
+  if (!forecastPeriod && baseYear && forecastYear) forecastPeriod = `${baseYear}–${forecastYear}`;
+
+  if (!baseValue && values.length >= 2) { baseValue = values[0]; forecastValue = values[1]; }
+  else if (!baseValue && values.length === 1) { forecastValue = values[0]; }
+
+  const hasFigures = !!((baseValue || forecastValue) && cagr) || !!(baseValue && forecastValue);
+  return {
+    hasFigures, baseValue, baseYear, forecastValue, forecastYear, cagr, forecastPeriod,
+    allValues: values, allCagrs: [...new Set(cagrs)],
+  };
+}
+
 async function planWithAi({ key, keyword, contentType, content, ourWords, matched, linkTargets }) {
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const isBlog = contentType === "blog";
@@ -191,6 +249,10 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
   const draft = content.length > MAX
     ? content.slice(0, MAX * 0.7) + "\n[...trimmed...]\n" + content.slice(-MAX * 0.3)
     : content;
+
+  // Pull the report's own size/CAGR/forecast figures from the FULL draft (not the
+  // trimmed copy) so the meta can be built from real data instead of generic copy.
+  const figures = extractReportFigures(content);
 
   const compBrief = matched.map((c) => ({
     site: c.site,
@@ -229,16 +291,27 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
       "'mapsTo' MUST be the first ~8 words of the real draft paragraph where that section begins. Do NOT invent, add, or recommend " +
       "headings for any topic the draft does not already cover, and do NOT output '[ADD]' or placeholder headings. Exactly one H1. " +
       "Cover every major topic shift that is genuinely in the draft. Use the keyword naturally in the H1 and 1-2 H2s where the draft supports it, no stuffing. " +
-      "'metaTitle' = ONE title, 50-60 characters, keyword near the front, compelling, not clickbait" +
+      // ---- META: built from the report's OWN figures; year required; length enforced ----
+      (figures.hasFigures
+        ? "The draft contains this report's own market figures (provided below as detectedFigures). Build the meta around THOSE exact values — never alter them, and never introduce a number that is not in detectedFigures. "
+        : "No market-size or CAGR figures were detected in the draft. Do NOT invent any; write benefit-led meta from the draft's real content and use figuresNote to tell the user that adding the market size, CAGR and forecast years to the page is the single biggest meta win, because every ranking competitor leads with those numbers. ") +
+      "'metaTitle' = ONE title, 50-60 characters, the keyword phrase near the front, compelling, not clickbait. " +
+      (figures.forecastPeriod || figures.forecastYear
+        ? "The title MUST include the forecast year: use detectedFigures.forecastPeriod (e.g. '2026–2034'), or if absent 'to ' + detectedFigures.forecastYear. "
+        : "If the draft states a forecast year, put it in the title; otherwise omit it — do not fabricate a year. ") +
       (hasComps
-        ? ", differentiated from the competitor titles provided (cover the value they signal without copying their wording). "
-        : ", following title best practice for this content type. ") +
-      "'metaTitleAlternates' = 2 alternates, also 50-60 chars. " +
-      "'metaDescription' = ONE description, 140-155 characters, includes the keyword and a concrete value proposition drawn from the draft" +
+        ? "Differentiate from the competitor titles provided (cover the value they signal without copying their wording). "
+        : "Follow report-page title best practice. ") +
+      "'metaTitleAlternates' = 2 alternates, also 50-60 chars, each carrying the forecast year/range when one is available. " +
+      "'metaDescription' = ONE description that is 140-155 characters — COUNT the characters and never return fewer than 140. " +
+      (figures.hasFigures
+        ? "Lead with the market-size trajectory and CAGR using ONLY detectedFigures, e.g. 'Marine collagen market to reach USD <forecastValue> by <forecastYear>, a <cagr> CAGR from USD <baseValue> in <baseYear>, driven by …', then fill to 140-155 with a concrete driver or segment taken from the draft. "
+        : "Lead with the keyword and the strongest concrete driver, segment, or player actually in the draft, expanding with real detail until it reaches 140-155 characters. ") +
       (hasComps
-        ? ", positioned to stand out against the competitor meta descriptions provided (do not copy their phrasing). "
-        : ". ") +
-      "'metaDescriptionAlternates' = 2 alternates, 140-155 chars. " +
+        ? "Position it to stand out against the competitor meta descriptions provided (do not copy their phrasing). "
+        : "") +
+      "'metaDescriptionAlternates' = 2 alternates, EACH 140-155 characters (never under 140), following the same figure rules. " +
+      "'figuresNote' = ONE short sentence: if you used detected figures, state them (e.g. 'Used your data: USD 1.37B → USD 2.82B at 9.5% CAGR, 2026–2034'); if figures were missing, tell the user to add market size + CAGR + forecast years to the page so the meta can lead with them. " +
       `'linkPlan' = object {externalSuggestions: array of {anchorText, sourceType, why} ` +
       `(suggest ${linkTargets.recommendedExternalLinks} items from editorial best practice, sourceType like 'government/regulator', ` +
       "'standards body', 'primary research', 'industry association' — name the type, not invented URLs; anchor texts must come from or fit naturally into the draft). " +
@@ -248,6 +321,7 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
     contentType,
     ourWords,
     competitorBenchmarks: compBrief,
+    detectedFigures: figures,
     draftContent: draft,
   });
 
@@ -281,6 +355,8 @@ async function planWithAi({ key, keyword, contentType, content, ourWords, matche
     metaTitleAlternates: Array.isArray(parsed.metaTitleAlternates) ? parsed.metaTitleAlternates : [],
     metaDescription: parsed.metaDescription || "",
     metaDescriptionAlternates: Array.isArray(parsed.metaDescriptionAlternates) ? parsed.metaDescriptionAlternates : [],
+    figuresNote: parsed.figuresNote || "",
+    detectedFigures: figures,
     linkPlan: parsed.linkPlan || { internalSuggestions: [], externalSuggestions: [] },
     notes: Array.isArray(parsed.notes) ? parsed.notes : [],
   };
