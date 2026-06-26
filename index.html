@@ -176,6 +176,27 @@
   code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
   footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line);
            font-family: var(--mono); font-size: 11px; color: var(--dim); }
+  /* ---- Bulk GSC from CSV ---- */
+  input[type=file] { width:100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+    padding: 11px 12px; border-radius: 9px; font-family: var(--mono); font-size: 12.5px; cursor: pointer; }
+  input[type=file]::file-selector-button { background: var(--signal-dim); color: var(--signal); border: 1px solid var(--line);
+    border-radius: 7px; padding: 6px 12px; margin-right: 12px; font-family: var(--mono); font-size: 12px; cursor: pointer; }
+  .bulk-summary { display:flex; flex-wrap:wrap; gap:18px; font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    padding: 12px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; }
+  .bulk-summary b { color: var(--ink); }
+  .bulk-note { font-size: 12px; color: var(--dim); margin: 10px 2px 0; }
+  .bulk-table-wrap { margin-top: 14px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  .bulk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bulk-table th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--dim); padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--panel-2); position: sticky; top: 0; }
+  .bulk-table th.num, .bulk-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bulk-table td { padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  .bulk-table tr:last-child td { border-bottom: none; }
+  .bulk-table td.url { max-width: 360px; }
+  .bulk-table td.url a { color: var(--info); text-decoration: none; word-break: break-all; }
+  .bulk-table td.url a:hover { text-decoration: underline; }
+  .bulk-table tr.miss td { color: var(--dim); }
+  .bulk-table tr.miss td.url a { color: var(--dim); }
 </style>
 </head>
 <body>
@@ -239,7 +260,55 @@
 
   <div class="results" id="results"></div>
 
-  <footer>Ranking X-Ray · API at <code>/api/analyze</code> · health at <code>/api/health</code></footer>
+  <div class="console" id="bulkCard" style="margin-top:22px">
+    <p class="eyebrow" style="margin-bottom:6px">Bulk Search Console</p>
+    <h2 style="margin:0 0 6px;font-size:20px">Pull rank · CTR · impressions from a CSV</h2>
+    <p class="lede" style="margin:0 0 18px;font-size:14px">
+      Upload a CSV with <b>Title in column A</b> and <b>URL in column B</b>. The latest GSC
+      metrics are pulled and inserted for every URL. Uses the property's connected token
+      (or override below).</p>
+
+    <div class="grid">
+      <div class="full">
+        <label for="csvFile">CSV file <span style="color:var(--dim)">(Title, URL)</span></label>
+        <input type="file" id="csvFile" accept=".csv,text/csv" />
+        <div class="seg-hint" id="csvHint" style="margin-top:8px">No file selected.</div>
+      </div>
+      <div>
+        <label for="bulkDays">Window (days)</label>
+        <input type="text" id="bulkDays" placeholder="28" value="28" />
+      </div>
+      <div>
+        <label for="bulkSite">GSC property URL <span style="color:var(--dim)">(optional)</span></label>
+        <input type="text" id="bulkSite" placeholder="defaults to server config" />
+      </div>
+    </div>
+
+    <details class="adv">
+      <summary>Advanced — token override &amp; precise mode</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="bulkToken">GSC refresh token (optional)</label>
+          <input type="text" id="bulkToken" placeholder="from /api/auth/start — else uses server config" />
+        </div>
+        <div class="full" style="display:flex;align-items:center;gap:9px">
+          <input type="checkbox" id="bulkPrecise" style="width:auto" />
+          <label for="bulkPrecise" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+            Precise mode — exact per-URL query for every row (slower, most accurate)</label>
+        </div>
+      </div>
+    </details>
+
+    <div class="row-actions">
+      <button class="run" id="bulkBtn" onclick="runBulk()">Fetch GSC metrics</button>
+      <button class="run" id="bulkDownload" onclick="downloadBulkCsv()" style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">Download enriched CSV ↓</button>
+      <span class="status" id="bulkStatus"></span>
+    </div>
+
+    <div id="bulkResults" style="margin-top:18px"></div>
+  </div>
+
+  <footer>Ranking X-Ray · API at <code>/api/analyze</code> · bulk CSV at <code>/api/bulk-gsc</code> · health at <code>/api/health</code></footer>
 </div>
 
 <script>
@@ -549,6 +618,116 @@ function renderResults(d){
   $("results").innerHTML = html;
   $("results").className = "results show";
   $("results").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+// ---------- Bulk GSC from CSV ----------
+let bulkCsvText = null;
+let bulkLastRows = null;
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const f = $("csvFile");
+  if(f) f.addEventListener('change', ()=>{
+    const file = f.files && f.files[0];
+    if(!file){ bulkCsvText = null; $("csvHint").textContent = "No file selected."; return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      bulkCsvText = String(e.target.result || "");
+      const lines = bulkCsvText.split(/\r?\n/).filter(l=>l.trim()).length;
+      $("csvHint").innerHTML = '<b style="color:var(--signal)">'+escapeHtml(file.name)+'</b> — '+lines+' line(s) read.';
+    };
+    reader.onerror = ()=>{ bulkCsvText = null; $("csvHint").textContent = "Could not read file."; };
+    reader.readAsText(file);
+  });
+});
+
+async function runBulk(){
+  if(!bulkCsvText || !bulkCsvText.trim()){ $("bulkStatus").textContent = "Choose a CSV file first."; return; }
+  const daysRaw = $("bulkDays").value.trim();
+  const days = daysRaw ? Number(daysRaw) : 28;
+  const gscSiteUrl = $("bulkSite").value.trim() || undefined;
+  const gscRefreshToken = $("bulkToken").value.trim() || undefined;
+  const precise = $("bulkPrecise").checked;
+
+  const btn = $("bulkBtn");
+  btn.disabled = true;
+  $("bulkDownload").style.display = "none";
+  $("bulkResults").innerHTML = "";
+  bulkLastRows = null;
+  let secs = 0;
+  $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… 0s';
+  const timer = setInterval(()=>{ secs++; $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… '+secs+'s'; }, 1000);
+
+  try {
+    const body = { csv: bulkCsvText, days, precise };
+    if(gscSiteUrl) body.gscSiteUrl = gscSiteUrl;
+    if(gscRefreshToken) body.gscRefreshToken = gscRefreshToken;
+
+    const res = await fetch("/api/bulk-gsc", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    clearInterval(timer);
+    $("bulkStatus").textContent = "";
+    btn.disabled = false;
+
+    if(!res.ok || data.error){
+      $("bulkResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Request failed")+'</b>'+
+        (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+'</div>';
+      return;
+    }
+    bulkLastRows = data.results || [];
+    renderBulk(data);
+    $("bulkDownload").style.display = bulkLastRows.length ? "inline-flex" : "none";
+  } catch(err){
+    clearInterval(timer);
+    btn.disabled = false;
+    $("bulkStatus").textContent = "";
+    $("bulkResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+  }
+}
+
+function renderBulk(data){
+  const rows = data.results || [];
+  const t = data.totals || {};
+  const fmt = (v)=> v==null ? '<span style="color:var(--dim)">—</span>' : escapeHtml(String(v));
+  let html = '<div class="bulk-summary">'+
+    '<span><b>'+(t.rows||0)+'</b> rows</span>'+
+    '<span style="color:var(--good)"><b>'+(t.matched||0)+'</b> matched</span>'+
+    '<span style="color:var(--dim)"><b>'+(t.unmatched||0)+'</b> no data</span>'+
+    '<span style="color:var(--muted)">'+escapeHtml(data.days+'-day window')+'</span></div>';
+  if(data.note) html += '<div class="bulk-note">'+escapeHtml(data.note)+'</div>';
+
+  html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr>'+
+    '<th>Title</th><th>URL</th><th class="num">Avg Pos</th><th class="num">CTR %</th>'+
+    '<th class="num">Impr.</th><th class="num">Clicks</th></tr></thead><tbody>';
+  for(const r of rows){
+    const cls = r.found ? '' : ' class="miss"';
+    html += '<tr'+cls+'>'+
+      '<td>'+escapeHtml(r.title||'')+'</td>'+
+      '<td class="url"><a href="'+escapeHtml(r.url)+'" target="_blank" rel="noopener">'+escapeHtml(r.url)+'</a></td>'+
+      '<td class="num">'+fmt(r.position)+'</td>'+
+      '<td class="num">'+fmt(r.ctr)+'</td>'+
+      '<td class="num">'+fmt(r.impressions)+'</td>'+
+      '<td class="num">'+fmt(r.clicks)+'</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  $("bulkResults").innerHTML = html;
+}
+
+function downloadBulkCsv(){
+  if(!bulkLastRows || !bulkLastRows.length) return;
+  const esc = (v)=>{ const s = v==null?'':String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const header = ["Title","URL","Avg Position","CTR (%)","Impressions","Clicks","Found"];
+  const lines = [header.join(",")];
+  for(const r of bulkLastRows){
+    lines.push([r.title, r.url, r.position??'', r.ctr??'', r.impressions??'', r.clicks??'', r.found?'yes':'no'].map(esc).join(","));
+  }
+  const blob = new Blob([lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gsc-metrics.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
 </script>
 </body>
