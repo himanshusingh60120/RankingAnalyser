@@ -264,25 +264,46 @@
     <p class="eyebrow" style="margin-bottom:6px">Bulk Search Console</p>
     <h2 style="margin:0 0 6px;font-size:20px">Pull rank · CTR · impressions from a CSV</h2>
     <p class="lede" style="margin:0 0 18px;font-size:14px">
-      Upload a CSV with <b>Title in column A</b> and <b>URL in column B</b>. The latest GSC
-      metrics are pulled and inserted for every URL. Uses the property's connected token
+      Upload a CSV with <b>URLs</b> (URL-only, or Title in column A + URL in column B).
+      GSC rank · CTR · impressions · clicks are pulled for every URL. Titles can be
+      extracted live from the pages themselves. Uses the property's connected token
       (or override below).</p>
 
     <div class="grid">
       <div class="full">
-        <label for="csvFile">CSV file <span style="color:var(--dim)">(Title, URL)</span></label>
+        <label for="csvFile">CSV file <span style="color:var(--dim)">(URL — or Title, URL)</span></label>
         <input type="file" id="csvFile" accept=".csv,text/csv" />
         <div class="seg-hint" id="csvHint" style="margin-top:8px">No file selected.</div>
       </div>
       <div>
-        <label for="bulkDays">Window (days)</label>
+        <label for="bulkStart">Start date <span style="color:var(--dim)">(optional)</span></label>
+        <input type="date" id="bulkStart" />
+      </div>
+      <div>
+        <label for="bulkEnd">End date <span style="color:var(--dim)">(optional)</span></label>
+        <input type="date" id="bulkEnd" />
+      </div>
+      <div>
+        <label for="bulkDays">Window (days) <span style="color:var(--dim)">(if no dates)</span></label>
         <input type="text" id="bulkDays" placeholder="28" value="28" />
+      </div>
+      <div>
+        <label for="bulkCountry">Country <span style="color:var(--dim)">(optional, e.g. US)</span></label>
+        <input type="text" id="bulkCountry" placeholder="all countries" />
       </div>
       <div>
         <label for="bulkSite">GSC property URL <span style="color:var(--dim)">(optional)</span></label>
         <input type="text" id="bulkSite" placeholder="defaults to server config" />
       </div>
+      <div class="full" style="display:flex;align-items:center;gap:9px">
+        <input type="checkbox" id="bulkTitles" style="width:auto" checked />
+        <label for="bulkTitles" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+          Extract titles directly from the URLs (fetches each page's real &lt;title&gt;)</label>
+      </div>
     </div>
+    <p class="bulk-note" style="margin:8px 2px 0">
+      Dates use GSC's calendar (Pacific Time). Pick the <b>same custom range + country</b>
+      in the GSC UI to verify — the numbers will match exactly.</p>
 
     <details class="adv">
       <summary>Advanced — token override &amp; precise mode</summary>
@@ -644,9 +665,16 @@ async function runBulk(){
   if(!bulkCsvText || !bulkCsvText.trim()){ $("bulkStatus").textContent = "Choose a CSV file first."; return; }
   const daysRaw = $("bulkDays").value.trim();
   const days = daysRaw ? Number(daysRaw) : 28;
+  const startDate = $("bulkStart").value || undefined;
+  const endDate = $("bulkEnd").value || undefined;
+  const country = $("bulkCountry").value.trim() || undefined;
+  const extractTitles = $("bulkTitles").checked;
   const gscSiteUrl = $("bulkSite").value.trim() || undefined;
   const gscRefreshToken = $("bulkToken").value.trim() || undefined;
   const precise = $("bulkPrecise").checked;
+  if (startDate && endDate && startDate > endDate) {
+    $("bulkStatus").textContent = "Start date is after end date."; return;
+  }
 
   const btn = $("bulkBtn");
   btn.disabled = true;
@@ -658,7 +686,10 @@ async function runBulk(){
   const timer = setInterval(()=>{ secs++; $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… '+secs+'s'; }, 1000);
 
   try {
-    const body = { csv: bulkCsvText, days, precise };
+    const body = { csv: bulkCsvText, days, precise, extractTitles };
+    if(startDate) body.startDate = startDate;
+    if(endDate) body.endDate = endDate;
+    if(country) body.country = country;
     if(gscSiteUrl) body.gscSiteUrl = gscSiteUrl;
     if(gscRefreshToken) body.gscRefreshToken = gscRefreshToken;
 
@@ -690,11 +721,17 @@ function renderBulk(data){
   const rows = data.results || [];
   const t = data.totals || {};
   const fmt = (v)=> v==null ? '<span style="color:var(--dim)">—</span>' : escapeHtml(String(v));
+  const rangeLabel = data.dateRange
+    ? data.dateRange.startDate+' → '+data.dateRange.endDate
+    : data.days+'-day window';
+  const countryLabel = data.filters && data.filters.country && data.filters.country !== 'all'
+    ? ' · country: '+data.filters.country.toUpperCase() : '';
   let html = '<div class="bulk-summary">'+
     '<span><b>'+(t.rows||0)+'</b> rows</span>'+
     '<span style="color:var(--good)"><b>'+(t.matched||0)+'</b> matched</span>'+
     '<span style="color:var(--dim)"><b>'+(t.unmatched||0)+'</b> no data</span>'+
-    '<span style="color:var(--muted)">'+escapeHtml(data.days+'-day window')+'</span></div>';
+    (t.titlesExtracted!=null ? '<span style="color:var(--info)"><b>'+t.titlesExtracted+'</b> titles extracted</span>' : '')+
+    '<span style="color:var(--muted)">'+escapeHtml(rangeLabel+countryLabel)+'</span></div>';
   if(data.note) html += '<div class="bulk-note">'+escapeHtml(data.note)+'</div>';
 
   html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr>'+
