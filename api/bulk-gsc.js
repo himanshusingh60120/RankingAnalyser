@@ -12,12 +12,18 @@
 //     "gscSiteUrl": "https://www.kingsresearch.com/",   // optional -> env GSC_SITE_URL
 //     "gscRefreshToken": "...",        // optional -> env GSC_REFRESH_TOKEN
 //     "days": 28,                       // optional, default 28 (recent window = "latest")
+//     "startDate": "2026-06-15",        // optional custom range (YYYY-MM-DD, GSC/PT dates)
+//     "endDate": "2026-07-12",          //   — overrides "days"; matches GSC UI custom ranges
+//     "country": "usa",                 // optional country filter (US / usa / United States)
+//     "searchType": "web",              // optional: web | image | video | news | discover
+//     "extractTitles": false,           // optional: fetch each URL and read its real <title>
 //     "precise": false,                 // optional, exact per-URL query for every row
 //     "format": "json" | "csv"          // optional, default json
 //   }
 //
 // You can also POST raw "text/csv" as the body and pass params on the query
 // string: /api/bulk-gsc?days=28&format=csv&site=https://www.kingsresearch.com/
+//   (also supported: start, end, country, searchType, extractTitles=true)
 //
 // CSV output columns (original two kept, metrics inserted after):
 //   Title, URL, Avg Position, CTR (%), Impressions, Clicks, Found
@@ -28,11 +34,15 @@ import {
   queryPageTotals,
   normalizeForMatch,
   indexMetricsByNormalizedUrl,
+  resolveDateRange,
+  normalizeCountry,
 } from "../lib/gsc.js";
 import { parseTitleUrlCsv, toCsv } from "../lib/csv.js";
+import { fetchTitle } from "../lib/titles.js";
 
 const MAX_ROWS = 5000;        // hard ceiling on CSV rows processed
 const MAX_PER_URL = 250;      // cap on exact per-URL GSC calls (bounds runtime)
+const MAX_TITLE_FETCH = 250;  // cap on live title fetches (bounds runtime)
 const POOL = 6;               // per-URL request concurrency
 
 export async function POST(request) {
@@ -53,6 +63,11 @@ export async function POST(request) {
       gscSiteUrl: u.searchParams.get("site") || undefined,
       gscRefreshToken: u.searchParams.get("token") || undefined,
       days: u.searchParams.get("days") ? Number(u.searchParams.get("days")) : undefined,
+      startDate: u.searchParams.get("start") || undefined,
+      endDate: u.searchParams.get("end") || undefined,
+      country: u.searchParams.get("country") || undefined,
+      searchType: u.searchParams.get("searchType") || undefined,
+      extractTitles: u.searchParams.get("extractTitles") === "true",
       precise: u.searchParams.get("precise") === "true",
       format: u.searchParams.get("format") || undefined,
     };
@@ -60,6 +75,25 @@ export async function POST(request) {
 
   const days = Number.isFinite(body.days) && body.days > 0 ? Math.floor(body.days) : 28;
   const precise = body.precise === true;
+  const extractTitles = body.extractTitles === true;
+  const country = normalizeCountry(body.country);
+  if (body.country && !country) {
+    return json({
+      error: `Unrecognized country "${body.country}".`,
+      hint: "Use an ISO 3166-1 alpha-3 code like usa, ind, gbr — or a common form like US / United States.",
+    }, 400);
+  }
+  // One options object drives every GSC call so all rows share the exact
+  // same window/filters — and we echo the resolved dates back so results can
+  // be verified 1:1 against the GSC UI with the same custom range + filters.
+  const gscOpts = {
+    days,
+    startDate: body.startDate,
+    endDate: body.endDate,
+    country: country || undefined,
+    searchType: body.searchType,
+  };
+  const range = resolveDateRange(gscOpts);
   const wantCsv =
     (body.format || "").toLowerCase() === "csv" ||
     (request.headers.get("accept") || "").includes("text/csv");
@@ -119,7 +153,7 @@ export async function POST(request) {
   let bulkError = null;
   if (!precise) {
     try {
-      exactMap = await queryManyPageMetrics(accessToken, siteUrl, days);
+      exactMap = await queryManyPageMetrics(accessToken, siteUrl, gscOpts);
       normIndex = indexMetricsByNormalizedUrl(exactMap);
     } catch (e) {
       bulkError = String(e.message || e);
@@ -157,7 +191,7 @@ export async function POST(request) {
   const lookupErrors = [];
   await pool(toLookup, POOL, async (r) => {
     try {
-      const t = await queryPageTotals(accessToken, siteUrl, r.url, days);
+      const t = await queryPageTotals(accessToken, siteUrl, r.url, gscOpts);
       if (t.hasData) {
         r.found = true;
         r.source = "per-url";
@@ -171,6 +205,28 @@ export async function POST(request) {
     }
   });
 
+  // ---- title extraction: read the live <title> straight from each URL ----
+  // The URL is the source of truth; CSV titles are often stale or missing.
+  let titlesFetched = 0;
+  let titleTruncated = false;
+  const titleErrors = [];
+  if (extractTitles) {
+    let toTitle = results.filter((r) => !r.invalid);
+    if (toTitle.length > MAX_TITLE_FETCH) {
+      toTitle = toTitle.slice(0, MAX_TITLE_FETCH);
+      titleTruncated = true;
+    }
+    await pool(toTitle, POOL, async (r) => {
+      try {
+        const t = await fetchTitle(r.url);
+        if (t.title) { r.title = t.title; r.titleSource = "live"; titlesFetched++; }
+        else if (t.error) titleErrors.push({ url: r.url, error: t.error });
+      } catch (e) {
+        titleErrors.push({ url: r.url, error: String(e.message || e) });
+      }
+    });
+  }
+
   // ---- shape output ----
   const matched = results.filter((r) => r.found).length;
   const clean = results.map((r) => ({
@@ -182,6 +238,7 @@ export async function POST(request) {
     impressions: r.found ? r.impressions : null,
     clicks: r.found ? r.clicks : null,
     source: r.source,
+    ...(r.titleSource ? { titleSource: r.titleSource } : {}),
     ...(r.invalid ? { invalid: true } : {}),
   }));
 
@@ -209,20 +266,30 @@ export async function POST(request) {
     generatedAt: new Date().toISOString(),
     siteUrl,
     days,
+    dateRange: range, // exact GSC (PT) dates used — set the same custom range in the GSC UI to verify
+    filters: {
+      country: country || "all",
+      searchType: gscOpts.searchType || "web",
+      dataState: "all (includes fresh data, like the GSC UI)",
+    },
     mode: precise ? "precise (per-URL)" : "bulk + per-URL fallback",
-    note: "Position/CTR/impressions are aggregated over the last " + days +
-          " days (GSC data lags ~2-3 days). Lower 'days' for a fresher window.",
+    note: `Metrics aggregated ${range.startDate} → ${range.endDate} (GSC/Pacific dates, ` +
+          `fresh data included). To verify in the GSC UI, set the same custom date range` +
+          (country ? ` and Country filter (${country})` : "") + ".",
     totals: {
       rows: clean.length,
       matched,
       unmatched: clean.length - matched,
+      ...(extractTitles ? { titlesExtracted: titlesFetched } : {}),
     },
     flags: {
       skippedHeader,
       truncatedRows: truncatedRows ? `input capped at ${MAX_ROWS} rows` : false,
       lookupTruncated: lookupTruncated ? `per-URL lookups capped at ${MAX_PER_URL}` : false,
+      titleTruncated: titleTruncated ? `title fetches capped at ${MAX_TITLE_FETCH}` : false,
       bulkError,
       lookupErrors: lookupErrors.length ? lookupErrors.slice(0, 10) : undefined,
+      titleErrors: titleErrors.length ? titleErrors.slice(0, 10) : undefined,
     },
     results: clean,
   });
