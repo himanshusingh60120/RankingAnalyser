@@ -17,7 +17,7 @@
 //     "country": "usa",                                  // optional GSC country filter
 //     "searchType": "web",                               // optional
 //     "includeUrls": true,                               // optional per-URL rows (capped)
-//     "format": "json" | "csv"                           // csv = long-format download
+//     "format": "json" | "csv" | "xlsx"                  // csv = long format; xlsx = styled workbook,\n//                                                        //   Summary sheet + one sheet per language
 //   }
 
 import {
@@ -30,6 +30,7 @@ import {
 } from "../lib/gsc.js";
 import { collectSitemapUrls } from "../lib/sitemaps.js";
 import { toCsv } from "../lib/csv.js";
+import { buildHreflangWorkbook } from "../lib/xlsx-report.js";
 
 const MAX_SITEMAPS = 12;   // selected sitemaps per run
 const MAX_WEEKS = 8;       // week ranges per run (each = 1+ GSC bulk queries)
@@ -76,8 +77,9 @@ export async function POST(request) {
   }
   const searchType = body.searchType;
   const includeUrls = body.includeUrls !== false;
-  const wantCsv = (body.format || "").toLowerCase() === "csv" ||
-                  (request.headers.get("accept") || "").includes("text/csv");
+  const fmt = (body.format || "").toLowerCase();
+  const wantCsv = fmt === "csv" || (request.headers.get("accept") || "").includes("text/csv");
+  const wantXlsx = fmt === "xlsx" || fmt === "excel";
 
   const siteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
   const refreshToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
@@ -137,7 +139,7 @@ export async function POST(request) {
                  ctr: hit.ctr, position: hit.position };
       });
       if (includeUrls && perWeek.some((p) => p.found)) {
-        urlRows.push({ url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code, weeks: perWeek });
+        urlRows.push({ url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code, langLabel: sm.lang.label, weeks: perWeek });
       }
     }
 
@@ -183,6 +185,27 @@ export async function POST(request) {
     const li = urlRows.length ? a.weeks.length - 1 : 0;
     return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
   });
+
+  // ---- XLSX: summary sheet + one sheet per language (full, uncapped) ----
+  if (wantXlsx) {
+    const wb = buildHreflangWorkbook({
+      siteUrl,
+      generatedAt: new Date().toISOString(),
+      filters: { country: country || "all", searchType: searchType || "web" },
+      weeks: weeks.map((w) => ({ label: w.label, startDate: w.startDate, endDate: w.endDate })),
+      grandTotals,
+      sitemapReports,
+      urlRows,
+    });
+    const buf = await wb.xlsx.writeBuffer();
+    return new Response(buf, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": 'attachment; filename="hreflang-weekly-report.xlsx"',
+      },
+    });
+  }
 
   // ---- CSV: long format, one row per URL per week (full, uncapped) ----
   if (wantCsv) {
