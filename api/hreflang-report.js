@@ -17,7 +17,10 @@
 //     "country": "usa",                                  // optional GSC country filter
 //     "searchType": "web",                               // optional
 //     "includeUrls": true,                               // optional per-URL rows (capped)
-//     "format": "json" | "csv" | "xlsx"                  // csv = long format; xlsx = styled workbook,\n//                                                        //   Summary sheet + one sheet per language
+//     "verifyIndexing": false,                           // optional: check TRUE index status
+//     "maxInspections": 2000,                            //   via URL Inspection API (2000/day cap)
+//     "format": "json" | "csv" | "xlsx"                  // csv = long format; xlsx = styled workbook,
+//                                                        //   Summary sheet + one sheet per language
 //   }
 
 import {
@@ -31,6 +34,9 @@ import {
 import { collectSitemapUrls, urlMatchesLang } from "../lib/sitemaps.js";
 import { toCsv } from "../lib/csv.js";
 import { buildHreflangWorkbook } from "../lib/xlsx-report.js";
+import { inspectMany, indexLabel } from "../lib/url-inspection.js";
+import { loadLatestCrawl } from "../lib/crawl-store.js";
+import { parseScreamingFrogCsv, buildSfIndex, sfIndexMeta } from "../lib/screaming-frog.js";
 
 const MAX_SITEMAPS = 12;   // selected sitemaps per run
 const MAX_WEEKS = 8;       // week ranges per run (each = 1+ GSC bulk queries)
@@ -79,6 +85,10 @@ export async function POST(request) {
   }
   const searchType = body.searchType;
   const includeUrls = body.includeUrls !== false;
+  const verifyIndexing = body.verifyIndexing === true;
+  const useCrawlData = body.useCrawlData === true; // fill index status from the latest Screaming Frog crawl (no quota)
+  const maxInspections = Number.isFinite(body.maxInspections) && body.maxInspections > 0
+    ? Math.min(Math.floor(body.maxInspections), 2000) : 2000;
   const fmt = (body.format || "").toLowerCase();
   const wantCsv = fmt === "csv" || (request.headers.get("accept") || "").includes("text/csv");
   const wantXlsx = fmt === "xlsx" || fmt === "excel";
@@ -143,10 +153,81 @@ export async function POST(request) {
   }));
   const totalUrls = perLang.reduce((n, g) => n + g.urls.length, 0);
 
+  // ---- 4b. optional: attach a per-URL index status ----
+  // Two sources, in priority order:
+  //   1. Screaming Frog data (quota-free, covers every crawled URL) — either a
+  //      CSV uploaded in this request, or the latest crawl stored in KV by the
+  //      local agent (useCrawlData).
+  //   2. URL Inspection API (Google's live verdict, capped at 2000/day).
+  // Whichever is active produces a lookup of url -> { kind, label } where
+  // kind is "good" (indexed/indexable) | "bad" (not) | "missing" | "unknown".
+  let sfSource = null;
+  let crawlMeta = null;
+  if (typeof body.screamingFrogCsv === "string" && body.screamingFrogCsv.trim()) {
+    const parsed = parseScreamingFrogCsv(body.screamingFrogCsv);
+    if (parsed.entries.length) sfSource = { entries: parsed.entries, basis: parsed.basis };
+  } else if (useCrawlData) {
+    const { map, meta } = await loadLatestCrawl();
+    if (map.size) {
+      // stored records: r.i (indexed bool|null) + r.l (label). Convert to compact "kind|label".
+      const compact = {};
+      let basis = "crawl";
+      for (const [key, rec] of map) {
+        if (!/^https?:\/\//i.test(key)) continue; // skip normalized-only keys
+        const kind = rec.indexed === true ? "good" : rec.indexed === false ? "bad" : "unknown";
+        const label = rec.label || (rec.indexed === true ? "Indexable" : "Non-Indexable");
+        compact[key] = `${kind}|${label}`;
+        if (/indexed|on google/i.test(label)) basis = "gsc";
+      }
+      sfSource = { compact, basis };
+      crawlMeta = meta;
+    } else {
+      crawlMeta = meta; // no crawl yet
+    }
+  }
+
+  let indexLookup = null;   // { exact: Map, norm: Map }
+  let indexMeta = null;     // { source, colHeader, sectionTitle, goodLabel, badLabel, missingLabel, note }
+  let inspectionMeta = null;
+  let crawlMetaOut = crawlMeta;
+
+  if (sfSource) {
+    indexLookup = buildSfIndex(sfSource);
+    indexMeta = sfIndexMeta(sfSource.basis);
+  } else if (verifyIndexing) {
+    // order: URLs with no search data first (most worth verifying), then the rest
+    const withData = new Set();
+    for (const wd of weekData) for (const u of wd.exact.keys()) withData.add(u);
+    const ordered = [];
+    for (const g of perLang) for (const u of g.urls) if (!withData.has(u)) ordered.push(u);
+    for (const g of perLang) for (const u of g.urls) if (withData.has(u)) ordered.push(u);
+
+    const { results, checked, rateLimited, errors } =
+      await inspectMany(accessToken, siteUrl, ordered, { maxInspections });
+    const exact = new Map(), norm = new Map();
+    for (const [url, insp] of results) {
+      const val = insp.indexed === true ? { kind: "good", label: "Indexed" }
+        : insp.indexed === false ? { kind: "bad", label: indexLabel(insp) }
+        : { kind: "unknown", label: "Unknown" };
+      exact.set(url, val);
+      const n = normalizeForMatch(url);
+      if (!norm.has(n)) norm.set(n, val);
+    }
+    indexLookup = { exact, norm };
+    indexMeta = { source: "gsc-inspection", colHeader: "Index Status (GSC)",
+      sectionTitle: "Index Status verified via URL Inspection (Google's actual verdict)",
+      goodLabel: "Indexed", badLabel: "Not Indexed", missingLabel: "Not Checked (over daily quota)",
+      note: "Index Status is Google's real verdict from the URL Inspection API. Not Indexed includes states such as 'Crawled - currently not indexed'. The API allows 2,000 inspections per property per day, so Not Checked URLs roll over to a later run." };
+    inspectionMeta = { requested: Math.min(ordered.length, maxInspections), checked, rateLimited, errors,
+                       totalUrls, notChecked: totalUrls - checked };
+  }
+  const indexActive = !!indexLookup;
+
   // ---- 5. match + roll up (one entry per language) ----
-  // A URL is "indexed" when Search Console returns data for it in at least one
-  // selected week; otherwise it is unindexed. Every sitemap URL is checked and
-  // listed with a status; unindexed URLs are also counted in a tally.
+  // A URL is "indexed" (search sense) when Search Console returns data for it in
+  // at least one selected week; otherwise unindexed. Every sitemap URL is listed
+  // with that status. When an index source is active each URL also carries a
+  // true index status (kind + label) and per-language good/bad/missing tallies.
   const urlRows = [];      // every checked URL (indexed and unindexed)
   let unindexedTotal = 0;  // URLs with no GSC data in any selected week
   const sitemapReports = perLang.map((sm) => {
@@ -154,6 +235,7 @@ export async function POST(request) {
       clicks: 0, impressions: 0, posWeighted: 0, matchedUrls: 0,
     }));
     let indexedCount = 0;
+    let ixGood = 0, ixBad = 0, ixMissing = 0;
 
     for (const pageUrl of sm.urls) {
       const norm = normalizeForMatch(pageUrl);
@@ -170,8 +252,19 @@ export async function POST(request) {
       });
       const indexed = perWeek.some((p) => p.found);
       if (indexed) indexedCount++;
+
+      let indexStatus;
+      if (indexActive) {
+        const hit = indexLookup.exact.get(pageUrl) || indexLookup.norm.get(norm);
+        indexStatus = hit || { kind: "missing", label: indexMeta.missingLabel };
+        if (indexStatus.kind === "good") ixGood++;
+        else if (indexStatus.kind === "bad") ixBad++;
+        else ixMissing++;
+      }
+
       if (includeUrls) urlRows.push({ url: pageUrl, sitemap: sm.sitemaps[0], lang: sm.lang.code,
-                                      langLabel: sm.lang.label, indexed, weeks: perWeek });
+                                      langLabel: sm.lang.label, indexed, weeks: perWeek,
+                                      ...(indexStatus ? { indexStatus } : {}) });
     }
     const unindexedCount = sm.urls.length - indexedCount;
     unindexedTotal += unindexedCount;
@@ -183,6 +276,7 @@ export async function POST(request) {
       urlCount: sm.urls.length,
       indexedUrls: indexedCount,
       unindexedUrls: unindexedCount,
+      ...(indexActive ? { indexStatusCounts: { good: ixGood, bad: ixBad, missing: ixMissing } } : {}),
       ...(sm.warning ? { warning: sm.warning } : {}),
       weeks: weekTotals.map((t, wi) => ({
         label: weeks[wi].label,
@@ -235,6 +329,8 @@ export async function POST(request) {
       sitemapReports,
       urlRows,
       periodType,
+      indexActive,
+      indexMeta,
     });
     const buf = await wb.xlsx.writeBuffer();
     return new Response(buf, {
@@ -248,21 +344,25 @@ export async function POST(request) {
 
   // ---- CSV: long format, one row per URL per week (full, uncapped) ----
   if (wantCsv) {
-    const header = ["Sitemap", "Language", "URL", "Week", "Start", "End",
-                    "Clicks", "Impressions", "CTR (%)", "Avg Position"];
+    const idxCol = indexActive;
+    const header = ["Sitemap", "Language", "URL", "Search Data",
+                    ...(idxCol ? [indexMeta.colHeader] : []),
+                    "Week", "Start", "End", "Clicks", "Impressions", "CTR (%)", "Avg Position"];
     const rows = [header];
     // sitemap roll-up rows first
     for (const sr of sitemapReports) {
       for (const wt of sr.weeks) {
-        rows.push([sr.sitemap, sr.lang.label, "(all URLs in sitemap)", wt.label,
-                   wt.startDate, wt.endDate, wt.clicks, wt.impressions, wt.ctr,
+        rows.push([sr.sitemap, sr.lang.label, "(all URLs in sitemap)", "",
+                   ...(idxCol ? [""] : []),
+                   wt.label, wt.startDate, wt.endDate, wt.clicks, wt.impressions, wt.ctr,
                    wt.position == null ? "" : wt.position]);
       }
     }
     for (const r of urlRows) {
       r.weeks.forEach((pw, wi) => {
-        rows.push([r.sitemap, r.lang, r.url, weeks[wi].label,
-                   weeks[wi].startDate, weeks[wi].endDate,
+        rows.push([r.sitemap, r.lang, r.url, r.indexed ? "Has data" : "No data",
+                   ...(idxCol ? [(r.indexStatus && r.indexStatus.label) || "Not checked"] : []),
+                   weeks[wi].label, weeks[wi].startDate, weeks[wi].endDate,
                    pw.found ? pw.clicks : "", pw.found ? pw.impressions : "",
                    pw.found ? pw.ctr : "", pw.found ? pw.position : ""]);
       });
@@ -294,7 +394,19 @@ export async function POST(request) {
       urlsInSitemaps: totalUrls,
       urlsIndexed: urlRows.filter((r) => r.indexed).length,
       urlsUnindexed: unindexedTotal,
+      ...(indexActive ? {
+        indexStatus: {
+          source: indexMeta.source,
+          label: indexMeta.colHeader,
+          good: sitemapReports.reduce((n, s) => n + (s.indexStatusCounts ? s.indexStatusCounts.good : 0), 0),
+          bad: sitemapReports.reduce((n, s) => n + (s.indexStatusCounts ? s.indexStatusCounts.bad : 0), 0),
+          missing: sitemapReports.reduce((n, s) => n + (s.indexStatusCounts ? s.indexStatusCounts.missing : 0), 0),
+          goodLabel: indexMeta.goodLabel, badLabel: indexMeta.badLabel, missingLabel: indexMeta.missingLabel,
+        },
+      } : {}),
     },
+    ...(inspectionMeta ? { indexVerification: inspectionMeta } : {}),
+    ...(crawlMetaOut ? { crawl: { jobId: crawlMetaOut.jobId, finishedAt: crawlMetaOut.finishedAt, counts: crawlMetaOut.counts } } : {}),
     periodType,
     flags: {
       sitemapsTruncated: sitemapsTruncated ? `capped at ${MAX_SITEMAPS} sitemaps` : false,
