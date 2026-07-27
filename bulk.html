@@ -331,6 +331,22 @@
       </div>
     </details>
 
+    <div class="full" style="display:flex;align-items:flex-start;gap:9px;margin-top:6px">
+      <input type="checkbox" id="hrVerify" style="width:auto;margin-top:3px" />
+      <label for="hrVerify" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+        Verify true index status via the <b>URL Inspection API</b> (Google's actual verdict, e.g. "Crawled - currently not indexed").
+        Much slower and limited to <b>2,000 URLs per property per day</b> — URLs beyond that are marked "Not checked" and roll over to a later run.
+        URLs with no search data are inspected first.</label>
+    </div>
+
+    <div class="full" style="display:flex;align-items:flex-start;gap:9px;margin-top:6px">
+      <input type="checkbox" id="hrCrawl" style="width:auto;margin-top:3px" />
+      <label for="hrCrawl" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+        Use the latest <b>Screaming Frog crawl</b> for index status (<b>no daily limit</b> — covers every crawled URL).
+        Fills the Index Status column from the most recent completed crawl. Start or check a crawl in the panel below.
+        If both boxes are ticked, crawl data is used.</label>
+    </div>
+
     <div class="row-actions">
       <button class="run" id="hrBtn" onclick="runHreflang()">Build weekly report</button>
       <button class="run" id="hrDownloadXlsx" onclick="downloadHreflangFile('xlsx')"
@@ -341,6 +357,39 @@
     </div>
 
     <div id="hrResults" style="margin-top:18px"></div>
+  </div>
+
+  <!-- ================= SCREAMING FROG CRAWL (index status) ================= -->
+  <div class="console" id="crawlCard" style="margin-top:22px">
+    <p class="eyebrow" style="margin-bottom:6px">Index status · Screaming Frog</p>
+    <h2 style="margin:0 0 6px;font-size:20px">Crawl-based index status (no daily limit)</h2>
+    <p class="lede" style="margin:0 0 18px;font-size:14px">
+      Trigger a Screaming Frog crawl from here. A local agent on your Screaming Frog machine picks up the job,
+      runs the crawl, and sends the index status back — covering <b>every URL</b> with no 2,000/day cap.
+      Once a crawl finishes, tick <b>"Use the latest Screaming Frog crawl"</b> in the report above.</p>
+
+    <div class="grid">
+      <div class="full">
+        <label for="crawlTarget">Crawl target <span style="color:var(--dim)">(site root or a sitemap URL)</span></label>
+        <input type="text" id="crawlTarget" value="https://www.kingsresearch.com/"
+               placeholder="https://www.kingsresearch.com/" />
+      </div>
+      <div class="full" style="display:flex;align-items:center;gap:9px">
+        <input type="checkbox" id="crawlInspect" style="width:auto" />
+        <label for="crawlInspect" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+          Use Google's verdict (requires GSC URL Inspection enabled in the agent's saved config — still bound by Google's 2,000/day).
+          Leave off to use Screaming Frog's own indexability, which has no limit.</label>
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <button class="run" id="crawlBtn" onclick="startCrawl()">Start crawl</button>
+      <button class="run" id="crawlRefresh" onclick="refreshCrawl()"
+              style="background:transparent;border:1px solid var(--line);color:var(--ink)">Refresh status</button>
+      <span class="status" id="crawlStatus"></span>
+    </div>
+
+    <div id="crawlPanel" style="margin-top:16px"></div>
   </div>
 
   <!-- ================= BULK CSV (moved from home page) ================= -->
@@ -496,6 +545,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $("hrMonth").value = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
   buildWeeks();
   wireBulkCsv();
+  refreshCrawl();
 });
 
 async function loadSitemaps(){
@@ -604,6 +654,8 @@ async function runHreflang(){
   const country = $("hrCountry").value.trim(); if(country) body.country = country;
   const site = $("hrSite").value.trim(); if(site) body.gscSiteUrl = site;
   const tok = $("hrToken").value.trim(); if(tok) body.gscRefreshToken = tok;
+  if($("hrVerify") && $("hrVerify").checked) body.verifyIndexing = true;
+  if($("hrCrawl") && $("hrCrawl").checked) body.useCrawlData = true;
   hrLastPayload = body;
 
   const btn = $("hrBtn");
@@ -612,8 +664,10 @@ async function runHreflang(){
   $("hrDownloadXlsx").style.display = "none";
   $("hrResults").innerHTML = "";
   let secs = 0;
-  $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' period(s)… 0s';
-  const timer = setInterval(()=>{ secs++; $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' period(s)… '+secs+'s'; }, 1000);
+  const verifying = $("hrVerify") && $("hrVerify").checked;
+  const baseMsg = verifying ? 'Querying '+weeks.length+' period(s) + inspecting index status (slow)…' : 'Reading sitemaps &amp; querying '+weeks.length+' period(s)…';
+  $("hrStatus").innerHTML = '<span class="dot"></span>'+baseMsg+' 0s';
+  const timer = setInterval(()=>{ secs++; $("hrStatus").innerHTML = '<span class="dot"></span>'+baseMsg+' '+secs+'s'; }, 1000);
 
   try {
     const res = await fetch("/api/hreflang-report", {
@@ -659,7 +713,18 @@ function renderHreflang(d){
     html += '<div class="bulk-summary">'+
       '<span><b>'+nfmt.format(tt.urlsInSitemaps)+'</b> URLs in sitemaps</span>'+
       '<span style="color:var(--good)"><b>'+nfmt.format(tt.urlsIndexed||tt.urlsWithData||0)+'</b> indexed</span>'+
-      '<span style="color:var(--dim)"><b>'+nfmt.format(tt.urlsUnindexed||0)+'</b> unindexed</span></div>';
+      '<span style="color:var(--dim)"><b>'+nfmt.format(tt.urlsUnindexed||0)+'</b> no search data</span></div>';
+  }
+  if(tt && tt.gscIndexStatus){
+    const g = tt.gscIndexStatus;
+    html += '<div class="bulk-summary" style="margin-top:6px">'+
+      '<span style="color:var(--muted)">GSC Index Status (verified):</span>'+
+      '<span style="color:var(--good)"><b>'+nfmt.format(g.indexed)+'</b> indexed</span>'+
+      '<span style="color:var(--crit)"><b>'+nfmt.format(g.notIndexed)+'</b> not indexed</span>'+
+      '<span style="color:var(--dim)"><b>'+nfmt.format(g.notChecked)+'</b> not checked (daily quota)</span></div>';
+    if(d.indexVerification && d.indexVerification.rateLimited){
+      html += '<div class="bulk-note" style="color:var(--warn)">Hit Google\'s 2,000/day inspection quota — '+nfmt.format(g.notChecked)+' URLs left unchecked. Run again tomorrow to continue.</div>';
+    }
   }
   const gt = d.grandTotals || [];
   if(gt.length){
@@ -1013,6 +1078,73 @@ async function downloadBulkCsv(){
   a.download = "gsc-metrics.csv";
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+/* ================= Screaming Frog crawl control ================= */
+async function startCrawl(){
+  const target = $("crawlTarget").value.trim();
+  if(!/^https?:\/\//i.test(target)){ $("crawlStatus").textContent = "Enter a valid http(s) target URL."; return; }
+  const btn = $("crawlBtn"); btn.disabled = true;
+  $("crawlStatus").innerHTML = '<span class="dot"></span>Queuing crawl…';
+  try {
+    const res = await fetch("/api/crawl/jobs", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ target, mode: /sitemap.*\.xml/i.test(target) ? "sitemap" : "spider",
+                             useUrlInspection: $("crawlInspect").checked })
+    });
+    const data = await res.json();
+    btn.disabled = false;
+    if(!res.ok || data.error){
+      $("crawlStatus").innerHTML = '<span style="color:var(--crit)">'+escapeHtml(data.error||"Failed to queue.")+'</span>';
+      if(data.hint) $("crawlPanel").innerHTML = '<div class="banner note">'+escapeHtml(data.hint)+'</div>';
+      return;
+    }
+    $("crawlStatus").innerHTML = '<span style="color:var(--good)">Job queued.</span> The agent will pick it up on its next poll.';
+    refreshCrawl();
+  } catch(err){
+    btn.disabled = false;
+    $("crawlStatus").innerHTML = '<span style="color:var(--crit)">Network error: '+escapeHtml(String(err.message||err))+'</span>';
+  }
+}
+
+async function refreshCrawl(){
+  try {
+    const res = await fetch("/api/crawl/status");
+    const d = await res.json();
+    if(d.configured === false){
+      $("crawlPanel").innerHTML = '<div class="banner note"><b>No crawl store connected yet.</b><div style="margin-top:6px;color:var(--muted)">'+
+        escapeHtml(d.hint||"Connect a Vercel KV (Upstash) store to enable crawl-based index status.")+'</div></div>';
+      return;
+    }
+    let html = "";
+    if(d.latest && d.latest.counts){
+      const c = d.latest.counts;
+      html += '<div class="bulk-summary">'+
+        '<span style="color:var(--muted)">Latest crawl:</span>'+
+        '<span><b>'+nfmt.format(c.total)+'</b> URLs</span>'+
+        '<span style="color:var(--good)"><b>'+nfmt.format(c.indexed)+'</b> indexable / indexed</span>'+
+        '<span style="color:var(--crit)"><b>'+nfmt.format(c.notIndexed)+'</b> non-indexable / not indexed</span>'+
+        (c.unknown? '<span style="color:var(--dim)"><b>'+nfmt.format(c.unknown)+'</b> unknown</span>':'')+
+        '<span style="color:var(--dim)">'+escapeHtml((d.latest.finishedAt||"").slice(0,16).replace("T"," "))+'</span></div>';
+    }
+    const jobs = d.jobs || [];
+    if(jobs.length){
+      html += '<div class="bulk-table-wrap" style="margin-top:10px"><table class="bulk-table"><thead><tr>'+
+        '<th>Target</th><th>Status</th><th class="num">URLs</th><th>Created</th></tr></thead><tbody>';
+      for(const j of jobs.slice(0,8)){
+        const badge = j.status==='done' ? 'var(--good)' : j.status==='running' ? 'var(--info)' : 'var(--warn)';
+        html += '<tr><td class="url">'+escapeHtml(j.label||j.target)+'</td>'+
+          '<td style="color:'+badge+'">'+escapeHtml(j.status)+'</td>'+
+          '<td class="num">'+(j.counts? nfmt.format(j.counts.total) : '—')+'</td>'+
+          '<td>'+escapeHtml((j.createdAt||"").slice(0,16).replace("T"," "))+'</td></tr>';
+      }
+      html += '</tbody></table></div>';
+    } else if(!d.latest){
+      html += '<div class="bulk-note">No crawls yet. Start one above, then run the agent on your Screaming Frog machine.</div>';
+    }
+    $("crawlPanel").innerHTML = html;
+  } catch(err){
+    $("crawlPanel").innerHTML = '<div class="banner err">Could not load crawl status: '+escapeHtml(String(err.message||err))+'</div>';
+  }
 }
 </script>
 </body>
