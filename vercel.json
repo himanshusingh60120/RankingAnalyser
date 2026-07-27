@@ -11,8 +11,24 @@
       "memory": 1024
     },
     "api/hreflang-report.js": {
-      "maxDuration": 120,
+      "maxDuration": 300,
       "memory": 1024
+    },
+    "api/crawl/ingest.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/crawl/jobs.js": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/crawl/next.js": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/crawl/status.js": {
+      "maxDuration": 30,
+      "memory": 512
     },
     "api/bulk-compare.js": {
       "maxDuration": 120,
