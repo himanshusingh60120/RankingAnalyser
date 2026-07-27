@@ -206,6 +206,11 @@
     border:1px solid var(--line); padding:9px 16px; border-radius:9px; transition:all .15s; }
   .ribbon a.tab:hover { color: var(--ink); border-color: var(--signal); }
   .ribbon a.tab.active { background: var(--signal); color:#04130d; font-weight:600; border-color:var(--signal); }
+  /* ---- Mode toggle ---- */
+  .seg-toggle { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+  .seg-toggle button { background:transparent; border:0; color:var(--muted); font-family:var(--mono);
+    font-size:12px; padding:9px 16px; cursor:pointer; }
+  .seg-toggle button.on { background:var(--signal); color:#04130d; font-weight:600; }
   /* ---- Sitemap picker ---- */
   .sm-list { display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:340px; overflow:auto;
     border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--panel-2); }
@@ -283,7 +288,14 @@
         <div id="smListWrap"></div>
       </div>
 
-      <div>
+      <div class="full">
+        <label>Report type</label>
+        <div class="seg-toggle">
+          <button type="button" id="hrModeWeek" class="on" onclick="setHrMode('week')">Weekly</button>
+          <button type="button" id="hrModeMonth" onclick="setHrMode('month')">Month on month</button>
+        </div>
+      </div>
+      <div id="hrWeeklyWrap">
         <label for="hrMonth">Month</label>
         <input type="month" id="hrMonth" onchange="buildWeeks()" />
       </div>
@@ -291,9 +303,13 @@
         <label for="hrCountry">Country <span style="color:var(--dim)">(optional, e.g. US)</span></label>
         <input type="text" id="hrCountry" placeholder="all countries" />
       </div>
-      <div class="full">
+      <div class="full" id="hrWeeksWrap">
         <label>Weeks in the month <span style="color:var(--dim)">(Mon–Sun · GSC/Pacific dates)</span></label>
         <div class="weeks" id="weeksBox"><span class="seg-hint">Pick a month first.</span></div>
+      </div>
+      <div class="full" id="hrMonthsWrap" style="display:none">
+        <label>Months to compare <span style="color:var(--dim)">(select two or more)</span></label>
+        <div class="weeks" id="hrMonthsBox"></div>
       </div>
     </div>
 
@@ -343,15 +359,24 @@
         <input type="file" id="csvFile" accept=".csv,text/csv" />
         <div class="seg-hint" id="csvHint" style="margin-top:8px">No file selected.</div>
       </div>
-      <div>
+      <div class="full" style="display:flex;align-items:center;gap:9px">
+        <input type="checkbox" id="bulkCompare" style="width:auto" onchange="toggleBulkCompare()" />
+        <label for="bulkCompare" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+          Month on month comparison (select months below; date fields are ignored)</label>
+      </div>
+      <div class="full" id="bulkMonthsWrap" style="display:none">
+        <label>Months to compare <span style="color:var(--dim)">(select two or more)</span></label>
+        <div class="weeks" id="bulkMonthsBox"></div>
+      </div>
+      <div class="bulk-range">
         <label for="bulkStart">Start date <span style="color:var(--dim)">(optional)</span></label>
         <input type="date" id="bulkStart" />
       </div>
-      <div>
+      <div class="bulk-range">
         <label for="bulkEnd">End date <span style="color:var(--dim)">(optional)</span></label>
         <input type="date" id="bulkEnd" />
       </div>
-      <div>
+      <div class="bulk-range">
         <label for="bulkDays">Window (days) <span style="color:var(--dim)">(if no dates)</span></label>
         <input type="text" id="bulkDays" placeholder="28" value="28" />
       </div>
@@ -407,6 +432,60 @@ const nfmt = new Intl.NumberFormat('en-US');
 function num(v){ return v==null ? '<span style="color:var(--dim)">—</span>' : nfmt.format(v); }
 
 /* ================= Weekly hreflang report ================= */
+/* ---- shared month chips ---- */
+function monthsList(n){
+  const out = [];
+  const now = new Date();
+  const todayIso = now.toISOString().slice(0,10);
+  for(let k=0;k<n;k++){
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth()-k, 1));
+    const y = d.getUTCFullYear(), m = d.getUTCMonth();
+    const start = new Date(Date.UTC(y,m,1)).toISOString().slice(0,10);
+    let end = new Date(Date.UTC(y,m+1,0)).toISOString().slice(0,10);
+    const partial = end >= todayIso;
+    if(partial) end = todayIso;
+    const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+    out.push({label, startDate:start, endDate:end, partial});
+  }
+  return out.reverse(); // oldest first, left to right
+}
+let hrMonths = [], bulkMonths = [];
+function renderMonthChips(boxId, months, cls){
+  $(boxId).innerHTML = months.map((m,i)=>
+    '<label class="week-chip"><input type="checkbox" class="'+cls+'" data-i="'+i+'" '+
+    'onchange="this.closest(\'.week-chip\').classList.toggle(\'on\', this.checked)" />'+
+    escapeHtml(m.label)+(m.partial? ' <span class="partial">partial</span>':'')+'</label>').join('');
+}
+function selectedMonths(cls, months){
+  return [...document.querySelectorAll('.'+cls)].filter(cb=>cb.checked).map(cb=>months[+cb.dataset.i]);
+}
+
+/* ---- hreflang report mode ---- */
+let hrMode = 'week';
+function setHrMode(mode){
+  hrMode = mode;
+  $("hrModeWeek").classList.toggle('on', mode==='week');
+  $("hrModeMonth").classList.toggle('on', mode==='month');
+  $("hrWeeklyWrap").style.display = mode==='week' ? '' : 'none';
+  $("hrWeeksWrap").style.display = mode==='week' ? '' : 'none';
+  $("hrMonthsWrap").style.display = mode==='month' ? '' : 'none';
+  if(mode==='month' && !hrMonths.length){
+    hrMonths = monthsList(13);
+    renderMonthChips('hrMonthsBox', hrMonths, 'hrm-cb');
+  }
+}
+
+/* ---- bulk compare mode ---- */
+function toggleBulkCompare(){
+  const on = $("bulkCompare").checked;
+  $("bulkMonthsWrap").style.display = on ? '' : 'none';
+  document.querySelectorAll('.bulk-range').forEach(el=>el.style.opacity = on ? '.35' : '1');
+  if(on && !bulkMonths.length){
+    bulkMonths = monthsList(13);
+    renderMonthChips('bulkMonthsBox', bulkMonths, 'bm-cb');
+  }
+}
+
 let smEntries = [];      // [{loc, lastmod, lang:{code,label}}]
 let hrWeeks = [];        // [{label, startDate, endDate, partial}]
 let hrLastPayload = null;
@@ -507,12 +586,20 @@ function buildWeeks(){
 async function runHreflang(){
   const sitemaps = [...document.querySelectorAll('.sm-cb')].filter(cb=>cb.checked).map(cb=>smEntries[+cb.dataset.i].loc);
   if(!sitemaps.length){ $("hrStatus").textContent = "Load the index and select at least one sitemap."; return; }
-  const weeks = [...document.querySelectorAll('.wk-cb')].filter(cb=>cb.checked).map(cb=>hrWeeks[+cb.dataset.i]);
-  if(!weeks.length){ $("hrStatus").textContent = "Tick at least one week."; return; }
+  let periods;
+  if(hrMode === 'month'){
+    periods = selectedMonths('hrm-cb', hrMonths);
+    if(periods.length < 1){ $("hrStatus").textContent = "Tick at least one month."; return; }
+  } else {
+    periods = [...document.querySelectorAll('.wk-cb')].filter(cb=>cb.checked).map(cb=>hrWeeks[+cb.dataset.i]);
+    if(!periods.length){ $("hrStatus").textContent = "Tick at least one week."; return; }
+  }
+  const weeks = periods;
 
   const body = {
     sitemaps,
-    weeks: weeks.map(w=>({label:w.label, startDate:w.startDate, endDate:w.endDate})),
+    periodType: hrMode,
+    weeks: periods.map(w=>({label:w.label, startDate:w.startDate, endDate:w.endDate})),
   };
   const country = $("hrCountry").value.trim(); if(country) body.country = country;
   const site = $("hrSite").value.trim(); if(site) body.gscSiteUrl = site;
@@ -525,8 +612,8 @@ async function runHreflang(){
   $("hrDownloadXlsx").style.display = "none";
   $("hrResults").innerHTML = "";
   let secs = 0;
-  $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' week(s)… 0s';
-  const timer = setInterval(()=>{ secs++; $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' week(s)… '+secs+'s'; }, 1000);
+  $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' period(s)… 0s';
+  const timer = setInterval(()=>{ secs++; $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' period(s)… '+secs+'s'; }, 1000);
 
   try {
     const res = await fetch("/api/hreflang-report", {
@@ -567,6 +654,13 @@ function renderHreflang(d){
     (d.filters && d.filters.country!=='all' ? ' · country: '+escapeHtml(d.filters.country.toUpperCase()) : '')+'</div>';
 
   // summary tiles for the latest selected week
+  const tt = d.totals || {};
+  if(tt.urlsInSitemaps != null){
+    html += '<div class="bulk-summary">'+
+      '<span><b>'+nfmt.format(tt.urlsInSitemaps)+'</b> URLs in sitemaps</span>'+
+      '<span style="color:var(--good)"><b>'+nfmt.format(tt.urlsIndexed||tt.urlsWithData||0)+'</b> indexed</span>'+
+      '<span style="color:var(--dim)"><b>'+nfmt.format(tt.urlsNotIndexed||0)+'</b> not indexed</span></div>';
+  }
   const gt = d.grandTotals || [];
   if(gt.length){
     const lastW = gt[gt.length-1];
@@ -580,7 +674,8 @@ function renderHreflang(d){
   }
 
   // sitemap × week matrix
-  html += '<h3 class="section">Per sitemap · per week</h3><div class="hr-wrap"><table class="hr"><thead>';
+  const perNoun = (d.periodType==='month') ? 'month' : 'week';
+  html += '<h3 class="section">Per sitemap · per '+perNoun+'</h3><div class="hr-wrap"><table class="hr"><thead>';
   html += '<tr><th class="lbl" rowspan="2">Sitemap (language)</th><th rowspan="2">URLs</th>';
   for(const w of weeks) html += '<th class="wk" colspan="4">'+escapeHtml(w.label)+'<br><span style="color:var(--dim)">'+escapeHtml(w.startDate)+' → '+escapeHtml(w.endDate)+'</span></th>';
   html += '</tr><tr>';
@@ -609,8 +704,8 @@ function renderHreflang(d){
 
   // week-over-week deltas when 2+ weeks picked
   if(gt.length >= 2){
-    html += '<h3 class="section">Week-over-week — all selected sitemaps</h3><div class="hr-wrap"><table class="hr"><thead><tr>'+
-      '<th class="lbl">Week</th><th>Clicks</th><th>Δ</th><th>Impr.</th><th>Δ</th><th>CTR %</th><th>Pos</th></tr></thead><tbody>';
+    html += '<h3 class="section">'+(perNoun==='month'?'Month-over-month':'Week-over-week')+' — all selected sitemaps</h3><div class="hr-wrap"><table class="hr"><thead><tr>'+
+      '<th class="lbl">'+(perNoun==='month'?'Month':'Week')+'</th><th>Clicks</th><th>Δ</th><th>Impr.</th><th>Δ</th><th>CTR %</th><th>Pos</th></tr></thead><tbody>';
     gt.forEach((w,i)=>{
       const prev = i? gt[i-1] : null;
       html += '<tr><td class="lbl">'+escapeHtml(w.label)+'</td>'+
@@ -699,8 +794,13 @@ function wireBulkCsv(){
   });
 }
 
+let bulkMode = 'single';   // 'single' | 'compare'
+let bulkComparePayload = null;
+
 async function runBulk(){
   if(!bulkCsvText || !bulkCsvText.trim()){ $("bulkStatus").textContent = "Choose a CSV file first."; return; }
+  if($("bulkCompare").checked){ return runBulkCompare(); }
+  bulkMode = 'single';
   const daysRaw = $("bulkDays").value.trim();
   const days = daysRaw ? Number(daysRaw) : 28;
   const startDate = $("bulkStart").value || undefined;
@@ -789,7 +889,117 @@ function renderBulk(data){
   $("bulkResults").innerHTML = html;
 }
 
-function downloadBulkCsv(){
+
+async function runBulkCompare(){
+  bulkMode = 'compare';
+  const months = selectedMonths('bm-cb', bulkMonths);
+  if(months.length < 2){ $("bulkStatus").textContent = "Tick at least two months to compare."; return; }
+  const body = { csv: bulkCsvText, periods: months.map(m=>({label:m.label, startDate:m.startDate, endDate:m.endDate})) };
+  const country = $("bulkCountry").value.trim(); if(country) body.country = country;
+  const site = $("bulkSite").value.trim(); if(site) body.gscSiteUrl = site;
+  const tok = $("bulkToken").value.trim(); if(tok) body.gscRefreshToken = tok;
+  bulkComparePayload = body;
+
+  const btn = $("bulkBtn");
+  btn.disabled = true;
+  $("bulkDownload").style.display = "none";
+  $("bulkResults").innerHTML = "";
+  let secs = 0;
+  $("bulkStatus").innerHTML = '<span class="dot"></span>Comparing '+months.length+' month(s)… 0s';
+  const timer = setInterval(()=>{ secs++; $("bulkStatus").innerHTML = '<span class="dot"></span>Comparing '+months.length+' month(s)… '+secs+'s'; }, 1000);
+
+  try {
+    const res = await fetch("/api/bulk-compare", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    clearInterval(timer);
+    $("bulkStatus").textContent = "";
+    btn.disabled = false;
+    if(!res.ok || data.error){
+      $("bulkResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Request failed")+'</b>'+
+        (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+'</div>';
+      return;
+    }
+    renderBulkCompare(data);
+    $("bulkDownload").style.display = "inline-flex";
+  } catch(err){
+    clearInterval(timer);
+    btn.disabled = false;
+    $("bulkStatus").textContent = "";
+    $("bulkResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+  }
+}
+
+function renderBulkCompare(d){
+  const periods = d.periods || [];
+  const t = d.totals || {};
+  let html = '<div class="bulk-summary">'+
+    '<span><b>'+(t.rows||0)+'</b> rows</span>'+
+    '<span style="color:var(--good)"><b>'+(t.indexed||0)+'</b> indexed</span>'+
+    '<span style="color:var(--dim)"><b>'+(t.notIndexed||0)+'</b> not indexed</span>'+
+    (t.invalid ? '<span style="color:var(--crit)"><b>'+t.invalid+'</b> invalid URLs</span>' : '')+'</div>';
+  if(d.note) html += '<div class="bulk-note">'+escapeHtml(d.note)+'</div>';
+
+  // totals per month
+  html += '<h3 class="section">Totals across the CSV, per month</h3><div class="hr-wrap"><table class="hr"><thead><tr>'+
+    '<th class="lbl">Month</th><th>Dates</th><th>Indexed URLs</th><th>Clicks</th><th>Change</th><th>Impressions</th><th>Change</th><th>CTR %</th><th>Avg Position</th></tr></thead><tbody>';
+  (d.totalsByPeriod||[]).forEach((p,i)=>{
+    const prev = i ? d.totalsByPeriod[i-1] : null;
+    html += '<tr><td class="lbl">'+escapeHtml(p.label)+'</td>'+
+      '<td class="lbl">'+escapeHtml(p.startDate+' to '+p.endDate)+'</td>'+
+      '<td>'+num(p.matchedUrls)+'</td>'+
+      '<td>'+num(p.clicks)+'</td><td>'+delta(prev && (p.clicks-prev.clicks))+'</td>'+
+      '<td>'+num(p.impressions)+'</td><td>'+delta(prev && (p.impressions-prev.impressions))+'</td>'+
+      '<td>'+p.ctr+'</td><td>'+(p.position==null?'—':p.position)+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // per-URL comparison (top 100 by latest month impressions)
+  const li = periods.length-1;
+  const rows = (d.results||[]).slice().sort((a,b)=>
+    ((b.periods[li]&&b.periods[li].impressions)||0) - ((a.periods[li]&&a.periods[li].impressions)||0));
+  html += '<h3 class="section">Per URL (showing '+Math.min(100,rows.length)+' of '+rows.length+', full data in the CSV download)</h3>';
+  html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr><th>URL</th><th>Status</th>';
+  for(const p of periods) html += '<th class="num" colspan="2">'+escapeHtml(p.label)+'<br>Clicks / Impressions</th>';
+  html += '<th class="num">Clicks Change</th></tr></thead><tbody>';
+  for(const r of rows.slice(0,100)){
+    const a = r.periods[periods.length-2]||{}, b = r.periods[li]||{};
+    const ch = (a.found||b.found) ? (b.clicks||0)-(a.clicks||0) : null;
+    html += '<tr'+(r.indexed?'':' class="miss"')+'><td class="url"><a href="'+escapeHtml(r.url)+'" target="_blank" rel="noopener">'+escapeHtml(r.url)+'</a></td>'+
+      '<td>'+(r.invalid?'Invalid':(r.indexed?'Indexed':'Not indexed'))+'</td>';
+    for(const m of r.periods){
+      html += '<td class="num">'+num(m.found?m.clicks:null)+'</td><td class="num">'+num(m.found?m.impressions:null)+'</td>';
+    }
+    html += '<td class="num">'+delta(ch)+'</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  $("bulkResults").innerHTML = html;
+}
+
+async function downloadBulkCsv(){
+  if(bulkMode === 'compare'){
+    if(!bulkComparePayload) return;
+    const btn = $("bulkDownload");
+    btn.disabled = true; btn.textContent = "Preparing CSV…";
+    try {
+      const res = await fetch("/api/bulk-compare", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({...bulkComparePayload, format:"csv"})
+      });
+      if(res.ok){
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "gsc-month-comparison.csv";
+        document.body.appendChild(a); a.click();
+        setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+      }
+      btn.textContent = "Download enriched CSV ↓";
+    } catch { btn.textContent = "Failed — retry"; }
+    btn.disabled = false;
+    return;
+  }
   if(!bulkLastRows || !bulkLastRows.length) return;
   const esc = (v)=>{ const s = v==null?'':String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   const header = ["Title","URL","Avg Position","CTR (%)","Impressions","Clicks","Found"];
