@@ -103,5 +103,30 @@ eq("CSV header", csv.split("\r\n")[0].startsWith("Sitemap,Language,URL,Week"), t
 eq("CSV has rollup row", csv.includes("(all URLs in sitemap)"), true);
 eq("CSV has per-URL row", csv.includes("report/a,W2"), true);
 
+
+// XLSX path
+const res3 = await POST(new Request("http://local/api/hreflang-report", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    sitemaps: ["https://www.kingsresearch.com/sitemap-en.xml", "https://www.kingsresearch.com/sitemap-ja.xml"],
+    weeks: [
+      { label: "Week 2 · Jul 6 – Jul 12", startDate: "2026-07-06", endDate: "2026-07-12" },
+      { label: "Week 3 · Jul 13 – Jul 19", startDate: "2026-07-13", endDate: "2026-07-19" },
+    ],
+    gscSiteUrl: "https://www.kingsresearch.com/",
+    gscRefreshToken: "fake-refresh",
+    format: "xlsx",
+  }),
+}));
+eq("XLSX status", res3.status, 200);
+eq("XLSX content-type", res3.headers.get("Content-Type"),
+   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+const buf = Buffer.from(await res3.arrayBuffer());
+eq("XLSX magic bytes (PK zip)", buf.slice(0, 2).toString(), "PK");
+eq("XLSX non-trivial size", buf.length > 5000, true);
+const { writeFileSync } = await import("node:fs");
+writeFileSync("/tmp/e2e-report.xlsx", buf);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
