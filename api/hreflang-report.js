@@ -121,12 +121,16 @@ export async function POST(request) {
   }
 
   // ---- 4. match + roll up ----
-  const urlRows = [];      // URLs with data in at least one period
-  const urlRowsAll = [];   // every sitemap URL, including not-indexed ones
+  // A URL is "indexed" when Search Console returns data for it in at least one
+  // selected week. URLs with no GSC data in any week are counted as unindexed
+  // (a tally only) and are not listed in the report.
+  const urlRows = [];      // indexed URLs only (listed in the report)
+  let unindexedTotal = 0;  // URLs with no GSC data in any selected week
   const sitemapReports = perSitemap.map((sm) => {
     const weekTotals = weeks.map(() => ({
       clicks: 0, impressions: 0, posWeighted: 0, matchedUrls: 0,
     }));
+    let indexedCount = 0;
 
     for (const pageUrl of sm.urls) {
       const norm = normalizeForMatch(pageUrl);
@@ -141,16 +145,22 @@ export async function POST(request) {
         return { found: true, clicks: hit.clicks, impressions: hit.impressions,
                  ctr: hit.ctr, position: hit.position };
       });
-      const rowObj = { url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code, langLabel: sm.lang.label,
-                       indexed: perWeek.some((p) => p.found), weeks: perWeek };
-      urlRowsAll.push(rowObj);
-      if (includeUrls && rowObj.indexed) urlRows.push(rowObj);
+      const indexed = perWeek.some((p) => p.found);
+      if (indexed) {
+        indexedCount++;
+        if (includeUrls) urlRows.push({ url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code,
+                                        langLabel: sm.lang.label, indexed: true, weeks: perWeek });
+      }
     }
+    const unindexedCount = sm.urls.length - indexedCount;
+    unindexedTotal += unindexedCount;
 
     return {
       sitemap: sm.sitemap,
       lang: sm.lang,
       urlCount: sm.urls.length,
+      indexedUrls: indexedCount,
+      unindexedUrls: unindexedCount,
       ...(sm.error ? { warning: sm.error } : {}),
       weeks: weekTotals.map((t, wi) => ({
         label: weeks[wi].label,
@@ -184,17 +194,8 @@ export async function POST(request) {
     };
   });
 
-  // rank per-URL rows by impressions in the last selected week, cap for JSON
-  const rankRows = (a, b) => {
-    if (a.indexed !== b.indexed) return a.indexed ? -1 : 1;
-    if (!a.indexed) return a.url.localeCompare(b.url);
-    const li = a.weeks.length - 1;
-    return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
-  };
-  urlRowsAll.sort(rankRows);
+  // rank indexed URLs by impressions in the last selected week, cap for JSON
   urlRows.sort((a, b) => {
-    if (a.indexed !== b.indexed) return a.indexed ? -1 : 1;
-    if (!a.indexed) return a.url.localeCompare(b.url);
     const li = a.weeks.length - 1;
     return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
   });
@@ -208,7 +209,7 @@ export async function POST(request) {
       weeks: weeks.map((w) => ({ label: w.label, startDate: w.startDate, endDate: w.endDate })),
       grandTotals,
       sitemapReports,
-      urlRows: urlRowsAll,
+      urlRows,
       periodType,
     });
     const buf = await wb.xlsx.writeBuffer();
@@ -234,7 +235,7 @@ export async function POST(request) {
                    wt.position == null ? "" : wt.position]);
       }
     }
-    for (const r of urlRowsAll) {
+    for (const r of urlRows) {
       r.weeks.forEach((pw, wi) => {
         rows.push([r.sitemap, r.lang, r.url, weeks[wi].label,
                    weeks[wi].startDate, weeks[wi].endDate,
@@ -251,8 +252,7 @@ export async function POST(request) {
     });
   }
 
-  const indexedRows = urlRows.filter((r) => r.indexed);
-  const urlRowsCapped = indexedRows.length > MAX_URL_ROWS;
+  const urlRowsCapped = urlRows.length > MAX_URL_ROWS;
   return json({
     generatedAt: new Date().toISOString(),
     siteUrl,
@@ -262,13 +262,14 @@ export async function POST(request) {
       dataState: "all (includes fresh data, like the GSC UI)",
     },
     note: "Weeks use GSC calendar dates (Pacific Time). Set the same custom range " +
-          "(+ country filter) in the GSC UI to verify totals 1:1.",
+          "(+ country filter) in the GSC UI to verify totals 1:1. Unindexed URLs " +
+          "(no Search Console data in any selected week) are counted, not listed.",
     weeks: weeks.map((w) => ({ label: w.label, startDate: w.startDate, endDate: w.endDate })),
     totals: {
       sitemaps: sitemapReports.length,
       urlsInSitemaps: totalUrls,
-      urlsWithData: urlRows.length,
-      urlsNotIndexed: totalUrls - urlRows.length,
+      urlsIndexed: urlRows.length,
+      urlsUnindexed: unindexedTotal,
     },
     periodType,
     flags: {
@@ -281,7 +282,7 @@ export async function POST(request) {
     },
     grandTotals,
     sitemaps: sitemapReports,
-    ...(includeUrls ? { urls: indexedRows.slice(0, MAX_URL_ROWS) } : {}),
+    ...(includeUrls ? { urls: urlRows.slice(0, MAX_URL_ROWS) } : {}),
   });
 }
 
