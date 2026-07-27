@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bulk Search Console · Ranking X-Ray</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #121922;
+    --panel-2: #0e141b;
+    --line: #1f2a36;
+    --ink: #e7edf3;
+    --muted: #8298ad;
+    --dim: #5b7186;
+    --signal: #4dd0a7;       /* diagnostic green-teal accent */
+    --signal-dim: #1f3a33;
+    --warn: #e0a44a;
+    --crit: #e06a5a;
+    --good: #4dd0a7;
+    --info: #5aa9e0;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  body {
+    background-image:
+      linear-gradient(transparent 0 96%, rgba(77,208,167,0.035) 96% 100%),
+      radial-gradient(900px 500px at 80% -10%, rgba(77,208,167,0.06), transparent 70%);
+    background-size: 100% 26px, 100% 100%;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 90px; }
+
+  /* Header */
+  header { padding: 40px 0 26px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
+             text-transform: uppercase; color: var(--signal); margin: 0 0 12px; }
+  h1 { font-size: clamp(28px, 4vw, 42px); margin: 0; letter-spacing: -0.02em; font-weight: 650; }
+  h1 .x { color: var(--signal); }
+  .lede { color: var(--muted); margin: 12px 0 0; max-width: 60ch; font-size: 15px; }
+  .sites { font-family: var(--mono); font-size: 11.5px; color: var(--dim); margin-top: 16px;
+           display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .sites b { color: var(--muted); font-weight: 500; }
+
+  /* Form */
+  .console { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+             padding: 22px; margin: 28px 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+          text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
+  input[type=text] {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+    padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
+  }
+  input[type=text]:focus { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-dim); }
+  .full { grid-column: 1 / -1; }
+  .adv { margin-top: 14px; }
+  /* Page-type segmented toggle */
+  .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line);
+         border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg-btn { background: transparent; border: 0; color: var(--muted); font-family: var(--mono);
+             font-size: 12px; letter-spacing: .06em; padding: 9px 18px; border-radius: 8px;
+             cursor: pointer; transition: all .15s; }
+  .seg-btn:hover { color: var(--ink); }
+  .seg-btn.active { background: var(--signal); color: #04130d; font-weight: 600; }
+  .seg-hint { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 8px; }
+  .seg-hint b { color: var(--muted); font-weight: 600; }
+  .planner-link { font-family: var(--mono); font-size: 12px; color: var(--info);
+                  text-decoration: none; border: 1px solid var(--line); padding: 11px 16px;
+                  border-radius: 9px; transition: all .15s; }
+  .planner-link:hover { border-color: var(--info); background: rgba(90,169,224,.08); }
+  .adv summary { cursor: pointer; font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+                 letter-spacing: .08em; }
+  .adv[open] summary { color: var(--signal); }
+  .adv .grid { margin-top: 14px; }
+  .row-actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; }
+  button.run {
+    background: var(--signal); color: #04130d; border: 0; padding: 13px 26px; border-radius: 9px;
+    font-weight: 650; font-size: 14px; cursor: pointer; font-family: var(--sans);
+    letter-spacing: .01em; transition: transform .08s ease, filter .15s ease;
+  }
+  button.run:hover { filter: brightness(1.08); }
+  button.run:active { transform: translateY(1px); }
+  button.run:disabled { opacity: .5; cursor: not-allowed; }
+  .status { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .status .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--signal);
+                 margin-right:7px; vertical-align: middle; animation: pulse 1.1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.3;} 50%{opacity:1;} }
+
+  /* Results */
+  .results { display: none; }
+  .results.show { display: block; }
+  .scorecard { display: flex; align-items: center; gap: 26px; background: var(--panel);
+               border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin: 26px 0 18px; flex-wrap: wrap; }
+  .gauge { position: relative; width: 116px; height: 116px; flex: none; }
+  .gauge svg { transform: rotate(-90deg); }
+  .gauge .num { position: absolute; inset: 0; display: flex; flex-direction: column;
+                align-items: center; justify-content: center; }
+  .gauge .num b { font-size: 30px; font-family: var(--mono); letter-spacing: -.02em; }
+  .gauge .num span { font-size: 9px; font-family: var(--mono); letter-spacing: .2em; color: var(--dim);
+                     text-transform: uppercase; margin-top: 2px; }
+  .sc-meta h2 { margin: 0 0 4px; font-size: 17px; word-break: break-all; }
+  .sc-meta .kw { font-family: var(--mono); font-size: 12px; color: var(--signal); }
+  .sc-meta .upd { color: var(--dim); font-size: 12px; margin-top: 8px; max-width: 56ch; }
+
+  h3.section { font-size: 12px; font-family: var(--mono); letter-spacing: .18em; text-transform: uppercase;
+               color: var(--dim); margin: 34px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+
+  /* Findings */
+  .finding { display: flex; gap: 12px; align-items: flex-start; background: var(--panel);
+             border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; }
+  .tag { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: .06em;
+         padding: 3px 7px; border-radius: 5px; white-space: nowrap; margin-top: 1px; }
+  .tag.critical { background: rgba(224,106,90,.16); color: var(--crit); }
+  .tag.warning  { background: rgba(224,164,74,.16); color: var(--warn); }
+  .tag.good     { background: rgba(77,208,167,.14); color: var(--good); }
+  .tag.info     { background: rgba(90,169,224,.14); color: var(--info); }
+  .f-cat { font-family: var(--mono); font-size: 10.5px; color: var(--dim); text-transform: uppercase;
+           letter-spacing: .06em; min-width: 92px; margin-top: 3px; }
+  .f-msg { font-size: 13.5px; }
+  .f-detail { font-size: 12px; color: var(--muted); margin-top: 3px; word-break: break-word; }
+
+  /* Competitor cards */
+  .comp { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+          padding: 20px; margin-bottom: 18px; }
+  .comp-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .comp-dom { font-size: 15px; font-weight: 600; }
+  .comp-dom a { color: var(--signal); text-decoration: none; font-family: var(--mono); font-size: 12px; }
+  .sauce { background: var(--panel-2); border: 1px solid var(--signal-dim); border-radius: 9px;
+           padding: 11px 14px; margin: 12px 0; font-size: 13.5px; }
+  .sauce b { color: var(--signal); }
+  .reasons { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; }
+  .reason { display: flex; gap: 11px; align-items: flex-start; }
+  .w { flex: none; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center;
+       justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 12px; color: #04130d; }
+  .w.hi { background: var(--crit); color: #1a0805; } .w.mid { background: var(--warn); color:#180f02;}
+  .w.lo { background: var(--info); color:#03121c; }
+  .reason .r-body b { font-size: 13px; } .reason .r-d { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  table.xr { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  table.xr th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+                text-transform: uppercase; color: var(--dim); padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  table.xr td { padding: 7px 10px; border-bottom: 1px solid #18222d; vertical-align: top; }
+  table.xr td.k { color: var(--muted); width: 38%; }
+  td.win { color: var(--signal); font-weight: 600; }
+  .mono { font-family: var(--mono); }
+
+  details.links { margin-top: 12px; }
+  details.links summary { cursor: pointer; font-family: var(--mono); font-size: 11px; color: var(--muted);
+                          letter-spacing: .06em; padding: 6px 0; }
+  .linklist { list-style: none; margin: 6px 0 0; padding: 0; }
+  .linklist li { padding: 5px 0; border-bottom: 1px solid #18222d; font-size: 12px; }
+  .linklist .a { color: var(--ink); } .linklist .h { color: var(--info); word-break: break-all; font-size: 11px; }
+
+  .banner { border-radius: 10px; padding: 13px 15px; font-size: 13.5px; margin: 14px 0; }
+  .banner.err { background: rgba(224,106,90,.1); border: 1px solid rgba(224,106,90,.35); color: #f0b6ad; }
+  .banner.note{ background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.28); color: #bcd9f1; }
+  .banner.warnb{ background: rgba(224,164,74,.09); border: 1px solid rgba(224,164,74,.3); color: #f0d3a2; }
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 4px 0 6px; }
+  @media (max-width: 680px) { .stats { grid-template-columns: repeat(2,1fr); } }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .tile .tv { font-family: var(--mono); font-size: 26px; letter-spacing: -.02em; color: var(--signal); }
+  .tile .tl { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+              color: var(--dim); margin-top: 6px; }
+  .draft { position: relative; background: var(--panel); border: 1px solid var(--signal-dim);
+           border-radius: 12px; padding: 18px; }
+  .draft pre { white-space: pre-wrap; font-family: var(--sans); font-size: 14px; line-height: 1.65;
+               margin: 0; color: var(--ink); }
+  .copybtn { position: absolute; top: 12px; right: 12px; background: var(--signal); color: #04130d;
+             border: 0; padding: 7px 14px; border-radius: 7px; font-weight: 600; font-size: 12px;
+             cursor: pointer; font-family: var(--sans); }
+  .copybtn:hover { filter: brightness(1.08); }
+  code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line);
+           font-family: var(--mono); font-size: 11px; color: var(--dim); }
+  /* ---- Bulk GSC from CSV ---- */
+  input[type=file] { width:100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+    padding: 11px 12px; border-radius: 9px; font-family: var(--mono); font-size: 12.5px; cursor: pointer; }
+  input[type=file]::file-selector-button { background: var(--signal-dim); color: var(--signal); border: 1px solid var(--line);
+    border-radius: 7px; padding: 6px 12px; margin-right: 12px; font-family: var(--mono); font-size: 12px; cursor: pointer; }
+  .bulk-summary { display:flex; flex-wrap:wrap; gap:18px; font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    padding: 12px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; }
+  .bulk-summary b { color: var(--ink); }
+  .bulk-note { font-size: 12px; color: var(--dim); margin: 10px 2px 0; }
+  .bulk-table-wrap { margin-top: 14px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  .bulk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bulk-table th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--dim); padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--panel-2); position: sticky; top: 0; }
+  .bulk-table th.num, .bulk-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bulk-table td { padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  .bulk-table tr:last-child td { border-bottom: none; }
+  .bulk-table td.url { max-width: 360px; }
+  .bulk-table td.url a { color: var(--info); text-decoration: none; word-break: break-all; }
+  .bulk-table td.url a:hover { text-decoration: underline; }
+  .bulk-table tr.miss td { color: var(--dim); }
+  .bulk-table tr.miss td.url a { color: var(--dim); }
+
+  /* ---- Top ribbon nav ---- */
+  .ribbon { display:flex; align-items:center; gap:8px; padding:14px 0 0; }
+  .ribbon .brand { font-family: var(--mono); font-size: 12px; letter-spacing:.2em; text-transform:uppercase;
+    color: var(--signal); margin-right:auto; text-decoration:none; }
+  .ribbon a.tab { font-family: var(--mono); font-size:12px; color: var(--muted); text-decoration:none;
+    border:1px solid var(--line); padding:9px 16px; border-radius:9px; transition:all .15s; }
+  .ribbon a.tab:hover { color: var(--ink); border-color: var(--signal); }
+  .ribbon a.tab.active { background: var(--signal); color:#04130d; font-weight:600; border-color:var(--signal); }
+  /* ---- Sitemap picker ---- */
+  .sm-list { display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:340px; overflow:auto;
+    border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--panel-2); }
+  .sm-item { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:8px; }
+  .sm-item:hover { background: rgba(77,208,167,.05); }
+  .sm-item input { width:auto; }
+  .sm-item .sm-lang { font-family:var(--mono); font-size:10.5px; color:var(--signal); background:var(--signal-dim);
+    border-radius:5px; padding:2px 7px; white-space:nowrap; }
+  .sm-item .sm-loc { font-family:var(--mono); font-size:12px; color:var(--ink); word-break:break-all; }
+  .sm-item .sm-mod { font-family:var(--mono); font-size:10.5px; color:var(--dim); margin-left:auto; white-space:nowrap; }
+  .sm-actions { display:flex; gap:10px; margin-top:8px; }
+  .mini { background:transparent; border:1px solid var(--line); color:var(--muted); font-family:var(--mono);
+    font-size:11px; padding:6px 11px; border-radius:7px; cursor:pointer; }
+  .mini:hover { color:var(--ink); border-color:var(--signal); }
+  /* ---- Week picker ---- */
+  .weeks { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .week-chip { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:9px;
+    padding:8px 12px; background:var(--panel-2); cursor:pointer; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .week-chip input { width:auto; }
+  .week-chip.on { border-color:var(--signal); color:var(--ink); background:rgba(77,208,167,.07); }
+  .week-chip .partial { color:var(--warn); font-size:10px; }
+  input[type=month], input[type=date] { width:100%; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--ink); padding:11px 13px; border-radius:9px; font-family:var(--mono); font-size:13px; outline:none; color-scheme: dark; }
+  input[type=month]:focus, input[type=date]:focus { border-color:var(--signal); box-shadow:0 0 0 3px var(--signal-dim); }
+  /* ---- hreflang report table ---- */
+  .hr-wrap { margin-top:16px; overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+  table.hr { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.hr th { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--dim); padding:9px 10px; border-bottom:1px solid var(--line); background:var(--panel-2); text-align:right; white-space:nowrap; }
+  table.hr th.lbl, table.hr td.lbl { text-align:left; }
+  table.hr th.wk { text-align:center; border-left:1px solid var(--line); color:var(--signal); }
+  table.hr td { padding:8px 10px; border-bottom:1px solid #18222d; text-align:right;
+    font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.hr td.first { border-left:1px solid var(--line); }
+  table.hr tr.total td { border-top:2px solid var(--line); color:var(--signal); font-weight:600; }
+  table.hr td .sub { color:var(--dim); font-size:10.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="ribbon">
+    <a class="brand" href="/">Ranking X-Ray</a>
+    <a class="tab" href="/">X-Ray</a>
+    <a class="tab active" href="/bulk">Bulk Search Console</a>
+    <a class="tab" href="/planner" target="_blank" rel="noopener">Content Planner</a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Search Console · bulk &amp; weekly</p>
+    <h1>Bulk <span class="x">Search Console</span></h1>
+    <p class="lede">Two tools: a <b>weekly hreflang report</b> built from your sitemap index — pick the language
+      sitemaps, pick a month, tick the weeks, get clicks · impressions · CTR · rank per language per week —
+      and the <b>bulk CSV puller</b> for ad-hoc URL lists.</p>
+  </header>
+
+  <!-- ================= WEEKLY HREFLANG REPORT ================= -->
+  <div class="console" id="hreflangCard">
+    <p class="eyebrow" style="margin-bottom:6px">Weekly hreflang report</p>
+    <h2 style="margin:0 0 6px;font-size:20px">Sitemap → language → week-by-week GSC metrics</h2>
+    <p class="lede" style="margin:0 0 18px;font-size:14px">
+      Loads the sitemap index, lists every child sitemap (each language version is its own sitemap).
+      Select the ones to report on, choose a month and the weeks inside it — one property-wide GSC pull
+      per week, rolled up per sitemap.</p>
+
+    <div class="grid">
+      <div class="full">
+        <label for="smIndexUrl">Sitemap index URL</label>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="smIndexUrl" style="flex:1"
+                 value="https://www.kingsresearch.com/sitemap.xml"
+                 placeholder="https://www.kingsresearch.com/sitemap.xml" />
+          <button class="run" id="smLoadBtn" onclick="loadSitemaps()" style="white-space:nowrap">Load sitemaps</button>
+        </div>
+        <div class="seg-hint" id="smHint" style="margin-top:8px">Not loaded yet.</div>
+        <div id="smListWrap"></div>
+      </div>
+
+      <div>
+        <label for="hrMonth">Month</label>
+        <input type="month" id="hrMonth" onchange="buildWeeks()" />
+      </div>
+      <div>
+        <label for="hrCountry">Country <span style="color:var(--dim)">(optional, e.g. US)</span></label>
+        <input type="text" id="hrCountry" placeholder="all countries" />
+      </div>
+      <div class="full">
+        <label>Weeks in the month <span style="color:var(--dim)">(Mon–Sun · GSC/Pacific dates)</span></label>
+        <div class="weeks" id="weeksBox"><span class="seg-hint">Pick a month first.</span></div>
+      </div>
+    </div>
+
+    <p class="bulk-note" style="margin:10px 2px 0">
+      Weeks run Monday → Sunday on GSC's calendar (Pacific Time). Future weeks are disabled;
+      the current week is marked <b>partial</b>. Set the same custom range + country in the GSC UI to verify.</p>
+
+    <details class="adv">
+      <summary>Advanced — property &amp; token override</summary>
+      <div class="grid">
+        <div>
+          <label for="hrSite">GSC property URL (optional)</label>
+          <input type="text" id="hrSite" placeholder="defaults to server config" />
+        </div>
+        <div>
+          <label for="hrToken">GSC refresh token (optional)</label>
+          <input type="text" id="hrToken" placeholder="from /api/auth/start — else server config" />
+        </div>
+      </div>
+    </details>
+
+    <div class="row-actions">
+      <button class="run" id="hrBtn" onclick="runHreflang()">Build weekly report</button>
+      <button class="run" id="hrDownload" onclick="downloadHreflangCsv()"
+              style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">Download full CSV ↓</button>
+      <span class="status" id="hrStatus"></span>
+    </div>
+
+    <div id="hrResults" style="margin-top:18px"></div>
+  </div>
+
+  <!-- ================= BULK CSV (moved from home page) ================= -->
+  <div class="console" id="bulkCard" style="margin-top:22px">
+    <p class="eyebrow" style="margin-bottom:6px">Bulk Search Console</p>
+    <h2 style="margin:0 0 6px;font-size:20px">Pull rank · CTR · impressions from a CSV</h2>
+    <p class="lede" style="margin:0 0 18px;font-size:14px">
+      Upload a CSV with <b>URLs</b> (URL-only, or Title in column A + URL in column B).
+      GSC rank · CTR · impressions · clicks are pulled for every URL. Titles can be
+      extracted live from the pages themselves. Uses the property's connected token
+      (or override below).</p>
+
+    <div class="grid">
+      <div class="full">
+        <label for="csvFile">CSV file <span style="color:var(--dim)">(URL — or Title, URL)</span></label>
+        <input type="file" id="csvFile" accept=".csv,text/csv" />
+        <div class="seg-hint" id="csvHint" style="margin-top:8px">No file selected.</div>
+      </div>
+      <div>
+        <label for="bulkStart">Start date <span style="color:var(--dim)">(optional)</span></label>
+        <input type="date" id="bulkStart" />
+      </div>
+      <div>
+        <label for="bulkEnd">End date <span style="color:var(--dim)">(optional)</span></label>
+        <input type="date" id="bulkEnd" />
+      </div>
+      <div>
+        <label for="bulkDays">Window (days) <span style="color:var(--dim)">(if no dates)</span></label>
+        <input type="text" id="bulkDays" placeholder="28" value="28" />
+      </div>
+      <div>
+        <label for="bulkCountry">Country <span style="color:var(--dim)">(optional, e.g. US)</span></label>
+        <input type="text" id="bulkCountry" placeholder="all countries" />
+      </div>
+      <div>
+        <label for="bulkSite">GSC property URL <span style="color:var(--dim)">(optional)</span></label>
+        <input type="text" id="bulkSite" placeholder="defaults to server config" />
+      </div>
+      <div class="full" style="display:flex;align-items:center;gap:9px">
+        <input type="checkbox" id="bulkTitles" style="width:auto" checked />
+        <label for="bulkTitles" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+          Extract titles directly from the URLs (fetches each page's real &lt;title&gt;)</label>
+      </div>
+    </div>
+    <p class="bulk-note" style="margin:8px 2px 0">
+      Dates use GSC's calendar (Pacific Time). Pick the <b>same custom range + country</b>
+      in the GSC UI to verify — the numbers will match exactly.</p>
+
+    <details class="adv">
+      <summary>Advanced — token override &amp; precise mode</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="bulkToken">GSC refresh token (optional)</label>
+          <input type="text" id="bulkToken" placeholder="from /api/auth/start — else uses server config" />
+        </div>
+        <div class="full" style="display:flex;align-items:center;gap:9px">
+          <input type="checkbox" id="bulkPrecise" style="width:auto" />
+          <label for="bulkPrecise" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+            Precise mode — exact per-URL query for every row (slower, most accurate)</label>
+        </div>
+      </div>
+    </details>
+
+    <div class="row-actions">
+      <button class="run" id="bulkBtn" onclick="runBulk()">Fetch GSC metrics</button>
+      <button class="run" id="bulkDownload" onclick="downloadBulkCsv()" style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">Download enriched CSV ↓</button>
+      <span class="status" id="bulkStatus"></span>
+    </div>
+
+    <div id="bulkResults" style="margin-top:18px"></div>
+  </div>
+
+  <footer>Bulk Search Console · weekly hreflang at <code>/api/hreflang-report</code> · sitemap list at <code>/api/sitemaps</code> · bulk CSV at <code>/api/bulk-gsc</code></footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const nfmt = new Intl.NumberFormat('en-US');
+function num(v){ return v==null ? '<span style="color:var(--dim)">—</span>' : nfmt.format(v); }
+
+/* ================= Weekly hreflang report ================= */
+let smEntries = [];      // [{loc, lastmod, lang:{code,label}}]
+let hrWeeks = [];        // [{label, startDate, endDate, partial}]
+let hrLastPayload = null;
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // default the month picker to the current month
+  const now = new Date();
+  $("hrMonth").value = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+  buildWeeks();
+  wireBulkCsv();
+});
+
+async function loadSitemaps(){
+  const url = $("smIndexUrl").value.trim();
+  if(!url){ $("smHint").textContent = "Enter the sitemap index URL."; return; }
+  const btn = $("smLoadBtn");
+  btn.disabled = true;
+  $("smHint").innerHTML = '<span class="dot"></span>Fetching sitemap index…';
+  try {
+    const res = await fetch("/api/sitemaps?url="+encodeURIComponent(url));
+    const data = await res.json();
+    btn.disabled = false;
+    if(!res.ok || data.error){
+      $("smHint").innerHTML = '<span style="color:var(--crit)">'+escapeHtml(data.error||"Failed to load sitemap.")+'</span>'+
+        (data.hint? ' <span style="color:var(--dim)">'+escapeHtml(data.hint)+'</span>':'');
+      $("smListWrap").innerHTML = "";
+      smEntries = [];
+      return;
+    }
+    smEntries = data.sitemaps || [];
+    $("smHint").innerHTML = '<b style="color:var(--signal)">'+smEntries.length+'</b> sitemap(s) found'+
+      (data.kind==='urlset' ? ' <span style="color:var(--dim)">(flat urlset — one entry)</span>' : '')+'. Select which to include:';
+    renderSitemapList();
+  } catch(err){
+    btn.disabled = false;
+    $("smHint").innerHTML = '<span style="color:var(--crit)">Network error: '+escapeHtml(String(err.message||err))+'</span>';
+  }
+}
+
+function renderSitemapList(){
+  if(!smEntries.length){ $("smListWrap").innerHTML = ""; return; }
+  let html = '<div class="sm-actions">'+
+    '<button type="button" class="mini" onclick="toggleAllSm(true)">Select all</button>'+
+    '<button type="button" class="mini" onclick="toggleAllSm(false)">Clear</button></div>'+
+    '<div class="sm-list">';
+  smEntries.forEach((s, i)=>{
+    const mod = s.lastmod ? String(s.lastmod).slice(0,10) : '';
+    html += '<label class="sm-item">'+
+      '<input type="checkbox" class="sm-cb" data-i="'+i+'" />'+
+      '<span class="sm-lang">'+escapeHtml(s.lang && s.lang.label || 'default')+'</span>'+
+      '<span class="sm-loc">'+escapeHtml(s.loc)+'</span>'+
+      (mod? '<span class="sm-mod">'+escapeHtml(mod)+'</span>':'')+
+      '</label>';
+  });
+  html += '</div>';
+  $("smListWrap").innerHTML = html;
+}
+function toggleAllSm(on){ document.querySelectorAll('.sm-cb').forEach(cb=>cb.checked=on); }
+
+// Mon–Sun weeks overlapping the selected month; future weeks disabled.
+function buildWeeks(){
+  const mv = $("hrMonth").value; // "YYYY-MM"
+  hrWeeks = [];
+  const box = $("weeksBox");
+  if(!/^\d{4}-\d{2}$/.test(mv)){ box.innerHTML = '<span class="seg-hint">Pick a month first.</span>'; return; }
+  const [Y, M] = mv.split("-").map(Number);
+  const first = new Date(Date.UTC(Y, M-1, 1));
+  const last  = new Date(Date.UTC(Y, M, 0));
+  // back up to the Monday on/before the 1st
+  let cur = new Date(first);
+  const dow = (cur.getUTCDay() + 6) % 7; // Mon=0
+  cur.setUTCDate(cur.getUTCDate() - dow);
+  const todayIso = new Date().toISOString().slice(0,10);
+  const iso = d => d.toISOString().slice(0,10);
+  const pretty = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+  let n = 1, html = '';
+  while(cur <= last){
+    const start = new Date(cur);
+    const end = new Date(cur); end.setUTCDate(end.getUTCDate()+6);
+    const s = iso(start), e = iso(end);
+    const future = s > todayIso;
+    const partial = !future && e >= todayIso;
+    const label = 'Week '+n+' · '+pretty(start)+' – '+pretty(end);
+    if(!future){
+      hrWeeks.push({label, startDate:s, endDate: partial ? todayIso : e, partial});
+      const idx = hrWeeks.length-1;
+      html += '<label class="week-chip" id="wc'+idx+'">'+
+        '<input type="checkbox" class="wk-cb" data-i="'+idx+'" onchange="this.closest(\'.week-chip\').classList.toggle(\'on\', this.checked)" />'+
+        escapeHtml(label)+(partial? ' <span class="partial">partial</span>':'')+'</label>';
+    } else {
+      html += '<span class="week-chip" style="opacity:.35;cursor:default">'+escapeHtml(label)+'</span>';
+    }
+    cur.setUTCDate(cur.getUTCDate()+7); n++;
+  }
+  box.innerHTML = html || '<span class="seg-hint">No elapsed weeks in this month yet.</span>';
+}
+
+async function runHreflang(){
+  const sitemaps = [...document.querySelectorAll('.sm-cb')].filter(cb=>cb.checked).map(cb=>smEntries[+cb.dataset.i].loc);
+  if(!sitemaps.length){ $("hrStatus").textContent = "Load the index and select at least one sitemap."; return; }
+  const weeks = [...document.querySelectorAll('.wk-cb')].filter(cb=>cb.checked).map(cb=>hrWeeks[+cb.dataset.i]);
+  if(!weeks.length){ $("hrStatus").textContent = "Tick at least one week."; return; }
+
+  const body = {
+    sitemaps,
+    weeks: weeks.map(w=>({label:w.label, startDate:w.startDate, endDate:w.endDate})),
+  };
+  const country = $("hrCountry").value.trim(); if(country) body.country = country;
+  const site = $("hrSite").value.trim(); if(site) body.gscSiteUrl = site;
+  const tok = $("hrToken").value.trim(); if(tok) body.gscRefreshToken = tok;
+  hrLastPayload = body;
+
+  const btn = $("hrBtn");
+  btn.disabled = true;
+  $("hrDownload").style.display = "none";
+  $("hrResults").innerHTML = "";
+  let secs = 0;
+  $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' week(s)… 0s';
+  const timer = setInterval(()=>{ secs++; $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' week(s)… '+secs+'s'; }, 1000);
+
+  try {
+    const res = await fetch("/api/hreflang-report", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    clearInterval(timer);
+    $("hrStatus").textContent = "";
+    btn.disabled = false;
+    if(!res.ok || data.error){
+      $("hrResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Request failed")+'</b>'+
+        (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+
+        (data.detail?'<div class="mono" style="margin-top:6px;font-size:12px">'+escapeHtml(data.detail)+'</div>':'')+'</div>';
+      return;
+    }
+    renderHreflang(data);
+    $("hrDownload").style.display = "inline-flex";
+  } catch(err){
+    clearInterval(timer);
+    btn.disabled = false;
+    $("hrStatus").textContent = "";
+    $("hrResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+  }
+}
+
+function renderHreflang(d){
+  const weeks = d.weeks || [];
+  let html = '';
+
+  // flags & note
+  const f = d.flags || {};
+  const warns = [];
+  for(const k of ['sitemapsTruncated','weeksTruncated','urlsTruncated','urlRowsCapped']) if(f[k]) warns.push(f[k]);
+  (f.weekErrors||[]).forEach(we=>warns.push(we.week+': '+we.error));
+  if(warns.length) html += '<div class="banner warnb">'+warns.map(escapeHtml).join('<br>')+'</div>';
+  if(d.note) html += '<div class="bulk-note">'+escapeHtml(d.note)+
+    (d.filters && d.filters.country!=='all' ? ' · country: '+escapeHtml(d.filters.country.toUpperCase()) : '')+'</div>';
+
+  // summary tiles for the latest selected week
+  const gt = d.grandTotals || [];
+  if(gt.length){
+    const lastW = gt[gt.length-1];
+    html += '<h3 class="section">All selected sitemaps — '+escapeHtml(lastW.label)+'</h3>'+
+      '<div class="stats">'+
+      tile('Clicks', nfmt.format(lastW.clicks))+
+      tile('Impressions', nfmt.format(lastW.impressions))+
+      tile('CTR', lastW.ctr+'%')+
+      tile('Avg position', lastW.position==null?'—':lastW.position)+
+      '</div>';
+  }
+
+  // sitemap × week matrix
+  html += '<h3 class="section">Per sitemap · per week</h3><div class="hr-wrap"><table class="hr"><thead>';
+  html += '<tr><th class="lbl" rowspan="2">Sitemap (language)</th><th rowspan="2">URLs</th>';
+  for(const w of weeks) html += '<th class="wk" colspan="4">'+escapeHtml(w.label)+'<br><span style="color:var(--dim)">'+escapeHtml(w.startDate)+' → '+escapeHtml(w.endDate)+'</span></th>';
+  html += '</tr><tr>';
+  for(let i=0;i<weeks.length;i++) html += '<th class="first">Clicks</th><th>Impr.</th><th>CTR %</th><th>Pos</th>';
+  html += '</tr></thead><tbody>';
+
+  for(const sr of (d.sitemaps||[])){
+    html += '<tr><td class="lbl"><span class="sm-lang">'+escapeHtml(sr.lang && sr.lang.label || '')+'</span> '+
+      '<span class="mono" style="font-size:11px;color:var(--muted);word-break:break-all">'+escapeHtml(shortSm(sr.sitemap))+'</span>'+
+      (sr.warning? '<div class="sub" style="color:var(--warn)">'+escapeHtml(sr.warning)+'</div>':'')+'</td>'+
+      '<td>'+nfmt.format(sr.urlCount)+'</td>';
+    for(const wt of sr.weeks){
+      html += '<td class="first">'+num(wt.clicks)+'</td><td>'+num(wt.impressions)+
+        ' <span class="sub">('+nfmt.format(wt.matchedUrls)+' urls)</span></td>'+
+        '<td>'+(wt.ctr==null?'—':wt.ctr)+'</td><td>'+(wt.position==null?'—':wt.position)+'</td>';
+    }
+    html += '</tr>';
+  }
+  // totals row
+  html += '<tr class="total"><td class="lbl">TOTAL</td><td>'+nfmt.format((d.totals||{}).urlsInSitemaps||0)+'</td>';
+  for(const wt of gt){
+    html += '<td class="first">'+num(wt.clicks)+'</td><td>'+num(wt.impressions)+'</td>'+
+      '<td>'+(wt.ctr==null?'—':wt.ctr)+'</td><td>'+(wt.position==null?'—':wt.position)+'</td>';
+  }
+  html += '</tr></tbody></table></div>';
+
+  // week-over-week deltas when 2+ weeks picked
+  if(gt.length >= 2){
+    html += '<h3 class="section">Week-over-week — all selected sitemaps</h3><div class="hr-wrap"><table class="hr"><thead><tr>'+
+      '<th class="lbl">Week</th><th>Clicks</th><th>Δ</th><th>Impr.</th><th>Δ</th><th>CTR %</th><th>Pos</th></tr></thead><tbody>';
+    gt.forEach((w,i)=>{
+      const prev = i? gt[i-1] : null;
+      html += '<tr><td class="lbl">'+escapeHtml(w.label)+'</td>'+
+        '<td>'+num(w.clicks)+'</td><td>'+delta(prev && (w.clicks-prev.clicks))+'</td>'+
+        '<td>'+num(w.impressions)+'</td><td>'+delta(prev && (w.impressions-prev.impressions))+'</td>'+
+        '<td>'+w.ctr+'</td><td>'+(w.position==null?'—':w.position)+'</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+
+  // top URLs (latest week impressions)
+  const urls = d.urls || [];
+  if(urls.length){
+    const li = weeks.length-1;
+    html += '<h3 class="section">Top URLs — by impressions in '+escapeHtml(weeks[li].label)+' (showing '+Math.min(50,urls.length)+' of '+nfmt.format((d.totals||{}).urlsWithData||urls.length)+' with data)</h3>';
+    html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr><th>Lang</th><th>URL</th>';
+    for(const w of weeks) html += '<th class="num" colspan="2">'+escapeHtml(w.label.replace(/Week /,'W'))+'<br>Clicks / Impr.</th>';
+    html += '<th class="num">CTR %</th><th class="num">Pos</th></tr></thead><tbody>';
+    for(const r of urls.slice(0,50)){
+      const lastPw = r.weeks[li] || {};
+      html += '<tr><td><span class="sm-lang">'+escapeHtml(r.lang)+'</span></td>'+
+        '<td class="url"><a href="'+escapeHtml(r.url)+'" target="_blank" rel="noopener">'+escapeHtml(r.url)+'</a></td>';
+      for(const pw of r.weeks){
+        html += '<td class="num">'+num(pw.clicks)+'</td><td class="num">'+num(pw.impressions)+'</td>';
+      }
+      html += '<td class="num">'+(lastPw.ctr==null?'—':lastPw.ctr)+'</td>'+
+        '<td class="num">'+(lastPw.position==null?'—':lastPw.position)+'</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div class="banner note">No URLs from the selected sitemaps had Search Console data in the chosen weeks.</div>';
+  }
+
+  $("hrResults").innerHTML = html;
+  $("hrResults").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function tile(label, val){ return '<div class="tile"><div class="tv">'+escapeHtml(val)+'</div><div class="tl">'+escapeHtml(label)+'</div></div>'; }
+function shortSm(u){ try { return new URL(u).pathname; } catch { return u; } }
+function delta(v){
+  if(v==null || isNaN(v)) return '<span style="color:var(--dim)">—</span>';
+  if(v===0) return '<span style="color:var(--dim)">0</span>';
+  return v>0 ? '<span style="color:var(--good)">+'+nfmt.format(v)+'</span>'
+             : '<span style="color:var(--crit)">'+nfmt.format(v)+'</span>';
+}
+
+async function downloadHreflangCsv(){
+  if(!hrLastPayload) return;
+  const btn = $("hrDownload");
+  btn.disabled = true; btn.textContent = "Preparing CSV…";
+  try {
+    const res = await fetch("/api/hreflang-report", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({...hrLastPayload, format:"csv"})
+    });
+    if(!res.ok){ btn.textContent = "CSV failed — retry"; btn.disabled = false; return; }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "hreflang-weekly-report.csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    btn.textContent = "Download full CSV ↓";
+  } catch { btn.textContent = "CSV failed — retry"; }
+  btn.disabled = false;
+}
+
+/* ================= Bulk CSV (moved from home page) ================= */
+let bulkCsvText = null;
+let bulkLastRows = null;
+
+function wireBulkCsv(){
+  const f = $("csvFile");
+  if(f) f.addEventListener('change', ()=>{
+    const file = f.files && f.files[0];
+    if(!file){ bulkCsvText = null; $("csvHint").textContent = "No file selected."; return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      bulkCsvText = String(e.target.result || "");
+      const lines = bulkCsvText.split(/\r?\n/).filter(l=>l.trim()).length;
+      $("csvHint").innerHTML = '<b style="color:var(--signal)">'+escapeHtml(file.name)+'</b> — '+lines+' line(s) read.';
+    };
+    reader.onerror = ()=>{ bulkCsvText = null; $("csvHint").textContent = "Could not read file."; };
+    reader.readAsText(file);
+  });
+}
+
+async function runBulk(){
+  if(!bulkCsvText || !bulkCsvText.trim()){ $("bulkStatus").textContent = "Choose a CSV file first."; return; }
+  const daysRaw = $("bulkDays").value.trim();
+  const days = daysRaw ? Number(daysRaw) : 28;
+  const startDate = $("bulkStart").value || undefined;
+  const endDate = $("bulkEnd").value || undefined;
+  const country = $("bulkCountry").value.trim() || undefined;
+  const extractTitles = $("bulkTitles").checked;
+  const gscSiteUrl = $("bulkSite").value.trim() || undefined;
+  const gscRefreshToken = $("bulkToken").value.trim() || undefined;
+  const precise = $("bulkPrecise").checked;
+  if (startDate && endDate && startDate > endDate) {
+    $("bulkStatus").textContent = "Start date is after end date."; return;
+  }
+
+  const btn = $("bulkBtn");
+  btn.disabled = true;
+  $("bulkDownload").style.display = "none";
+  $("bulkResults").innerHTML = "";
+  bulkLastRows = null;
+  let secs = 0;
+  $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… 0s';
+  const timer = setInterval(()=>{ secs++; $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… '+secs+'s'; }, 1000);
+
+  try {
+    const body = { csv: bulkCsvText, days, precise, extractTitles };
+    if(startDate) body.startDate = startDate;
+    if(endDate) body.endDate = endDate;
+    if(country) body.country = country;
+    if(gscSiteUrl) body.gscSiteUrl = gscSiteUrl;
+    if(gscRefreshToken) body.gscRefreshToken = gscRefreshToken;
+
+    const res = await fetch("/api/bulk-gsc", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    clearInterval(timer);
+    $("bulkStatus").textContent = "";
+    btn.disabled = false;
+
+    if(!res.ok || data.error){
+      $("bulkResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Request failed")+'</b>'+
+        (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+'</div>';
+      return;
+    }
+    bulkLastRows = data.results || [];
+    renderBulk(data);
+    $("bulkDownload").style.display = bulkLastRows.length ? "inline-flex" : "none";
+  } catch(err){
+    clearInterval(timer);
+    btn.disabled = false;
+    $("bulkStatus").textContent = "";
+    $("bulkResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+  }
+}
+
+function renderBulk(data){
+  const rows = data.results || [];
+  const t = data.totals || {};
+  const fmt = (v)=> v==null ? '<span style="color:var(--dim)">—</span>' : escapeHtml(String(v));
+  const rangeLabel = data.dateRange
+    ? data.dateRange.startDate+' → '+data.dateRange.endDate
+    : data.days+'-day window';
+  const countryLabel = data.filters && data.filters.country && data.filters.country !== 'all'
+    ? ' · country: '+data.filters.country.toUpperCase() : '';
+  let html = '<div class="bulk-summary">'+
+    '<span><b>'+(t.rows||0)+'</b> rows</span>'+
+    '<span style="color:var(--good)"><b>'+(t.matched||0)+'</b> matched</span>'+
+    '<span style="color:var(--dim)"><b>'+(t.unmatched||0)+'</b> no data</span>'+
+    (t.titlesExtracted!=null ? '<span style="color:var(--info)"><b>'+t.titlesExtracted+'</b> titles extracted</span>' : '')+
+    '<span style="color:var(--muted)">'+escapeHtml(rangeLabel+countryLabel)+'</span></div>';
+  if(data.note) html += '<div class="bulk-note">'+escapeHtml(data.note)+'</div>';
+
+  html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr>'+
+    '<th>Title</th><th>URL</th><th class="num">Avg Pos</th><th class="num">CTR %</th>'+
+    '<th class="num">Impr.</th><th class="num">Clicks</th></tr></thead><tbody>';
+  for(const r of rows){
+    const cls = r.found ? '' : ' class="miss"';
+    html += '<tr'+cls+'>'+
+      '<td>'+escapeHtml(r.title||'')+'</td>'+
+      '<td class="url"><a href="'+escapeHtml(r.url)+'" target="_blank" rel="noopener">'+escapeHtml(r.url)+'</a></td>'+
+      '<td class="num">'+fmt(r.position)+'</td>'+
+      '<td class="num">'+fmt(r.ctr)+'</td>'+
+      '<td class="num">'+fmt(r.impressions)+'</td>'+
+      '<td class="num">'+fmt(r.clicks)+'</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  $("bulkResults").innerHTML = html;
+}
+
+function downloadBulkCsv(){
+  if(!bulkLastRows || !bulkLastRows.length) return;
+  const esc = (v)=>{ const s = v==null?'':String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const header = ["Title","URL","Avg Position","CTR (%)","Impressions","Clicks","Found"];
+  const lines = [header.join(",")];
+  for(const r of bulkLastRows){
+    lines.push([r.title, r.url, r.position??'', r.ctr??'', r.impressions??'', r.clicks??'', r.found?'yes':'no'].map(esc).join(","));
+  }
+  const blob = new Blob([lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gsc-metrics.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+</script>
+</body>
+</html>
