@@ -28,7 +28,7 @@ import {
   resolveDateRange,
   normalizeCountry,
 } from "../lib/gsc.js";
-import { collectSitemapUrls } from "../lib/sitemaps.js";
+import { collectSitemapUrls, urlMatchesLang } from "../lib/sitemaps.js";
 import { toCsv } from "../lib/csv.js";
 import { buildHreflangWorkbook } from "../lib/xlsx-report.js";
 
@@ -93,8 +93,8 @@ export async function POST(request) {
   // ---- 1. collect URLs from the selected sitemaps ----
   const { perSitemap, truncated: urlsTruncated } =
     await collectSitemapUrls(sitemaps, { maxUrls: MAX_URLS });
-  const totalUrls = perSitemap.reduce((n, s) => n + s.urls.length, 0);
-  if (!totalUrls) {
+  const rawUrlTotal = perSitemap.reduce((n, s) => n + s.urls.length, 0);
+  if (!rawUrlTotal) {
     return json({
       error: "No page URLs could be read from the selected sitemaps.",
       sitemaps: perSitemap.map((s) => ({ sitemap: s.sitemap, error: s.error || "0 URLs" })),
@@ -120,13 +120,36 @@ export async function POST(request) {
     }
   }
 
-  // ---- 4. match + roll up ----
+  // ---- 4. group selected sitemaps by language, keep only URLs that belong ----
+  // A localized sitemap (e.g. /fr/sitemap-reports.xml) may list URLs that
+  // aren't actually that language's pages. Group every selected sitemap by its
+  // detected language, then keep only URLs whose own path matches that language
+  // (root/no-prefix URLs count as English). This makes "URLs in Sitemap" reflect
+  // the language's real pages instead of the whole catalog. URLs are de-duped.
+  const langGroups = new Map(); // code -> { lang, sitemaps:[], urls:Set, warnings:[] }
+  for (const sm of perSitemap) {
+    const code = sm.lang.code;
+    if (!langGroups.has(code)) langGroups.set(code, { lang: sm.lang, sitemaps: [], urls: new Set(), warnings: [] });
+    const g = langGroups.get(code);
+    g.sitemaps.push(sm.sitemap);
+    if (sm.error) g.warnings.push(`${smShort(sm.sitemap)}: ${sm.error}`);
+    for (const u of sm.urls) if (urlMatchesLang(u, code)) g.urls.add(u);
+  }
+  const perLang = [...langGroups.values()].map((g) => ({
+    lang: g.lang,
+    sitemaps: g.sitemaps,
+    urls: [...g.urls],
+    warning: g.warnings.length ? g.warnings.join(" · ") : null,
+  }));
+  const totalUrls = perLang.reduce((n, g) => n + g.urls.length, 0);
+
+  // ---- 5. match + roll up (one entry per language) ----
   // A URL is "indexed" when Search Console returns data for it in at least one
-  // selected week. URLs with no GSC data in any week are counted as unindexed
-  // (a tally only) and are not listed in the report.
-  const urlRows = [];      // indexed URLs only (listed in the report)
+  // selected week; otherwise it is unindexed. Every sitemap URL is checked and
+  // listed with a status; unindexed URLs are also counted in a tally.
+  const urlRows = [];      // every checked URL (indexed and unindexed)
   let unindexedTotal = 0;  // URLs with no GSC data in any selected week
-  const sitemapReports = perSitemap.map((sm) => {
+  const sitemapReports = perLang.map((sm) => {
     const weekTotals = weeks.map(() => ({
       clicks: 0, impressions: 0, posWeighted: 0, matchedUrls: 0,
     }));
@@ -146,22 +169,21 @@ export async function POST(request) {
                  ctr: hit.ctr, position: hit.position };
       });
       const indexed = perWeek.some((p) => p.found);
-      if (indexed) {
-        indexedCount++;
-        if (includeUrls) urlRows.push({ url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code,
-                                        langLabel: sm.lang.label, indexed: true, weeks: perWeek });
-      }
+      if (indexed) indexedCount++;
+      if (includeUrls) urlRows.push({ url: pageUrl, sitemap: sm.sitemaps[0], lang: sm.lang.code,
+                                      langLabel: sm.lang.label, indexed, weeks: perWeek });
     }
     const unindexedCount = sm.urls.length - indexedCount;
     unindexedTotal += unindexedCount;
 
     return {
-      sitemap: sm.sitemap,
+      sitemap: sm.sitemaps.join(" , "),
+      sitemaps: sm.sitemaps,
       lang: sm.lang,
       urlCount: sm.urls.length,
       indexedUrls: indexedCount,
       unindexedUrls: unindexedCount,
-      ...(sm.error ? { warning: sm.error } : {}),
+      ...(sm.warning ? { warning: sm.warning } : {}),
       weeks: weekTotals.map((t, wi) => ({
         label: weeks[wi].label,
         startDate: weeks[wi].startDate,
@@ -194,8 +216,10 @@ export async function POST(request) {
     };
   });
 
-  // rank indexed URLs by impressions in the last selected week, cap for JSON
+  // rank rows: indexed first (by latest-week impressions), then unindexed A-Z
   urlRows.sort((a, b) => {
+    if (a.indexed !== b.indexed) return a.indexed ? -1 : 1;
+    if (!a.indexed) return a.url.localeCompare(b.url);
     const li = a.weeks.length - 1;
     return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
   });
@@ -268,7 +292,7 @@ export async function POST(request) {
     totals: {
       sitemaps: sitemapReports.length,
       urlsInSitemaps: totalUrls,
-      urlsIndexed: urlRows.length,
+      urlsIndexed: urlRows.filter((r) => r.indexed).length,
       urlsUnindexed: unindexedTotal,
     },
     periodType,
@@ -284,6 +308,10 @@ export async function POST(request) {
     sitemaps: sitemapReports,
     ...(includeUrls ? { urls: urlRows.slice(0, MAX_URL_ROWS) } : {}),
   });
+}
+
+function smShort(u) {
+  try { return new URL(u).pathname; } catch { return u; }
 }
 
 function json(obj, status = 200) {
