@@ -317,8 +317,10 @@
 
     <div class="row-actions">
       <button class="run" id="hrBtn" onclick="runHreflang()">Build weekly report</button>
-      <button class="run" id="hrDownload" onclick="downloadHreflangCsv()"
-              style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">Download full CSV ↓</button>
+      <button class="run" id="hrDownloadXlsx" onclick="downloadHreflangFile('xlsx')"
+              style="display:none">Download Excel report ↓</button>
+      <button class="run" id="hrDownload" onclick="downloadHreflangFile('csv')"
+              style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">CSV ↓</button>
       <span class="status" id="hrStatus"></span>
     </div>
 
@@ -520,6 +522,7 @@ async function runHreflang(){
   const btn = $("hrBtn");
   btn.disabled = true;
   $("hrDownload").style.display = "none";
+  $("hrDownloadXlsx").style.display = "none";
   $("hrResults").innerHTML = "";
   let secs = 0;
   $("hrStatus").innerHTML = '<span class="dot"></span>Reading sitemaps &amp; querying '+weeks.length+' week(s)… 0s';
@@ -540,6 +543,7 @@ async function runHreflang(){
       return;
     }
     renderHreflang(data);
+    $("hrDownloadXlsx").style.display = "inline-flex";
     $("hrDownload").style.display = "inline-flex";
   } catch(err){
     clearInterval(timer);
@@ -653,24 +657,25 @@ function delta(v){
              : '<span style="color:var(--crit)">'+nfmt.format(v)+'</span>';
 }
 
-async function downloadHreflangCsv(){
+async function downloadHreflangFile(kind){
   if(!hrLastPayload) return;
-  const btn = $("hrDownload");
-  btn.disabled = true; btn.textContent = "Preparing CSV…";
+  const btn = kind === 'xlsx' ? $("hrDownloadXlsx") : $("hrDownload");
+  const idle = kind === 'xlsx' ? "Download Excel report ↓" : "CSV ↓";
+  btn.disabled = true; btn.textContent = kind === 'xlsx' ? "Building workbook…" : "Preparing CSV…";
   try {
     const res = await fetch("/api/hreflang-report", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({...hrLastPayload, format:"csv"})
+      body: JSON.stringify({...hrLastPayload, format: kind})
     });
-    if(!res.ok){ btn.textContent = "CSV failed — retry"; btn.disabled = false; return; }
+    if(!res.ok){ btn.textContent = "Failed — retry"; btn.disabled = false; return; }
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "hreflang-weekly-report.csv";
+    a.download = kind === 'xlsx' ? "hreflang-weekly-report.xlsx" : "hreflang-weekly-report.csv";
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
-    btn.textContent = "Download full CSV ↓";
-  } catch { btn.textContent = "CSV failed — retry"; }
+    btn.textContent = idle;
+  } catch { btn.textContent = "Failed — retry"; }
   btn.disabled = false;
 }
 
