@@ -45,6 +45,33 @@ Returns: target X-ray + on-page score + findings, one X-ray + weighted verdict
 per fixed competitor (with every in-content link listed verbatim, chrome links
 separated), and GSC findings if credentials supplied.
 
+### `GET /api/sitemaps`
+
+Lists the child sitemaps of a sitemap index (server-side fetch, no CORS),
+each with an inferred hreflang/language label:
+`/api/sitemaps?url=https://www.kingsresearch.com/sitemap.xml`
+
+### `POST /api/hreflang-report`
+
+Weekly hreflang report. Pass the sitemaps selected from `/api/sitemaps` and one
+or more week ranges; returns clicks · impressions · CTR · avg position per
+sitemap (= per language) per week, one property-wide GSC pull per week, plus
+per-URL rows. `format: "csv"` returns a long-format CSV download.
+
+```
+{
+  "sitemaps": ["https://www.kingsresearch.com/sitemap-ja.xml"],
+  "weeks": [{ "label": "Week 2 · Jul 6–12", "startDate": "2026-07-06", "endDate": "2026-07-12" }],
+  "country": "usa",          // optional
+  "gscSiteUrl": "...",       // optional -> env GSC_SITE_URL
+  "gscRefreshToken": "...",  // optional -> env GSC_REFRESH_TOKEN
+  "format": "json"           // or "csv"
+}
+```
+
+UI: the **Bulk Search Console** page at `/bulk` (top ribbon) hosts both the
+weekly hreflang report and the bulk-CSV metrics puller (moved off the home page).
+
 ### `GET /api/auth/start`
 Redirects to Google's consent screen for Search Console (read-only).
 
