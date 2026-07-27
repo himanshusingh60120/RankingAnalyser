@@ -197,10 +197,24 @@
   .bulk-table td.url a:hover { text-decoration: underline; }
   .bulk-table tr.miss td { color: var(--dim); }
   .bulk-table tr.miss td.url a { color: var(--dim); }
+  /* ---- Top ribbon nav ---- */
+  .ribbon { display:flex; align-items:center; gap:8px; padding:14px 0 0; }
+  .ribbon .brand { font-family: var(--mono); font-size: 12px; letter-spacing:.2em; text-transform:uppercase;
+    color: var(--signal); margin-right:auto; text-decoration:none; }
+  .ribbon a.tab { font-family: var(--mono); font-size:12px; color: var(--muted); text-decoration:none;
+    border:1px solid var(--line); padding:9px 16px; border-radius:9px; transition:all .15s; }
+  .ribbon a.tab:hover { color: var(--ink); border-color: var(--signal); }
+  .ribbon a.tab.active { background: var(--signal); color:#04130d; font-weight:600; border-color:var(--signal); }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="ribbon">
+    <a class="brand" href="/">Ranking X-Ray</a>
+    <a class="tab active" href="/">X-Ray</a>
+    <a class="tab" href="/bulk">Bulk Search Console</a>
+    <a class="tab" href="/planner" target="_blank" rel="noopener">Content Planner</a>
+  </nav>
   <header>
     <p class="eyebrow">Source-level diagnostic</p>
     <h1>Ranking <span class="x">X-Ray</span></h1>
@@ -260,76 +274,7 @@
 
   <div class="results" id="results"></div>
 
-  <div class="console" id="bulkCard" style="margin-top:22px">
-    <p class="eyebrow" style="margin-bottom:6px">Bulk Search Console</p>
-    <h2 style="margin:0 0 6px;font-size:20px">Pull rank · CTR · impressions from a CSV</h2>
-    <p class="lede" style="margin:0 0 18px;font-size:14px">
-      Upload a CSV with <b>URLs</b> (URL-only, or Title in column A + URL in column B).
-      GSC rank · CTR · impressions · clicks are pulled for every URL. Titles can be
-      extracted live from the pages themselves. Uses the property's connected token
-      (or override below).</p>
-
-    <div class="grid">
-      <div class="full">
-        <label for="csvFile">CSV file <span style="color:var(--dim)">(URL — or Title, URL)</span></label>
-        <input type="file" id="csvFile" accept=".csv,text/csv" />
-        <div class="seg-hint" id="csvHint" style="margin-top:8px">No file selected.</div>
-      </div>
-      <div>
-        <label for="bulkStart">Start date <span style="color:var(--dim)">(optional)</span></label>
-        <input type="date" id="bulkStart" />
-      </div>
-      <div>
-        <label for="bulkEnd">End date <span style="color:var(--dim)">(optional)</span></label>
-        <input type="date" id="bulkEnd" />
-      </div>
-      <div>
-        <label for="bulkDays">Window (days) <span style="color:var(--dim)">(if no dates)</span></label>
-        <input type="text" id="bulkDays" placeholder="28" value="28" />
-      </div>
-      <div>
-        <label for="bulkCountry">Country <span style="color:var(--dim)">(optional, e.g. US)</span></label>
-        <input type="text" id="bulkCountry" placeholder="all countries" />
-      </div>
-      <div>
-        <label for="bulkSite">GSC property URL <span style="color:var(--dim)">(optional)</span></label>
-        <input type="text" id="bulkSite" placeholder="defaults to server config" />
-      </div>
-      <div class="full" style="display:flex;align-items:center;gap:9px">
-        <input type="checkbox" id="bulkTitles" style="width:auto" checked />
-        <label for="bulkTitles" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
-          Extract titles directly from the URLs (fetches each page's real &lt;title&gt;)</label>
-      </div>
-    </div>
-    <p class="bulk-note" style="margin:8px 2px 0">
-      Dates use GSC's calendar (Pacific Time). Pick the <b>same custom range + country</b>
-      in the GSC UI to verify — the numbers will match exactly.</p>
-
-    <details class="adv">
-      <summary>Advanced — token override &amp; precise mode</summary>
-      <div class="grid">
-        <div class="full">
-          <label for="bulkToken">GSC refresh token (optional)</label>
-          <input type="text" id="bulkToken" placeholder="from /api/auth/start — else uses server config" />
-        </div>
-        <div class="full" style="display:flex;align-items:center;gap:9px">
-          <input type="checkbox" id="bulkPrecise" style="width:auto" />
-          <label for="bulkPrecise" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
-            Precise mode — exact per-URL query for every row (slower, most accurate)</label>
-        </div>
-      </div>
-    </details>
-
-    <div class="row-actions">
-      <button class="run" id="bulkBtn" onclick="runBulk()">Fetch GSC metrics</button>
-      <button class="run" id="bulkDownload" onclick="downloadBulkCsv()" style="display:none;background:transparent;border:1px solid var(--line);color:var(--ink)">Download enriched CSV ↓</button>
-      <span class="status" id="bulkStatus"></span>
-    </div>
-
-    <div id="bulkResults" style="margin-top:18px"></div>
-  </div>
-
-  <footer>Ranking X-Ray · API at <code>/api/analyze</code> · bulk CSV at <code>/api/bulk-gsc</code> · health at <code>/api/health</code></footer>
+  <footer>Ranking X-Ray · API at <code>/api/analyze</code> · bulk &amp; weekly hreflang moved to <a href="/bulk" style="color:var(--info)">Bulk Search Console</a> · health at <code>/api/health</code></footer>
 </div>
 
 <script>
@@ -641,131 +586,6 @@ function renderResults(d){
   $("results").scrollIntoView({behavior:"smooth", block:"start"});
 }
 
-// ---------- Bulk GSC from CSV ----------
-let bulkCsvText = null;
-let bulkLastRows = null;
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  const f = $("csvFile");
-  if(f) f.addEventListener('change', ()=>{
-    const file = f.files && f.files[0];
-    if(!file){ bulkCsvText = null; $("csvHint").textContent = "No file selected."; return; }
-    const reader = new FileReader();
-    reader.onload = e => {
-      bulkCsvText = String(e.target.result || "");
-      const lines = bulkCsvText.split(/\r?\n/).filter(l=>l.trim()).length;
-      $("csvHint").innerHTML = '<b style="color:var(--signal)">'+escapeHtml(file.name)+'</b> — '+lines+' line(s) read.';
-    };
-    reader.onerror = ()=>{ bulkCsvText = null; $("csvHint").textContent = "Could not read file."; };
-    reader.readAsText(file);
-  });
-});
-
-async function runBulk(){
-  if(!bulkCsvText || !bulkCsvText.trim()){ $("bulkStatus").textContent = "Choose a CSV file first."; return; }
-  const daysRaw = $("bulkDays").value.trim();
-  const days = daysRaw ? Number(daysRaw) : 28;
-  const startDate = $("bulkStart").value || undefined;
-  const endDate = $("bulkEnd").value || undefined;
-  const country = $("bulkCountry").value.trim() || undefined;
-  const extractTitles = $("bulkTitles").checked;
-  const gscSiteUrl = $("bulkSite").value.trim() || undefined;
-  const gscRefreshToken = $("bulkToken").value.trim() || undefined;
-  const precise = $("bulkPrecise").checked;
-  if (startDate && endDate && startDate > endDate) {
-    $("bulkStatus").textContent = "Start date is after end date."; return;
-  }
-
-  const btn = $("bulkBtn");
-  btn.disabled = true;
-  $("bulkDownload").style.display = "none";
-  $("bulkResults").innerHTML = "";
-  bulkLastRows = null;
-  let secs = 0;
-  $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… 0s';
-  const timer = setInterval(()=>{ secs++; $("bulkStatus").innerHTML = '<span class="dot"></span>Querying Search Console… '+secs+'s'; }, 1000);
-
-  try {
-    const body = { csv: bulkCsvText, days, precise, extractTitles };
-    if(startDate) body.startDate = startDate;
-    if(endDate) body.endDate = endDate;
-    if(country) body.country = country;
-    if(gscSiteUrl) body.gscSiteUrl = gscSiteUrl;
-    if(gscRefreshToken) body.gscRefreshToken = gscRefreshToken;
-
-    const res = await fetch("/api/bulk-gsc", {
-      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    clearInterval(timer);
-    $("bulkStatus").textContent = "";
-    btn.disabled = false;
-
-    if(!res.ok || data.error){
-      $("bulkResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Request failed")+'</b>'+
-        (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+'</div>';
-      return;
-    }
-    bulkLastRows = data.results || [];
-    renderBulk(data);
-    $("bulkDownload").style.display = bulkLastRows.length ? "inline-flex" : "none";
-  } catch(err){
-    clearInterval(timer);
-    btn.disabled = false;
-    $("bulkStatus").textContent = "";
-    $("bulkResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
-  }
-}
-
-function renderBulk(data){
-  const rows = data.results || [];
-  const t = data.totals || {};
-  const fmt = (v)=> v==null ? '<span style="color:var(--dim)">—</span>' : escapeHtml(String(v));
-  const rangeLabel = data.dateRange
-    ? data.dateRange.startDate+' → '+data.dateRange.endDate
-    : data.days+'-day window';
-  const countryLabel = data.filters && data.filters.country && data.filters.country !== 'all'
-    ? ' · country: '+data.filters.country.toUpperCase() : '';
-  let html = '<div class="bulk-summary">'+
-    '<span><b>'+(t.rows||0)+'</b> rows</span>'+
-    '<span style="color:var(--good)"><b>'+(t.matched||0)+'</b> matched</span>'+
-    '<span style="color:var(--dim)"><b>'+(t.unmatched||0)+'</b> no data</span>'+
-    (t.titlesExtracted!=null ? '<span style="color:var(--info)"><b>'+t.titlesExtracted+'</b> titles extracted</span>' : '')+
-    '<span style="color:var(--muted)">'+escapeHtml(rangeLabel+countryLabel)+'</span></div>';
-  if(data.note) html += '<div class="bulk-note">'+escapeHtml(data.note)+'</div>';
-
-  html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr>'+
-    '<th>Title</th><th>URL</th><th class="num">Avg Pos</th><th class="num">CTR %</th>'+
-    '<th class="num">Impr.</th><th class="num">Clicks</th></tr></thead><tbody>';
-  for(const r of rows){
-    const cls = r.found ? '' : ' class="miss"';
-    html += '<tr'+cls+'>'+
-      '<td>'+escapeHtml(r.title||'')+'</td>'+
-      '<td class="url"><a href="'+escapeHtml(r.url)+'" target="_blank" rel="noopener">'+escapeHtml(r.url)+'</a></td>'+
-      '<td class="num">'+fmt(r.position)+'</td>'+
-      '<td class="num">'+fmt(r.ctr)+'</td>'+
-      '<td class="num">'+fmt(r.impressions)+'</td>'+
-      '<td class="num">'+fmt(r.clicks)+'</td></tr>';
-  }
-  html += '</tbody></table></div>';
-  $("bulkResults").innerHTML = html;
-}
-
-function downloadBulkCsv(){
-  if(!bulkLastRows || !bulkLastRows.length) return;
-  const esc = (v)=>{ const s = v==null?'':String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const header = ["Title","URL","Avg Position","CTR (%)","Impressions","Clicks","Found"];
-  const lines = [header.join(",")];
-  for(const r of bulkLastRows){
-    lines.push([r.title, r.url, r.position??'', r.ctr??'', r.impressions??'', r.clicks??'', r.found?'yes':'no'].map(esc).join(","));
-  }
-  const blob = new Blob([lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "gsc-metrics.csv";
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
-}
 </script>
 </body>
 </html>
