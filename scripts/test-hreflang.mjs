@@ -6,7 +6,8 @@
 
 const SITEMAP_EN = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://www.kingsresearch.com/report/a</loc></url>
-<url><loc>https://www.kingsresearch.com/report/b</loc></url></urlset>`;
+<url><loc>https://www.kingsresearch.com/report/b</loc></url>
+<url><loc>https://www.kingsresearch.com/report/never-indexed</loc></url></urlset>`;
 const SITEMAP_JA = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://www.kingsresearch.com/ja/report/a</loc></url></urlset>`;
 
@@ -71,7 +72,7 @@ console.log("status:", res.status);
 const en = data.sitemaps.find((s) => s.sitemap.includes("-en"));
 const ja = data.sitemaps.find((s) => s.sitemap.includes("-ja"));
 
-eq("EN sitemap urlCount", en.urlCount, 2);
+eq("EN sitemap urlCount", en.urlCount, 3);
 eq("EN wk1 clicks (10+30)", en.weeks[0].clicks, 40);
 eq("EN wk1 impressions", en.weeks[0].impressions, 400);
 eq("EN wk1 CTR", en.weeks[0].ctr, 10);
@@ -85,6 +86,9 @@ eq("JA lang label", ja.lang.label, "Japanese");
 eq("grand wk1 clicks", data.grandTotals[0].clicks, 42);
 eq("grand wk1 impressions", data.grandTotals[0].impressions, 450);
 eq("urls with data", data.totals.urlsWithData, 3);
+eq("urls not indexed", data.totals.urlsNotIndexed, 1);
+eq("JSON urls exclude not-indexed", data.urls.some((u) => u.url.includes("c-not-indexed")), false);
+eq("urls not indexed", data.totals.urlsNotIndexed, 1);
 
 // CSV path
 const res2 = await POST(new Request("http://local/api/hreflang-report", {
@@ -102,6 +106,7 @@ const csv = await res2.text();
 eq("CSV header", csv.split("\r\n")[0].startsWith("Sitemap,Language,URL,Week"), true);
 eq("CSV has rollup row", csv.includes("(all URLs in sitemap)"), true);
 eq("CSV has per-URL row", csv.includes("report/a,W2"), true);
+eq("CSV lists not-indexed URL with blanks", csv.includes("report/never-indexed,W2,2026-07-06,2026-07-12,,,,"), true);
 
 
 // XLSX path
@@ -127,6 +132,64 @@ eq("XLSX magic bytes (PK zip)", buf.slice(0, 2).toString(), "PK");
 eq("XLSX non-trivial size", buf.length > 5000, true);
 const { writeFileSync } = await import("node:fs");
 writeFileSync("/tmp/e2e-report.xlsx", buf);
+
+
+// XLSX: not-indexed URL appears with blank cells and a status
+const { execSync } = await import("node:child_process");
+const py = `
+import openpyxl, json
+wb = openpyxl.load_workbook('/tmp/e2e-report.xlsx')
+ws = wb['English']
+rows = {}
+for r in range(5, ws.max_row+1):
+    u = ws.cell(r,1).value
+    if u: rows[u] = (ws.cell(r,2).value, ws.cell(r,3).value)
+print(json.dumps(rows))
+`;
+const sheetRows = JSON.parse(execSync("python3 -", { input: py }).toString());
+const ni = sheetRows["https://www.kingsresearch.com/report/never-indexed"];
+eq("not-indexed row present", !!ni, true);
+eq("not-indexed status", ni && ni[0], "Not indexed");
+eq("not-indexed metrics blank", ni && (ni[1] === null || ni[1] === ""), true);
+
+// bulk-compare endpoint
+const { POST: COMPARE } = await import("../api/bulk-compare.js");
+const cres = await COMPARE(new Request("http://local/api/bulk-compare", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    csv: "Title,URL\nA,https://www.kingsresearch.com/report/a\nB,https://www.kingsresearch.com/report/b\nGhost,https://www.kingsresearch.com/report/never-indexed",
+    periods: [
+      { label: "P1", startDate: "2026-07-06", endDate: "2026-07-12" },
+      { label: "P2", startDate: "2026-07-13", endDate: "2026-07-19" },
+    ],
+    gscSiteUrl: "https://www.kingsresearch.com/",
+    gscRefreshToken: "fake-refresh",
+  }),
+}));
+const cdata = await cres.json();
+eq("compare status", cres.status, 200);
+eq("compare indexed", cdata.totals.indexed, 2);
+eq("compare not indexed", cdata.totals.notIndexed, 1);
+eq("compare P1 clicks", cdata.totalsByPeriod[0].clicks, 40);
+eq("compare P2 clicks", cdata.totalsByPeriod[1].clicks, 20);
+const ghost = cdata.results.find(r => r.url.includes("never-indexed"));
+eq("ghost blank in both periods", ghost.periods.every(p => !p.found && p.clicks === null), true);
+
+const cres2 = await COMPARE(new Request("http://local/api/bulk-compare", {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    csv: "Title,URL\nA,https://www.kingsresearch.com/report/a",
+    periods: [
+      { label: "P1", startDate: "2026-07-06", endDate: "2026-07-12" },
+      { label: "P2", startDate: "2026-07-13", endDate: "2026-07-19" },
+    ],
+    gscSiteUrl: "https://www.kingsresearch.com/", gscRefreshToken: "fake-refresh", format: "csv",
+  }),
+}));
+const ccsv = await cres2.text();
+eq("compare CSV header has periods", ccsv.split("\r\n")[0].includes("P1 Clicks") && ccsv.split("\r\n")[0].includes("Clicks Change"), true);
+
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
