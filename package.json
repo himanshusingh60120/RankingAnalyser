@@ -10,7 +10,8 @@
     "test:local": "node scripts/test-local.mjs"
   },
   "dependencies": {
-    "cheerio": "^1.2.0"
+    "cheerio": "^1.2.0",
+    "exceljs": "^4.4.0"
   },
   "engines": {
     "node": ">=18"
