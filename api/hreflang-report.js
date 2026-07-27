@@ -34,7 +34,7 @@ import { buildHreflangWorkbook } from "../lib/xlsx-report.js";
 
 const MAX_SITEMAPS = 12;   // selected sitemaps per run
 const MAX_WEEKS = 8;       // week ranges per run (each = 1+ GSC bulk queries)
-const MAX_URLS = 30000;    // total sitemap URLs processed
+const MAX_URLS = 60000;    // total sitemap URLs processed
 const MAX_URL_ROWS = 2000; // per-URL rows returned in JSON (CSV gets them all)
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -53,11 +53,13 @@ export async function POST(request) {
   let sitemapsTruncated = false;
   if (sitemaps.length > MAX_SITEMAPS) { sitemaps = sitemaps.slice(0, MAX_SITEMAPS); sitemapsTruncated = true; }
 
-  // ---- validate weeks ----
-  let weeks = Array.isArray(body.weeks) ? body.weeks : [];
+  // ---- validate periods (weeks or months; "periods" is an alias) ----
+  const periodType = (body.periodType || "").toLowerCase() === "month" ? "month" : "week";
+  let weeks = Array.isArray(body.weeks) ? body.weeks
+            : Array.isArray(body.periods) ? body.periods : [];
   weeks = weeks
     .map((w, i) => ({
-      label: String(w.label || `Week ${i + 1}`),
+      label: String(w.label || (periodType === "month" ? `Month ${i + 1}` : `Week ${i + 1}`)),
       startDate: String(w.startDate || ""),
       endDate: String(w.endDate || ""),
     }))
@@ -119,7 +121,8 @@ export async function POST(request) {
   }
 
   // ---- 4. match + roll up ----
-  const urlRows = [];
+  const urlRows = [];      // URLs with data in at least one period
+  const urlRowsAll = [];   // every sitemap URL, including not-indexed ones
   const sitemapReports = perSitemap.map((sm) => {
     const weekTotals = weeks.map(() => ({
       clicks: 0, impressions: 0, posWeighted: 0, matchedUrls: 0,
@@ -138,9 +141,10 @@ export async function POST(request) {
         return { found: true, clicks: hit.clicks, impressions: hit.impressions,
                  ctr: hit.ctr, position: hit.position };
       });
-      if (includeUrls && perWeek.some((p) => p.found)) {
-        urlRows.push({ url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code, langLabel: sm.lang.label, weeks: perWeek });
-      }
+      const rowObj = { url: pageUrl, sitemap: sm.sitemap, lang: sm.lang.code, langLabel: sm.lang.label,
+                       indexed: perWeek.some((p) => p.found), weeks: perWeek };
+      urlRowsAll.push(rowObj);
+      if (includeUrls && rowObj.indexed) urlRows.push(rowObj);
     }
 
     return {
@@ -181,8 +185,17 @@ export async function POST(request) {
   });
 
   // rank per-URL rows by impressions in the last selected week, cap for JSON
+  const rankRows = (a, b) => {
+    if (a.indexed !== b.indexed) return a.indexed ? -1 : 1;
+    if (!a.indexed) return a.url.localeCompare(b.url);
+    const li = a.weeks.length - 1;
+    return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
+  };
+  urlRowsAll.sort(rankRows);
   urlRows.sort((a, b) => {
-    const li = urlRows.length ? a.weeks.length - 1 : 0;
+    if (a.indexed !== b.indexed) return a.indexed ? -1 : 1;
+    if (!a.indexed) return a.url.localeCompare(b.url);
+    const li = a.weeks.length - 1;
     return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
   });
 
@@ -195,7 +208,8 @@ export async function POST(request) {
       weeks: weeks.map((w) => ({ label: w.label, startDate: w.startDate, endDate: w.endDate })),
       grandTotals,
       sitemapReports,
-      urlRows,
+      urlRows: urlRowsAll,
+      periodType,
     });
     const buf = await wb.xlsx.writeBuffer();
     return new Response(buf, {
@@ -220,12 +234,12 @@ export async function POST(request) {
                    wt.position == null ? "" : wt.position]);
       }
     }
-    for (const r of urlRows) {
+    for (const r of urlRowsAll) {
       r.weeks.forEach((pw, wi) => {
-        if (!pw.found) return;
         rows.push([r.sitemap, r.lang, r.url, weeks[wi].label,
                    weeks[wi].startDate, weeks[wi].endDate,
-                   pw.clicks, pw.impressions, pw.ctr, pw.position]);
+                   pw.found ? pw.clicks : "", pw.found ? pw.impressions : "",
+                   pw.found ? pw.ctr : "", pw.found ? pw.position : ""]);
       });
     }
     return new Response(toCsv(rows), {
@@ -237,7 +251,8 @@ export async function POST(request) {
     });
   }
 
-  const urlRowsCapped = urlRows.length > MAX_URL_ROWS;
+  const indexedRows = urlRows.filter((r) => r.indexed);
+  const urlRowsCapped = indexedRows.length > MAX_URL_ROWS;
   return json({
     generatedAt: new Date().toISOString(),
     siteUrl,
@@ -253,7 +268,9 @@ export async function POST(request) {
       sitemaps: sitemapReports.length,
       urlsInSitemaps: totalUrls,
       urlsWithData: urlRows.length,
+      urlsNotIndexed: totalUrls - urlRows.length,
     },
+    periodType,
     flags: {
       sitemapsTruncated: sitemapsTruncated ? `capped at ${MAX_SITEMAPS} sitemaps` : false,
       weeksTruncated: weeksTruncated ? `capped at ${MAX_WEEKS} weeks` : false,
@@ -264,7 +281,7 @@ export async function POST(request) {
     },
     grandTotals,
     sitemaps: sitemapReports,
-    ...(includeUrls ? { urls: urlRows.slice(0, MAX_URL_ROWS) } : {}),
+    ...(includeUrls ? { urls: indexedRows.slice(0, MAX_URL_ROWS) } : {}),
   });
 }
 
