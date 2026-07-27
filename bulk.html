@@ -659,7 +659,7 @@ function renderHreflang(d){
     html += '<div class="bulk-summary">'+
       '<span><b>'+nfmt.format(tt.urlsInSitemaps)+'</b> URLs in sitemaps</span>'+
       '<span style="color:var(--good)"><b>'+nfmt.format(tt.urlsIndexed||tt.urlsWithData||0)+'</b> indexed</span>'+
-      '<span style="color:var(--dim)"><b>'+nfmt.format(tt.urlsNotIndexed||0)+'</b> not indexed</span></div>';
+      '<span style="color:var(--dim)"><b>'+nfmt.format(tt.urlsUnindexed||0)+'</b> unindexed</span></div>';
   }
   const gt = d.grandTotals || [];
   if(gt.length){
@@ -720,7 +720,7 @@ function renderHreflang(d){
   const urls = d.urls || [];
   if(urls.length){
     const li = weeks.length-1;
-    html += '<h3 class="section">Top URLs — by impressions in '+escapeHtml(weeks[li].label)+' (showing '+Math.min(50,urls.length)+' of '+nfmt.format((d.totals||{}).urlsWithData||urls.length)+' with data)</h3>';
+    html += '<h3 class="section">Top URLs — by impressions in '+escapeHtml(weeks[li].label)+' (showing '+Math.min(50,urls.length)+' of '+nfmt.format((d.totals||{}).urlsIndexed||urls.length)+' indexed)</h3>';
     html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr><th>Lang</th><th>URL</th>';
     for(const w of weeks) html += '<th class="num" colspan="2">'+escapeHtml(w.label.replace(/Week /,'W'))+'<br>Clicks / Impr.</th>';
     html += '<th class="num">CTR %</th><th class="num">Pos</th></tr></thead><tbody>';
