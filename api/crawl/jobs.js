@@ -5,12 +5,13 @@
 // A job describes what the local Screaming Frog agent should crawl. The agent
 // polls /api/crawl/next to claim pending jobs.
 
-import { isKvConfigured, kvGetJSON, kvSetJSON, kvLPush, kvLRange } from "../../lib/kv.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON, kvLPush, kvLRange } from "../../lib/kv.js";
 
 const JOBS_TTL = 60 * 60 * 24 * 30; // 30 days
 
 export async function GET() {
-  if (!isKvConfigured()) return kvErr();
+  try {
+  if (!isKvConfigured()) return kvErr(kvStatus().reason);
   const ids = (await kvLRange("crawl:jobs", 0, 49)) || [];
   const jobs = [];
   for (const id of ids) {
@@ -18,10 +19,15 @@ export async function GET() {
     if (j) jobs.push(j);
   }
   return json({ jobs });
+
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "GET failed", detail: String(e && e.message || e) }, null, 2), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
 }
 
 export async function POST(request) {
-  if (!isKvConfigured()) return kvErr();
+  try {
+  if (!isKvConfigured()) return kvErr(kvStatus().reason);
   let body;
   try { body = await request.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
 
@@ -45,14 +51,19 @@ export async function POST(request) {
   await kvSetJSON(`crawl:job:${id}`, job, JOBS_TTL);
   await kvLPush("crawl:jobs", id);
   return json({ job }, 201);
+
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "POST failed", detail: String(e && e.message || e) }, null, 2), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
 }
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj, null, 2), { status, headers: { "Content-Type": "application/json" } });
 }
-function kvErr() {
+function kvErr(detail) {
   return json({
     error: "No KV store connected.",
-    hint: "In Vercel → Storage, create a KV (Upstash Redis) store and connect it to this project. That injects KV_REST_API_URL and KV_REST_API_TOKEN.",
+    detail: detail || undefined,
+    hint: "In Vercel → Storage, create an Upstash for Redis store and connect it to this project, then redeploy. That injects KV_REST_API_URL and KV_REST_API_TOKEN.",
   }, 503);
 }
