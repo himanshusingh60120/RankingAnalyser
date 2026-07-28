@@ -12,11 +12,5 @@
     "api/crawl-jobs.js": { "maxDuration": 30 },
     "api/crawl-ingest.js": { "maxDuration": 60 },
     "api/crawl-status.js": { "maxDuration": 30 }
-  },
-  "rewrites": [
-    { "source": "/api/crawl/next", "destination": "/api/crawl-next" },
-    { "source": "/api/crawl/jobs", "destination": "/api/crawl-jobs" },
-    { "source": "/api/crawl/ingest", "destination": "/api/crawl-ingest" },
-    { "source": "/api/crawl/status", "destination": "/api/crawl-status" }
-  ]
+  }
 }
