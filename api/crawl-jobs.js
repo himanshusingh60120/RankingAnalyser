@@ -1,6 +1,6 @@
-// api/crawl/jobs.js
-// GET  /api/crawl/jobs            -> list recent jobs (for the UI)
-// POST /api/crawl/jobs            -> create a crawl job (from the UI)
+// api/crawl-jobs.js
+// GET  /api/crawl-jobs            -> list recent jobs (for the UI)
+// POST /api/crawl-jobs            -> create a crawl job (from the UI)
 //
 // A job describes what the local Screaming Frog agent should crawl. The agent
 // polls /api/crawl/next to claim pending jobs.
