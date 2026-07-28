@@ -2,56 +2,21 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "functions": {
-    "api/analyze.js": {
-      "maxDuration": 120
-    },
-    "api/plan.js": {
-      "maxDuration": 120
-    },
-    "api/hreflang-report.js": {
-      "maxDuration": 300
-    },
-    "api/hreflang-assemble.js": {
-      "maxDuration": 60
-    },
-    "api/bulk-compare.js": {
-      "maxDuration": 120
-    },
-    "api/sitemaps.js": {
-      "maxDuration": 60
-    },
-    "api/**/*.js": {
-      "maxDuration": 30
-    },
-    "api/crawl-next.js": {
-      "maxDuration": 30
-    },
-    "api/crawl-jobs.js": {
-      "maxDuration": 30
-    },
-    "api/crawl-ingest.js": {
-      "maxDuration": 60
-    },
-    "api/crawl-status.js": {
-      "maxDuration": 30
-    }
+    "api/analyze.js": { "maxDuration": 120 },
+    "api/plan.js": { "maxDuration": 120 },
+    "api/hreflang-report.js": { "maxDuration": 300 },
+    "api/hreflang-assemble.js": { "maxDuration": 60 },
+    "api/bulk-compare.js": { "maxDuration": 120 },
+    "api/sitemaps.js": { "maxDuration": 60 },
+    "api/crawl-next.js": { "maxDuration": 30 },
+    "api/crawl-jobs.js": { "maxDuration": 30 },
+    "api/crawl-ingest.js": { "maxDuration": 60 },
+    "api/crawl-status.js": { "maxDuration": 30 }
   },
   "rewrites": [
-    {
-      "source": "/api/crawl/next",
-      "destination": "/api/crawl-next"
-    },
-    {
-      "source": "/api/crawl/jobs",
-      "destination": "/api/crawl-jobs"
-    },
-    {
-      "source": "/api/crawl/ingest",
-      "destination": "/api/crawl-ingest"
-    },
-    {
-      "source": "/api/crawl/status",
-      "destination": "/api/crawl-status"
-    }
+    { "source": "/api/crawl/next", "destination": "/api/crawl-next" },
+    { "source": "/api/crawl/jobs", "destination": "/api/crawl-jobs" },
+    { "source": "/api/crawl/ingest", "destination": "/api/crawl-ingest" },
+    { "source": "/api/crawl/status", "destination": "/api/crawl-status" }
   ]
 }
