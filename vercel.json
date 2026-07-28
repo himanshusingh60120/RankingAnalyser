@@ -2,15 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "functions": {
-    "api/analyze.js": { "maxDuration": 120 },
-    "api/plan.js": { "maxDuration": 120 },
-    "api/hreflang-report.js": { "maxDuration": 300 },
+    "api/analyze.js": { "maxDuration": 60 },
+    "api/plan.js": { "maxDuration": 60 },
+    "api/hreflang-report.js": { "maxDuration": 60 },
     "api/hreflang-assemble.js": { "maxDuration": 60 },
-    "api/bulk-compare.js": { "maxDuration": 120 },
+    "api/bulk-compare.js": { "maxDuration": 60 },
     "api/sitemaps.js": { "maxDuration": 60 },
-    "api/crawl-next.js": { "maxDuration": 30 },
-    "api/crawl-jobs.js": { "maxDuration": 30 },
-    "api/crawl-ingest.js": { "maxDuration": 60 },
-    "api/crawl-status.js": { "maxDuration": 30 }
+    "api/crawl.js": { "maxDuration": 60 }
   }
 }
