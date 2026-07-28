@@ -13,9 +13,9 @@
 // When done, crawl:latest points at this job with its chunk list + counts so
 // the report can load the index status for every crawled URL.
 
-import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON } from "../../lib/kv.js";
-import { requireAgent } from "../../lib/agent-auth.js";
-import { parseCrawlRows } from "../../lib/crawl-parse.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON } from "../lib/kv.js";
+import { requireAgent } from "../lib/agent-auth.js";
+import { parseCrawlRows } from "../lib/crawl-parse.js";
 
 const TTL = 60 * 60 * 24 * 30;
 
