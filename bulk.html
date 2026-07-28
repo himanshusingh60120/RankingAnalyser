@@ -1179,7 +1179,7 @@ async function startCrawl(){
   const btn = $("crawlBtn"); btn.disabled = true;
   $("crawlStatus").innerHTML = '<span class="dot"></span>Queuing crawl…';
   try {
-    const res = await fetch("/api/crawl/jobs", {
+    const res = await fetch("/api/crawl-jobs", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ target, mode: /sitemap.*\.xml/i.test(target) ? "sitemap" : "spider",
                              useUrlInspection: $("crawlInspect").checked })
@@ -1201,7 +1201,7 @@ async function startCrawl(){
 
 async function refreshCrawl(){
   try {
-    const res = await fetch("/api/crawl/status");
+    const res = await fetch("/api/crawl-status");
     const d = await res.json();
     if(d.configured === false){
       $("crawlPanel").innerHTML = '<div class="banner note"><b>No crawl store connected yet.</b><div style="margin-top:6px;color:var(--muted)">'+
