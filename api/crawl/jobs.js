@@ -5,7 +5,7 @@
 // A job describes what the local Screaming Frog agent should crawl. The agent
 // polls /api/crawl/next to claim pending jobs.
 
-import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON, kvLPush, kvLRange } from "../../lib/kv.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON, kvLPush, kvLRange } from "../lib/kv.js";
 
 const JOBS_TTL = 60 * 60 * 24 * 30; // 30 days
 
