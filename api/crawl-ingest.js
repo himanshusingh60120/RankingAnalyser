@@ -1,5 +1,5 @@
-// api/crawl/ingest.js
-// POST /api/crawl/ingest   (agent only, Bearer AGENT_TOKEN)
+// api/crawl-ingest.js
+// POST /api/crawl-ingest   (agent only, Bearer AGENT_TOKEN)
 // The agent uploads parsed crawl rows in chunks (to stay under body limits).
 //
 // Body: {
