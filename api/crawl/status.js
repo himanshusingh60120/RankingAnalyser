@@ -1,7 +1,7 @@
 // api/crawl/status.js
 // GET /api/crawl/status  -> { latest, jobs } for the UI to display crawl state.
 
-import { isKvConfigured, kvStatus, kvGetJSON, kvLRange } from "../../lib/kv.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvLRange } from "../lib/kv.js";
 
 export async function GET() {
   try {
