@@ -37,6 +37,8 @@ import { buildHreflangWorkbook } from "../lib/xlsx-report.js";
 import { inspectMany, indexLabel } from "../lib/url-inspection.js";
 import { loadLatestCrawl } from "../lib/crawl-store.js";
 import { parseScreamingFrogCsv, buildSfIndex, sfIndexMeta } from "../lib/screaming-frog.js";
+import { pageFilterForLang, saveSlice, saveSessionMeta } from "../lib/report-session.js";
+import { isKvConfigured } from "../lib/kv.js";
 
 const MAX_SITEMAPS = 12;   // selected sitemaps per run
 const MAX_WEEKS = 8;       // week ranges per run (each = 1+ GSC bulk queries)
@@ -89,6 +91,10 @@ export async function POST(request) {
   const useCrawlData = body.useCrawlData === true; // fill index status from the latest Screaming Frog crawl (no quota)
   const maxInspections = Number.isFinite(body.maxInspections) && body.maxInspections > 0
     ? Math.min(Math.floor(body.maxInspections), 2000) : 2000;
+  // free-tier chunked mode: compute one language's slice and stash it in KV
+  const partial = body.partial === true;
+  const sessionId = typeof body.sessionId === "string" ? body.sessionId.replace(/[^a-z0-9_-]/gi, "").slice(0, 60) : "";
+  const langCode = typeof body.langCode === "string" ? body.langCode : "";
   const fmt = (body.format || "").toLowerCase();
   const wantCsv = fmt === "csv" || (request.headers.get("accept") || "").includes("text/csv");
   const wantXlsx = fmt === "xlsx" || fmt === "excel";
@@ -117,12 +123,17 @@ export async function POST(request) {
   catch (e) { return json({ error: "GSC token refresh failed.", detail: String(e.message || e) }, 502); }
 
   // ---- 3. one property-wide bulk query per week ----
+  // In partial (free-tier) mode, scope each GSC query to this one language's
+  // URL pattern so the request stays small and fast (well under 60s).
+  const pageFilter = partial && langCode ? pageFilterForLang(langCode) : {};
+
   const weekData = []; // [{ exact: Map, norm: Map, error? }]
   for (const w of weeks) {
     try {
       const exact = await queryManyPageMetrics(accessToken, siteUrl, {
         startDate: w.startDate, endDate: w.endDate,
         country: country || undefined, searchType,
+        ...pageFilter,
       });
       weekData.push({ exact, norm: indexMetricsByNormalizedUrl(exact) });
     } catch (e) {
@@ -317,6 +328,37 @@ export async function POST(request) {
     const li = a.weeks.length - 1;
     return (b.weeks[li].impressions || 0) - (a.weeks[li].impressions || 0);
   });
+
+  // ---- Partial (free-tier) mode: stash this language's slice, return summary ----
+  if (partial) {
+    if (!sessionId) return json({ error: "partial mode requires a sessionId." }, 400);
+    if (!isKvConfigured()) return json({ error: "partial mode needs a KV store connected." }, 503);
+    const codes = sitemapReports.map((s) => s.lang.code);
+    for (const sr of sitemapReports) {
+      const code = sr.lang.code;
+      const rows = urlRows.filter((u) => u.lang === code);
+      await saveSlice(sessionId, code, { sitemapReport: sr, urlRows: rows });
+    }
+    await saveSessionMeta(sessionId, {
+      langs: codes, siteUrl,
+      weeks: weeks.map((w) => ({ label: w.label, startDate: w.startDate, endDate: w.endDate })),
+      filters: { country: country || "all", searchType: searchType || "web" },
+      periodType,
+      indexActive, indexMeta,
+    });
+    return json({
+      partial: true, sessionId,
+      languages: sitemapReports.map((s) => ({
+        code: s.lang.code, label: s.lang.label,
+        urlsInSitemap: s.urlCount, indexed: s.indexedUrls, unindexed: s.unindexedUrls,
+      })),
+      totals: {
+        urlsInSitemaps: totalUrls,
+        urlsIndexed: urlRows.filter((r) => r.indexed).length,
+      },
+      ...(inspectionMeta ? { indexVerification: inspectionMeta } : {}),
+    });
+  }
 
   // ---- XLSX: summary sheet + one sheet per language (full, uncapped) ----
   if (wantXlsx) {
