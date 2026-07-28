@@ -1,5 +1,5 @@
-// api/crawl/next.js
-// POST /api/crawl/next   (agent only, Bearer AGENT_TOKEN)
+// api/crawl-next.js
+// POST /api/crawl-next   (agent only, Bearer AGENT_TOKEN)
 // The local Screaming Frog agent calls this to claim the oldest pending job.
 
 import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON, kvLRange } from "../lib/kv.js";
