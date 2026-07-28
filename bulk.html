@@ -347,6 +347,13 @@
         If both boxes are ticked, crawl data is used.</label>
     </div>
 
+    <div class="full" style="display:flex;align-items:flex-start;gap:9px;margin-top:6px">
+      <input type="checkbox" id="hrChunked" style="width:auto;margin-top:3px" />
+      <label for="hrChunked" style="margin:0;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:13px;color:var(--muted)">
+        <b>Free-plan mode</b> — process one language at a time so each request stays under 60s (works on Vercel Hobby, no Pro needed).
+        Needs a connected KV store. Recommended for large sites (thousands of URLs per language).</label>
+    </div>
+
     <div class="row-actions">
       <button class="run" id="hrBtn" onclick="runHreflang()">Build weekly report</button>
       <button class="run" id="hrDownloadXlsx" onclick="downloadHreflangFile('xlsx')"
@@ -658,6 +665,10 @@ async function runHreflang(){
   if($("hrCrawl") && $("hrCrawl").checked) body.useCrawlData = true;
   hrLastPayload = body;
 
+  if($("hrChunked") && $("hrChunked").checked){
+    return runHreflangChunked(body, sitemaps);
+  }
+
   const btn = $("hrBtn");
   btn.disabled = true;
   $("hrDownload").style.display = "none";
@@ -691,6 +702,82 @@ async function runHreflang(){
     btn.disabled = false;
     $("hrStatus").textContent = "";
     $("hrResults").innerHTML = '<div class="banner err"><b>Network error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+  }
+}
+
+let hrSessionId = null;
+
+// Group the selected sitemaps by detected language, then call the report once
+// per language (partial mode). Each call is small and finishes under 60s. A
+// final assemble call builds the combined report from the stored slices.
+async function runHreflangChunked(baseBody, sitemaps){
+  const btn = $("hrBtn"); btn.disabled = true;
+  $("hrDownload").style.display = "none";
+  $("hrDownloadXlsx").style.display = "none";
+  $("hrResults").innerHTML = "";
+
+  // group selected sitemaps by lang code using the loaded index badges
+  const byLang = new Map();
+  for(const cb of document.querySelectorAll('.sm-cb')){
+    if(!cb.checked) continue;
+    const e = smEntries[+cb.dataset.i];
+    const code = (e.lang && e.lang.code) || 'x-default';
+    if(!byLang.has(code)) byLang.set(code, { code, label:(e.lang&&e.lang.label)||'Default', locs:[] });
+    byLang.get(code).locs.push(e.loc);
+  }
+  const langs = [...byLang.values()];
+  if(!langs.length){ btn.disabled=false; $("hrStatus").textContent="Select at least one sitemap."; return; }
+
+  hrSessionId = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  const total = langs.length;
+  let done = 0;
+  const results = [];
+  $("hrResults").innerHTML = '<div class="bulk-note">Free-plan mode: processing '+total+' language(s) one at a time…</div>';
+
+  for(const L of langs){
+    done++;
+    $("hrStatus").innerHTML = '<span class="dot"></span>Language '+done+'/'+total+': '+escapeHtml(L.label)+'…';
+    const body = { ...baseBody, sitemaps: L.locs, partial: true, sessionId: hrSessionId, langCode: L.code };
+    try {
+      const res = await fetch("/api/hreflang-report", {
+        method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if(!res.ok || data.error){
+        btn.disabled=false; $("hrStatus").textContent="";
+        $("hrResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(L.label+': '+(data.error||"failed"))+'</b>'+
+          (data.hint?'<div style="margin-top:6px;color:var(--muted)">'+escapeHtml(data.hint)+'</div>':'')+'</div>';
+        return;
+      }
+      if(data.languages) results.push(...data.languages);
+    } catch(err){
+      btn.disabled=false; $("hrStatus").textContent="";
+      $("hrResults").innerHTML = '<div class="banner err"><b>Network error on '+escapeHtml(L.label)+'</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
+      return;
+    }
+  }
+
+  // assemble for the on-screen summary
+  $("hrStatus").innerHTML = '<span class="dot"></span>Assembling combined report…';
+  try {
+    const res = await fetch("/api/hreflang-assemble", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ sessionId: hrSessionId })
+    });
+    const data = await res.json();
+    btn.disabled=false; $("hrStatus").textContent="";
+    if(!res.ok || data.error){
+      $("hrResults").innerHTML = '<div class="banner err"><b>'+escapeHtml(data.error||"Assemble failed")+'</b></div>';
+      return;
+    }
+    renderHreflang(data);
+    // downloads go through the assemble endpoint (session-based)
+    $("hrDownloadXlsx").style.display = "inline-flex";
+    $("hrDownload").style.display = "inline-flex";
+    hrLastPayload = { __assemble: true, sessionId: hrSessionId };
+  } catch(err){
+    btn.disabled=false; $("hrStatus").textContent="";
+    $("hrResults").innerHTML = '<div class="banner err"><b>Assemble error</b><div style="margin-top:6px;color:var(--muted)">'+escapeHtml(String(err.message||err))+'</div></div>';
   }
 }
 
@@ -823,9 +910,13 @@ async function downloadHreflangFile(kind){
   const idle = kind === 'xlsx' ? "Download Excel report ↓" : "CSV ↓";
   btn.disabled = true; btn.textContent = kind === 'xlsx' ? "Building workbook…" : "Preparing CSV…";
   try {
-    const res = await fetch("/api/hreflang-report", {
+    const chunked = hrLastPayload.__assemble === true;
+    const url = chunked ? "/api/hreflang-assemble" : "/api/hreflang-report";
+    const payload = chunked ? { sessionId: hrLastPayload.sessionId, format: kind }
+                            : { ...hrLastPayload, format: kind };
+    const res = await fetch(url, {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({...hrLastPayload, format: kind})
+      body: JSON.stringify(payload)
     });
     if(!res.ok){ btn.textContent = "Failed — retry"; btn.disabled = false; return; }
     const blob = await res.blob();
@@ -835,6 +926,8 @@ async function downloadHreflangFile(kind){
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
     btn.textContent = idle;
+    // in chunked mode the session is consumed by the download; re-run to make another
+    if(chunked) hrLastPayload = null;
   } catch { btn.textContent = "Failed — retry"; }
   btn.disabled = false;
 }
