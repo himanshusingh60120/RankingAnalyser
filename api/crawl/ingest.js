@@ -13,13 +13,14 @@
 // When done, crawl:latest points at this job with its chunk list + counts so
 // the report can load the index status for every crawled URL.
 
-import { isKvConfigured, kvGetJSON, kvSetJSON } from "../../lib/kv.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvSetJSON } from "../../lib/kv.js";
 import { requireAgent } from "../../lib/agent-auth.js";
 import { parseCrawlRows } from "../../lib/crawl-parse.js";
 
 const TTL = 60 * 60 * 24 * 30;
 
 export async function POST(request) {
+  try {
   const auth = requireAgent(request);
   if (auth) return auth;
   if (!isKvConfigured()) return json({ error: "KV not configured." }, 503);
@@ -74,6 +75,10 @@ export async function POST(request) {
 
   await kvSetJSON(`crawl:job:${jobId}`, job, TTL);
   return json({ ok: true, chunks: job.chunks, receivedRows: job.receivedRows });
+
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "POST failed", detail: String(e && e.message || e) }, null, 2), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
 }
 
 function json(obj, status = 200) {
