@@ -1,9 +1,10 @@
 // api/crawl/status.js
 // GET /api/crawl/status  -> { latest, jobs } for the UI to display crawl state.
 
-import { isKvConfigured, kvGetJSON, kvLRange } from "../../lib/kv.js";
+import { isKvConfigured, kvStatus, kvGetJSON, kvLRange } from "../../lib/kv.js";
 
 export async function GET() {
+  try {
   if (!isKvConfigured()) {
     return json({ configured: false,
       hint: "Connect a Vercel KV (Upstash) store to enable crawl-based index status." });
@@ -17,6 +18,10 @@ export async function GET() {
                        createdAt: j.createdAt, finishedAt: j.finishedAt, counts: j.counts });
   }
   return json({ configured: true, latest, jobs });
+
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "GET failed", detail: String(e && e.message || e) }, null, 2), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
 }
 
 function json(obj, status = 200) {
