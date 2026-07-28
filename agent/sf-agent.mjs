@@ -44,7 +44,7 @@ const api = (path, opts = {}) =>
   });
 
 async function claimJob() {
-  const res = await api("/api/crawl/next", { method: "POST", body: "{}" });
+  const res = await api("/api/crawl-next", { method: "POST", body: "{}" });
   if (!res.ok) throw new Error(`claim failed: ${res.status} ${await res.text()}`);
   return (await res.json()).job;
 }
@@ -129,7 +129,7 @@ async function uploadChunks(job, rowObjs) {
   for (let c = 0; c < total; c++) {
     const slice = rows.slice(c * CFG.chunkSize, (c + 1) * CFG.chunkSize);
     const done = c === total - 1;
-    const res = await api("/api/crawl/ingest", {
+    const res = await api("/api/crawl-ingest", {
       method: "POST",
       body: JSON.stringify({ jobId: job.id, chunkIndex: c, done, rows: slice }),
     });
