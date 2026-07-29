@@ -3,37 +3,39 @@
 //
 // Runs on the machine that has Screaming Frog SEO Spider (paid license, CLI
 // enabled). Polls your Vercel app for crawl jobs, runs Screaming Frog headless,
-// parses the export, and uploads the index status back to Vercel in chunks.
+// parses the export, and uploads index status + status codes back to Vercel.
 //
-// Vercel is the control plane: you create/trigger jobs and read results there;
-// this agent is the muscle that runs the actual crawl locally.
-//
-// Setup: copy .env.example -> .env and fill it in, then:
-//   node agent/sf-agent.mjs            # run once, process one job and exit
-//   node agent/sf-agent.mjs --loop     # poll forever (every POLL_SECONDS)
+//   node sf-agent.mjs            # process one job and exit
+//   node sf-agent.mjs --loop     # poll forever (every POLL_SECONDS)
 //
 // Requires Node 18+ (built-in fetch). No npm install needed.
+//
+// JOB MODES:
+//   sitemap  -> fetch EVERY URL from the sitemap (or sitemap index, all
+//               languages) and crawl exactly those URLs via List mode
+//               (--crawl-list). This is what you want for "crawl my sitemap
+//               URLs, get 301s/404s + indexability". No GUI config needed.
+//   spider   -> classic --crawl <url> spider that follows links.
 
 import { spawn } from "node:child_process";
-import { readFile, readdir, mkdtemp, rm } from "node:fs/promises";
+import { readFile, writeFile, readdir, mkdtemp, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// ---- config from environment ----
 const CFG = {
-  base: env("VERCEL_BASE_URL"),                 // e.g. https://ranking-analyser.vercel.app
-  token: env("AGENT_TOKEN"),                    // must match the Vercel env var
-  sfCli: env("SF_CLI_PATH"),                    // full path to the Screaming Frog CLI executable
-  sfConfig: process.env.SF_CONFIG_PATH || "",   // optional .seospiderconfig
-  outDir: process.env.SF_OUTPUT_DIR || "",      // optional; a temp dir is used if empty
+  base: env("VERCEL_BASE_URL"),
+  token: env("AGENT_TOKEN"),
+  sfCli: env("SF_CLI_PATH"),
+  sfConfig: process.env.SF_CONFIG_PATH || "",
+  outDir: process.env.SF_OUTPUT_DIR || "",
   chunkSize: Number(process.env.CHUNK_SIZE || 4000),
   pollSeconds: Number(process.env.POLL_SECONDS || 60),
 };
 
 function env(name) {
   const v = process.env[name];
-  if (!v) { console.error(`Missing required env var ${name}. Copy agent/.env.example to .env and fill it in.`); process.exit(1); }
+  if (!v) { console.error(`Missing required env var ${name}.`); process.exit(1); }
   return v;
 }
 
@@ -49,21 +51,70 @@ async function claimJob() {
   return (await res.json()).job;
 }
 
-// Run Screaming Frog headless and return the folder it wrote exports to.
+// ---- Sitemap expansion -------------------------------------------------------
+// Recursively fetch a sitemap or sitemap index and return all page <loc> URLs.
+async function fetchText(url) {
+  const res = await fetch(url, { headers: { "User-Agent": "RankingAnalyser-Agent/1.0" } });
+  if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
+  return res.text();
+}
+
+function extractLocs(xml) {
+  const locs = [];
+  const re = /<loc>\s*([^<\s]+)\s*<\/loc>/gi;
+  let m;
+  while ((m = re.exec(xml))) locs.push(m[1].trim());
+  return locs;
+}
+
+async function expandSitemap(url, seen = new Set(), pages = []) {
+  if (seen.has(url)) return pages;
+  seen.add(url);
+  let xml;
+  try { xml = await fetchText(url); }
+  catch (e) { console.error(`[sitemap] skip ${url}: ${e.message}`); return pages; }
+
+  const isIndex = /<sitemapindex/i.test(xml);
+  const locs = extractLocs(xml);
+  if (isIndex) {
+    console.log(`[sitemap] index ${url} -> ${locs.length} child sitemaps`);
+    for (const child of locs) await expandSitemap(child, seen, pages);
+  } else {
+    console.log(`[sitemap] ${url} -> ${locs.length} urls`);
+    for (const u of locs) pages.push(u);
+  }
+  return pages;
+}
+
+// ---- Run Screaming Frog ------------------------------------------------------
 async function runCrawl(job) {
   const out = CFG.outDir || (await mkdtemp(join(tmpdir(), "sfcrawl-")));
-  const args = [];
-  if (job.mode === "sitemap") { args.push("--crawl-list"); } // treated below
-  // Screaming Frog flags. --crawl for a spider crawl; sitemaps are crawled by
-  // pointing --crawl at the sitemap URL with "crawl these sitemaps" config, or
-  // simply spidering the site root. We spider the target here.
-  args.length = 0;
-  args.push("--crawl", job.target, "--headless", "--overwrite",
-            "--output-folder", out,
-            "--export-tabs", "Internal:All");
+  const wantSitemap = job.mode === "sitemap" || /sitemap[^/]*\.xml($|\?)/i.test(job.target);
+
+  let args;
+  let listFile = "";
+  if (wantSitemap) {
+    // Expand the sitemap(s) to a URL list, then crawl exactly those URLs.
+    const pages = [...new Set(await expandSitemap(job.target))];
+    if (!pages.length) throw new Error(`No URLs found in sitemap ${job.target}`);
+    listFile = join(out, "urls.txt");
+    await writeFile(listFile, pages.join("\n"), "utf8");
+    console.log(`[sitemap] total ${pages.length} URLs -> ${listFile}`);
+    args = [
+      "--crawl-list", listFile,
+      "--headless", "--overwrite",
+      "--output-folder", out,
+      "--export-tabs", "Internal:All",
+    ];
+  } else {
+    args = [
+      "--crawl", job.target,
+      "--headless", "--overwrite",
+      "--output-folder", out,
+      "--export-tabs", "Internal:All",
+    ];
+  }
   if (CFG.sfConfig && existsSync(CFG.sfConfig)) args.push("--config", CFG.sfConfig);
-  // If the job wants Google's verdict, your saved .seospiderconfig must have
-  // GSC URL Inspection enabled (see agent/README.md) — it can't be toggled via CLI.
 
   console.log(`[crawl] ${CFG.sfCli} ${args.join(" ")}`);
   await new Promise((resolve, reject) => {
@@ -74,7 +125,6 @@ async function runCrawl(job) {
   return out;
 }
 
-// Find the Internal export CSV in the output folder.
 async function findExport(dir) {
   const files = await readdir(dir);
   const csv = files.find((f) => /internal.*\.csv$/i.test(f)) || files.find((f) => f.toLowerCase().endsWith(".csv"));
@@ -82,7 +132,6 @@ async function findExport(dir) {
   return join(dir, csv);
 }
 
-// Minimal CSV parse (handles quoted fields) -> array of row objects.
 function parseCsv(text) {
   const rows = [];
   let i = 0, field = "", record = [], inQ = false;
@@ -107,7 +156,6 @@ function parseCsv(text) {
 }
 
 async function uploadChunks(job, rowObjs) {
-  // keep only the columns the server needs, to stay small
   const keep = (r) => {
     const g = (names) => {
       for (const n of names) {
@@ -119,6 +167,7 @@ async function uploadChunks(job, rowObjs) {
     return {
       url: g(["address", "url"]),
       statusCode: g(["status code"]),
+      status: g(["status"]),
       indexability: g(["indexability"]),
       indexabilityStatus: g(["indexability status"]),
       coverage: g(["coverage", "search console coverage"]),
@@ -142,7 +191,7 @@ async function uploadChunks(job, rowObjs) {
 async function processOne() {
   const job = await claimJob();
   if (!job) { console.log("No pending jobs."); return false; }
-  console.log(`[job] ${job.id} — crawling ${job.target}`);
+  console.log(`[job] ${job.id} — ${job.mode || "spider"} — ${job.target}`);
   let dir;
   try {
     dir = await runCrawl(job);
