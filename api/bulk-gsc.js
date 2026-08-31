@@ -5,11 +5,18 @@
 // Search Console metrics — average position (rank), CTR, impressions, clicks —
 // pulled and inserted for every URL.
 //
+// Works across EVERY Search Console property the connected Google account can
+// read, not just one. Pass gscSiteUrl to choose, or leave it out and the
+// property is detected from the URLs in the CSV. GET /api/gsc-sites lists them.
+//
 // Body (application/json):
 //   {
 //     "csv": "Title,URL\n...",        // raw CSV text   (OR)
 //     "rows": [{ "title": "...", "url": "..." }],
-//     "gscSiteUrl": "https://www.kingsresearch.com/",   // optional -> env GSC_SITE_URL
+//     "gscSiteUrl": "sc-domain:example.com",  // optional: any property the
+//                                      //   connected account can read. Omit to
+//                                      //   auto-detect from the CSV's own URLs.
+//     "autoDetectSite": true,          // optional, default true
 //     "gscRefreshToken": "...",        // optional -> env GSC_REFRESH_TOKEN
 //     "days": 28,                       // optional, default 28 (recent window = "latest")
 //     "startDate": "2026-06-15",        // optional custom range (YYYY-MM-DD, GSC/PT dates)
@@ -36,6 +43,8 @@ import {
   indexMetricsByNormalizedUrl,
   resolveDateRange,
   normalizeCountry,
+  listSites,
+  resolveSiteForRequest,
 } from "../lib/gsc.js";
 import { parseTitleUrlCsv, toCsv } from "../lib/csv.js";
 import { fetchTitle } from "../lib/titles.js";
@@ -98,14 +107,18 @@ export async function POST(request) {
     (body.format || "").toLowerCase() === "csv" ||
     (request.headers.get("accept") || "").includes("text/csv");
 
-  const siteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
+  // The property is resolved AFTER auth, against the real list of properties
+  // this account can read — see the site-resolution block below.
+  const requestedSite = String(body.gscSiteUrl || "").trim() || null;
+  const envSite = String(process.env.GSC_SITE_URL || "").trim() || null;
+  const autoDetectSite = body.autoDetectSite !== false;
   const refreshToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
 
-  if (!siteUrl || !refreshToken) {
+  if (!refreshToken) {
     return json({
       error: "Search Console credentials missing.",
-      hint: "Pass gscSiteUrl + gscRefreshToken, or set GSC_SITE_URL + GSC_REFRESH_TOKEN " +
-            "env vars. Get a refresh token from /api/auth/start.",
+      hint: "Pass gscRefreshToken, or set the GSC_REFRESH_TOKEN env var. " +
+            "Get a refresh token from /api/auth/start.",
     }, 400);
   }
 
@@ -146,6 +159,49 @@ export async function POST(request) {
   } catch (e) {
     return json({ error: "GSC token refresh failed.", detail: String(e.message || e) }, 502);
   }
+
+  // ---- work out which property to query ----
+  // The token is account-wide: it reads every property the signed-in Google
+  // account is verified on, not only the one in GSC_SITE_URL. So ask Google
+  // what those properties are, then match the request (or the CSV's own URLs)
+  // against them.
+  let sites = [];
+  let sitesError = null;
+  try {
+    sites = await listSites(accessToken);
+  } catch (e) {
+    sitesError = String(e.message || e); // non-fatal: fall back to the raw value
+  }
+
+  const csvUrls = inputRows.map((r) => r.url).filter(isUrl);
+  const picked = resolveSiteForRequest({
+    requested: requestedSite,
+    envSite,
+    sites,
+    urls: csvUrls,
+    autoDetect: autoDetectSite,
+  });
+
+  if (!picked.siteUrl) {
+    const readable = sites.filter((s) => s.canQuery).map((s) => s.siteUrl);
+    return json({
+      error: picked.reason === "no-access"
+        ? `This Google account has no Search Console property matching "${requestedSite}".`
+        : "Could not tell which Search Console property to query.",
+      hint: readable.length
+        ? "Pass gscSiteUrl set to one of availableProperties, exactly as listed."
+        : "The connected account has no readable properties. Add it in Search Console " +
+          "under Settings → Users and permissions.",
+      availableProperties: readable,
+      ...(sitesError ? { sitesError } : {}),
+    }, 400);
+  }
+
+  const siteUrl = picked.siteUrl;
+  const siteWarning = picked.site && picked.site.canQuery === false
+    ? `Access to ${siteUrl} is "${picked.site.permissionLevel}" — the property is visible ` +
+      "but its data is not readable. Ask an owner for Restricted access or higher."
+    : null;
 
   // ---- bulk pull (one call) unless precise mode forces per-URL for all ----
   let exactMap = new Map();
@@ -265,6 +321,17 @@ export async function POST(request) {
   return json({
     generatedAt: new Date().toISOString(),
     siteUrl,
+    // How this property was chosen, so a zero-match run is diagnosable at a glance.
+    siteResolution: {
+      siteUrl,
+      reason: picked.reason,
+      verified: picked.verified !== false,
+      permissionLevel: picked.site ? picked.site.permissionLevel : null,
+      ...(picked.coverage != null ? { urlCoverage: `${picked.coverage}%` } : {}),
+      ...(picked.alternatives ? { alsoAvailable: picked.alternatives } : {}),
+      propertiesOnAccount: sites.length || null,
+      ...(siteWarning ? { warning: siteWarning } : {}),
+    },
     days,
     dateRange: range, // exact GSC (PT) dates used — set the same custom range in the GSC UI to verify
     filters: {
@@ -288,6 +355,7 @@ export async function POST(request) {
       lookupTruncated: lookupTruncated ? `per-URL lookups capped at ${MAX_PER_URL}` : false,
       titleTruncated: titleTruncated ? `title fetches capped at ${MAX_TITLE_FETCH}` : false,
       bulkError,
+      sitesError,
       lookupErrors: lookupErrors.length ? lookupErrors.slice(0, 10) : undefined,
       titleErrors: titleErrors.length ? titleErrors.slice(0, 10) : undefined,
     },
