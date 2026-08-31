@@ -26,6 +26,8 @@ import {
   indexMetricsByNormalizedUrl,
   resolveDateRange,
   normalizeCountry,
+  listSites,
+  resolveSiteForRequest,
 } from "../lib/gsc.js";
 import { parseTitleUrlCsv, toCsv } from "../lib/csv.js";
 
@@ -83,17 +85,45 @@ export async function POST(request) {
   const wantCsv = (body.format || "").toLowerCase() === "csv" ||
                   (request.headers.get("accept") || "").includes("text/csv");
 
-  const siteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
+  // Property is resolved after auth, against the properties this account can read.
+  const requestedSite = String(body.gscSiteUrl || "").trim() || null;
+  const envSite = String(process.env.GSC_SITE_URL || "").trim() || null;
+  const autoDetectSite = body.autoDetectSite !== false;
   const refreshToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
-  if (!siteUrl || !refreshToken) {
+  if (!refreshToken) {
     return json({ error: "Search Console credentials missing.",
-                  hint: "Pass gscSiteUrl + gscRefreshToken, or set GSC_SITE_URL + GSC_REFRESH_TOKEN env vars." }, 400);
+                  hint: "Pass gscRefreshToken, or set the GSC_REFRESH_TOKEN env var." }, 400);
   }
 
   // ---- auth ----
   let accessToken;
   try { ({ access_token: accessToken } = await refreshAccessToken(refreshToken)); }
   catch (e) { return json({ error: "GSC token refresh failed.", detail: String(e.message || e) }, 502); }
+
+  // ---- which property? ----
+  let sites = [];
+  let sitesError = null;
+  try { sites = await listSites(accessToken); }
+  catch (e) { sitesError = String(e.message || e); }
+
+  const picked = resolveSiteForRequest({
+    requested: requestedSite,
+    envSite,
+    sites,
+    urls: inputRows.map((r) => r.url).filter((u) => /^https?:\/\//i.test(u || "")),
+    autoDetect: autoDetectSite,
+  });
+  if (!picked.siteUrl) {
+    return json({
+      error: picked.reason === "no-access"
+        ? `This Google account has no Search Console property matching "${requestedSite}".`
+        : "Could not tell which Search Console property to query.",
+      hint: "Pass gscSiteUrl set to one of availableProperties, exactly as listed.",
+      availableProperties: sites.filter((s) => s.canQuery).map((s) => s.siteUrl),
+      ...(sitesError ? { sitesError } : {}),
+    }, 400);
+  }
+  const siteUrl = picked.siteUrl;
 
   // ---- one property-wide pull per period ----
   const periodData = [];
@@ -181,6 +211,14 @@ export async function POST(request) {
   return json({
     generatedAt: new Date().toISOString(),
     siteUrl,
+    siteResolution: {
+      siteUrl,
+      reason: picked.reason,
+      verified: picked.verified !== false,
+      permissionLevel: picked.site ? picked.site.permissionLevel : null,
+      ...(picked.coverage != null ? { urlCoverage: `${picked.coverage}%` } : {}),
+      propertiesOnAccount: sites.length || null,
+    },
     filters: { country: country || "all", searchType: searchType || "web",
                dataState: "all (includes fresh data, like the GSC UI)" },
     note: "Blank period metrics mean Search Console recorded no data for that URL in that period. " +
