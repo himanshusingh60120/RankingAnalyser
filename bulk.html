@@ -51,11 +51,16 @@
   @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
   label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
           text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
-  input[type=text] {
+  input[type=text], select {
     width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
     padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
   }
-  input[type=text]:focus { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-dim); }
+  input[type=text]:focus, select:focus { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-dim); }
+  select { cursor: pointer; appearance: none; padding-right: 34px;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%236f7f7a' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; background-size: 11px; }
+  select:disabled { color: var(--dim); cursor: default; }
+  select option { background: var(--panel-2); color: var(--ink); }
   .full { grid-column: 1 / -1; }
   .adv { margin-top: 14px; }
   /* Page-type segmented toggle */
@@ -321,8 +326,12 @@
       <summary>Advanced — property &amp; token override</summary>
       <div class="grid">
         <div>
-          <label for="hrSite">GSC property URL (optional)</label>
-          <input type="text" id="hrSite" placeholder="defaults to server config" />
+          <label for="hrSite">Search Console property</label>
+          <select id="hrSite" onchange="onSitePick('hr')">
+            <option value="">Detect from the sitemap</option>
+          </select>
+          <input type="text" id="hrSiteCustom" style="display:none;margin-top:8px"
+                 placeholder="sc-domain:example.com or https://www.example.com/" />
         </div>
         <div>
           <label for="hrToken">GSC refresh token (optional)</label>
@@ -406,8 +415,8 @@
     <p class="lede" style="margin:0 0 18px;font-size:14px">
       Upload a CSV with <b>URLs</b> (URL-only, or Title in column A + URL in column B).
       GSC rank · CTR · impressions · clicks are pulled for every URL. Titles can be
-      extracted live from the pages themselves. Uses the property's connected token
-      (or override below).</p>
+      extracted live from the pages themselves. Works on any property the connected
+      Google account can read — pick one below, or let it follow the URLs in the CSV.</p>
 
     <div class="grid">
       <div class="full">
@@ -441,8 +450,13 @@
         <input type="text" id="bulkCountry" placeholder="all countries" />
       </div>
       <div>
-        <label for="bulkSite">GSC property URL <span style="color:var(--dim)">(optional)</span></label>
-        <input type="text" id="bulkSite" placeholder="defaults to server config" />
+        <label for="bulkSite">Search Console property</label>
+        <select id="bulkSite" onchange="onSitePick('bulk')">
+          <option value="">Detect from the CSV</option>
+        </select>
+        <input type="text" id="bulkSiteCustom" style="display:none;margin-top:8px"
+               placeholder="sc-domain:example.com or https://www.example.com/" />
+        <div class="seg-hint" id="bulkSiteHint" style="margin-top:8px">Loading properties…</div>
       </div>
       <div class="full" style="display:flex;align-items:center;gap:9px">
         <input type="checkbox" id="bulkTitles" style="width:auto" checked />
@@ -553,7 +567,87 @@ document.addEventListener('DOMContentLoaded', ()=>{
   buildWeeks();
   wireBulkCsv();
   refreshCrawl();
+  loadGscProperties();
+  // a pasted token override belongs to a different account — reload its properties
+  ['bulkToken','hrToken'].forEach(id=>{
+    const el = $(id);
+    if(el) el.addEventListener('change', ()=> loadGscProperties(true));
+  });
 });
+
+/* ---------- Search Console properties ----------
+   One refresh token reads every property its Google account is verified on,
+   so the picker is filled from Google rather than from a server-side default. */
+let gscSites = [];
+
+async function loadGscProperties(force){
+  const hint = $("bulkSiteHint");
+  if(hint && !force) hint.textContent = "Loading properties…";
+  const token = ($("bulkToken") && $("bulkToken").value.trim()) ||
+                ($("hrToken") && $("hrToken").value.trim()) || "";
+  try {
+    const res = await fetch("/api/gsc-sites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(token ? { gscRefreshToken: token } : {})
+    });
+    const data = await res.json();
+    if(!res.ok || data.error){
+      gscSites = [];
+      fillSiteSelect("bulkSite", "Detect from the CSV");
+      fillSiteSelect("hrSite", "Detect from the sitemap");
+      if(hint) hint.innerHTML = '<span style="color:var(--warn)">'+escapeHtml(data.error||"Could not load properties")+'</span>'+
+        (data.hint? ' <span style="color:var(--dim)">'+escapeHtml(data.hint)+'</span>' : '');
+      return;
+    }
+    gscSites = data.sites || [];
+    fillSiteSelect("bulkSite", "Detect from the CSV", data.defaultSiteUrl);
+    fillSiteSelect("hrSite", "Detect from the sitemap", data.defaultSiteUrl);
+    const readable = gscSites.filter(s=>s.canQuery).length;
+    if(hint){
+      hint.innerHTML = readable
+        ? '<b style="color:var(--signal)">'+readable+'</b> propert'+(readable===1?'y':'ies')+' available'+
+          (data.account? ' · <span style="color:var(--dim)">'+escapeHtml(data.account)+'</span>' : '')
+        : '<span style="color:var(--warn)">No readable properties on this account.</span>';
+    }
+  } catch(err){
+    if(hint) hint.innerHTML = '<span style="color:var(--warn)">Could not reach /api/gsc-sites: '+escapeHtml(String(err.message||err))+'</span>';
+  }
+}
+
+function fillSiteSelect(id, autoLabel, defaultSite){
+  const sel = $(id);
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = "";
+  sel.appendChild(new Option(autoLabel, ""));
+  for(const s of gscSites){
+    const label = s.siteUrl + (s.canQuery ? "" : "  (no data access)") +
+                  (s.siteUrl === defaultSite ? "  · server default" : "");
+    const opt = new Option(label, s.siteUrl);
+    opt.disabled = !s.canQuery;
+    sel.appendChild(opt);
+  }
+  sel.appendChild(new Option("Type a property manually…", "__custom__"));
+  if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
+}
+
+function onSitePick(which){
+  const custom = $(which + "SiteCustom");
+  if(!custom) return;
+  custom.style.display = $(which + "Site").value === "__custom__" ? "block" : "none";
+}
+
+/** The chosen property, or undefined to let the server detect it. */
+function siteValue(id){
+  const sel = $(id);
+  if(!sel) return undefined;
+  if(sel.value === "__custom__"){
+    const c = $(id + "Custom");
+    return (c && c.value.trim()) || undefined;
+  }
+  return sel.value.trim() || undefined;
+}
 
 async function loadSitemaps(){
   const url = $("smIndexUrl").value.trim();
@@ -659,7 +753,7 @@ async function runHreflang(){
     weeks: periods.map(w=>({label:w.label, startDate:w.startDate, endDate:w.endDate})),
   };
   const country = $("hrCountry").value.trim(); if(country) body.country = country;
-  const site = $("hrSite").value.trim(); if(site) body.gscSiteUrl = site;
+  const site = siteValue("hrSite"); if(site) body.gscSiteUrl = site;
   const tok = $("hrToken").value.trim(); if(tok) body.gscRefreshToken = tok;
   if($("hrVerify") && $("hrVerify").checked) body.verifyIndexing = true;
   if($("hrCrawl") && $("hrCrawl").checked) body.useCrawlData = true;
@@ -965,7 +1059,7 @@ async function runBulk(){
   const endDate = $("bulkEnd").value || undefined;
   const country = $("bulkCountry").value.trim() || undefined;
   const extractTitles = $("bulkTitles").checked;
-  const gscSiteUrl = $("bulkSite").value.trim() || undefined;
+  const gscSiteUrl = siteValue("bulkSite");
   const gscRefreshToken = $("bulkToken").value.trim() || undefined;
   const precise = $("bulkPrecise").checked;
   if (startDate && endDate && startDate > endDate) {
@@ -1028,6 +1122,18 @@ function renderBulk(data){
     '<span style="color:var(--dim)"><b>'+(t.unmatched||0)+'</b> no data</span>'+
     (t.titlesExtracted!=null ? '<span style="color:var(--info)"><b>'+t.titlesExtracted+'</b> titles extracted</span>' : '')+
     '<span style="color:var(--muted)">'+escapeHtml(rangeLabel+countryLabel)+'</span></div>';
+
+  const sr = data.siteResolution;
+  if(sr && sr.siteUrl){
+    html += '<div class="bulk-note">Property: <b style="color:var(--signal)">'+escapeHtml(sr.siteUrl)+'</b>'+
+      (sr.reason? ' — '+escapeHtml(sr.reason) : '')+
+      (sr.propertiesOnAccount>1 ? ' · '+sr.propertiesOnAccount+' available on this account' : '')+'</div>';
+    if(sr.warning) html += '<div class="banner warnb" style="margin-top:8px">'+escapeHtml(sr.warning)+'</div>';
+  }
+  if(t.matched===0 && sr && sr.siteUrl){
+    html += '<div class="banner warnb" style="margin-top:8px">No rows matched. These URLs may belong to a different '+
+      'Search Console property — pick the right one above, or check the URLs are the exact forms Google indexed.</div>';
+  }
   if(data.note) html += '<div class="bulk-note">'+escapeHtml(data.note)+'</div>';
 
   html += '<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr>'+
@@ -1054,7 +1160,7 @@ async function runBulkCompare(){
   if(months.length < 2){ $("bulkStatus").textContent = "Tick at least two months to compare."; return; }
   const body = { csv: bulkCsvText, periods: months.map(m=>({label:m.label, startDate:m.startDate, endDate:m.endDate})) };
   const country = $("bulkCountry").value.trim(); if(country) body.country = country;
-  const site = $("bulkSite").value.trim(); if(site) body.gscSiteUrl = site;
+  const site = siteValue("bulkSite"); if(site) body.gscSiteUrl = site;
   const tok = $("bulkToken").value.trim(); if(tok) body.gscRefreshToken = tok;
   bulkComparePayload = body;
 
