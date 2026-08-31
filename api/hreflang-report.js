@@ -30,6 +30,8 @@ import {
   indexMetricsByNormalizedUrl,
   resolveDateRange,
   normalizeCountry,
+  listSites,
+  resolveSiteForRequest,
 } from "../lib/gsc.js";
 import { collectSitemapUrls, urlMatchesLang } from "../lib/sitemaps.js";
 import { toCsv } from "../lib/csv.js";
@@ -99,11 +101,14 @@ export async function POST(request) {
   const wantCsv = fmt === "csv" || (request.headers.get("accept") || "").includes("text/csv");
   const wantXlsx = fmt === "xlsx" || fmt === "excel";
 
-  const siteUrl = body.gscSiteUrl || process.env.GSC_SITE_URL || null;
+  // Property resolved after auth against the account's real property list.
+  const requestedSite = String(body.gscSiteUrl || "").trim() || null;
+  const envSite = String(process.env.GSC_SITE_URL || "").trim() || null;
+  const autoDetectSite = body.autoDetectSite !== false;
   const refreshToken = body.gscRefreshToken || process.env.GSC_REFRESH_TOKEN || null;
-  if (!siteUrl || !refreshToken) {
+  if (!refreshToken) {
     return json({ error: "Search Console credentials missing.",
-                  hint: "Pass gscSiteUrl + gscRefreshToken, or set GSC_SITE_URL + GSC_REFRESH_TOKEN env vars." }, 400);
+                  hint: "Pass gscRefreshToken, or set the GSC_REFRESH_TOKEN env var." }, 400);
   }
 
   // ---- 1. collect URLs from the selected sitemaps ----
@@ -121,6 +126,34 @@ export async function POST(request) {
   let accessToken;
   try { ({ access_token: accessToken } = await refreshAccessToken(refreshToken)); }
   catch (e) { return json({ error: "GSC token refresh failed.", detail: String(e.message || e) }, 502); }
+
+  // ---- 2b. which property? ----
+  // The token reads every property this Google account is verified on, so the
+  // sitemap's own URLs decide the property when one wasn't named.
+  let sites = [];
+  let sitesError = null;
+  try { sites = await listSites(accessToken); }
+  catch (e) { sitesError = String(e.message || e); }
+
+  const sampleUrls = perSitemap.flatMap((s) => (s.urls || []).slice(0, 25));
+  const picked = resolveSiteForRequest({
+    requested: requestedSite,
+    envSite,
+    sites,
+    urls: sampleUrls,
+    autoDetect: autoDetectSite,
+  });
+  if (!picked.siteUrl) {
+    return json({
+      error: picked.reason === "no-access"
+        ? `This Google account has no Search Console property matching "${requestedSite}".`
+        : "Could not tell which Search Console property to query.",
+      hint: "Pass gscSiteUrl set to one of availableProperties, exactly as listed.",
+      availableProperties: sites.filter((s) => s.canQuery).map((s) => s.siteUrl),
+      ...(sitesError ? { sitesError } : {}),
+    }, 400);
+  }
+  const siteUrl = picked.siteUrl;
 
   // ---- 3. one property-wide bulk query per week ----
   // In partial (free-tier) mode, scope each GSC query to this one language's
@@ -422,6 +455,13 @@ export async function POST(request) {
   return json({
     generatedAt: new Date().toISOString(),
     siteUrl,
+    siteResolution: {
+      siteUrl,
+      reason: picked.reason,
+      verified: picked.verified !== false,
+      permissionLevel: picked.site ? picked.site.permissionLevel : null,
+      propertiesOnAccount: sites.length || null,
+    },
     filters: {
       country: country || "all",
       searchType: searchType || "web",
