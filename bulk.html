@@ -1,3 +1,4 @@
+<!-- bulk.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -204,7 +205,7 @@
   .bulk-table tr.miss td.url a { color: var(--dim); }
 
   /* ---- Top ribbon nav ---- */
-  .ribbon { display:flex; align-items:center; gap:8px; padding:14px 0 0; }
+  .ribbon { display:flex; align-items:center; gap:8px; padding:14px 0 0; flex-wrap:wrap; }
   .ribbon .brand { font-family: var(--mono); font-size: 12px; letter-spacing:.2em; text-transform:uppercase;
     color: var(--signal); margin-right:auto; text-decoration:none; }
   .ribbon a.tab { font-family: var(--mono); font-size:12px; color: var(--muted); text-decoration:none;
@@ -261,6 +262,7 @@
     <a class="tab" href="/">X-Ray</a>
     <a class="tab active" href="/bulk">Bulk Search Console</a>
     <a class="tab" href="/planner" target="_blank" rel="noopener">Content Planner</a>
+    <a class="tab" href="/brief">Content Brief</a>
   </nav>
 
   <header>
