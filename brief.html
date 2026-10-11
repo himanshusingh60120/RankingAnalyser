@@ -18,25 +18,23 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
 body{background-image:linear-gradient(transparent 0 96%,rgba(77,208,167,.035) 96% 100%),radial-gradient(900px 500px at 80% -10%,rgba(77,208,167,.06),transparent 70%);background-size:100% 26px,100% 100%;line-height:1.5}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px}
-/* ---- app shell (matches the X-Ray page) ---- */
 .ribbon{display:flex;align-items:center;gap:8px;padding:14px 0 0;flex-wrap:wrap}
 .ribbon .brand{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--signal);margin-right:auto;text-decoration:none}
 .ribbon a.tab{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:9px 16px;border-radius:9px;transition:all .15s}
 .ribbon a.tab:hover{color:var(--ink);border-color:var(--signal)}
 .ribbon a.tab.active{background:var(--signal);color:#04130d;font-weight:600;border-color:var(--signal)}
-header{padding:40px 0 26px;border-bottom:1px solid var(--line)}
+header{padding:34px 0 20px;border-bottom:1px solid var(--line)}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--signal);margin:0 0 12px}
-header h1{font-size:clamp(28px,4vw,42px);margin:0;letter-spacing:-.02em;font-weight:650}
+header h1{font-size:clamp(28px,4vw,40px);margin:0;letter-spacing:-.02em;font-weight:650}
 header h1 .x{color:var(--signal)}
-.lede{color:var(--muted);margin:12px 0 0;max-width:66ch;font-size:15px}
-.console{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin:24px 0 18px}
+.lede{color:var(--muted);margin:12px 0 0;max-width:68ch;font-size:15px}
+.console{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin:22px 0 16px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:680px){.grid{grid-template-columns:1fr}}
 .full{grid-column:1/-1}
 .console label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 7px}
-/* NEW: password input styled like the other fields (team access key) */
-.console input[type=text],.console input[type=password],.console select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:12px 13px;border-radius:9px;font-family:var(--mono);font-size:13.5px;outline:none}
-.console input[type=text]:focus,.console input[type=password]:focus,.console select:focus{border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim)}
+.console input[type=text],.console select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:12px 13px;border-radius:9px;font-family:var(--mono);font-size:13.5px;outline:none}
+.console input[type=text]:focus,.console select:focus{border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim)}
 #kw{font-size:16px;padding:14px 15px}
 .seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .seg-btn{background:transparent;border:0;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 18px;border-radius:8px;cursor:pointer}
@@ -46,23 +44,28 @@ header h1 .x{color:var(--signal)}
 .adv summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.08em}
 .adv[open] summary{color:var(--signal)}
 .adv .grid{margin-top:14px}
-.row-actions{display:flex;align-items:center;gap:16px;margin-top:20px;flex-wrap:wrap}
+.mbox{background:var(--panel-2);border:1px dashed var(--line);border-radius:9px;padding:14px;min-height:70px;color:var(--muted);font-family:var(--mono);font-size:12.5px;outline:none;max-height:120px;overflow:hidden}
+.mbox:focus{border-color:var(--signal)}
+.mbox:empty::before{content:attr(data-ph);color:var(--dim)}
+.mbox.got{color:var(--signal);border-style:solid}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink);margin:6px 6px 0 0}
+.chip button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px}
+.hint2{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
+.row-actions{display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}
 button.run{background:var(--signal);color:#04130d;border:0;padding:13px 26px;border-radius:9px;font-weight:650;font-size:14px;cursor:pointer;font-family:var(--sans)}
 button.run:hover{filter:brightness(1.08)}
 button.run:disabled{opacity:.5;cursor:not-allowed}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12.5px;cursor:pointer}
+button.ghost:hover{border-color:var(--signal)}
 .status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--signal);margin-right:7px;vertical-align:middle;animation:pulse 1.1s infinite}
 @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
-.banner{border-radius:10px;padding:12px 15px;font-size:13.5px;margin:10px 0}
-.banner a{color:inherit}
+.banner{border-radius:10px;padding:11px 15px;font-size:13.5px;margin:8px 0}
 .banner .hint{margin-top:6px;font-size:12.5px;opacity:.85}
 .banner.err{background:rgba(224,106,90,.1);border:1px solid rgba(224,106,90,.35);color:#f0b6ad}
-.banner.note{background:rgba(90,169,224,.08);border:1px solid rgba(90,169,224,.28);color:#bcd9f1}
 .banner.warnb{background:rgba(224,164,74,.09);border:1px solid rgba(224,164,74,.3);color:#f0d3a2}
-.banner.okb{background:rgba(77,208,167,.08);border:1px solid rgba(77,208,167,.3);color:#bfeedd}
 code{font-family:var(--mono);background:var(--panel-2);padding:1px 5px;border-radius:4px;font-size:12px}
 footer.app{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--dim)}
-/* ---- progress steps ---- */
 .steps{display:flex;gap:10px;margin:0 0 8px;flex-wrap:wrap}
 .steps.hidden{display:none}
 .step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--dim);padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
@@ -72,204 +75,235 @@ footer.app{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);fon
 .step.done{color:var(--muted)}
 .step.done .sn{background:var(--signal);color:#04130d;border-color:var(--signal)}
 .step.err{color:var(--crit);border-color:rgba(224,106,90,.45)}
-/* ---- page-1 panel ---- */
-.serp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0 14px}
-.serp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.serp-head h3{margin:0;font-size:16px}
-.serp-sub{font-family:var(--mono);font-size:11px;color:var(--dim)}
-.comp-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
-.srow{display:flex;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
-.pos{flex:none;width:34px;height:34px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px}
-.srow.is-ours .pos{background:var(--signal);color:#04130d;border-color:var(--signal)}
-.sbody{min-width:0;flex:1}
-.chip{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:2px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap}
-.t-ours{background:rgba(77,208,167,.16);color:var(--signal)}
-.t-tracked{background:rgba(224,106,90,.16);color:var(--crit)}
-.t-publisher{background:rgba(224,164,74,.16);color:var(--warn)}
-.t-authority{background:rgba(90,169,224,.16);color:var(--info)}
-.t-press,.t-news,.t-ugc,.t-other{background:#1a2430;color:var(--muted)}
-.dom{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px}
-.stitle{display:block;color:var(--ink);text-decoration:none;font-weight:600;font-size:14.5px;margin:5px 0 3px;word-break:break-word}
-.stitle:hover{color:var(--signal)}
-.ssnip{font-size:12.5px;color:var(--muted)}
-.sstats{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:7px}
-.sstats b{color:var(--ink);font-weight:600}
-/* ---- toolbar ---- */
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 0}
-.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:12px;padding:9px 14px;border-radius:9px;cursor:pointer}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
+.panel .ph2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:14px;gap:10px;flex-wrap:wrap}
+.panel a{color:var(--signal)}
+.tw{overflow-x:auto;margin:6px 0}
+table.st{width:100%;border-collapse:collapse;font-size:12.5px}
+table.st th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.st td{padding:7px 8px;border-bottom:1px solid #18222d;vertical-align:top}
+.up{color:var(--signal)}.down{color:var(--crit)}.nowrap{white-space:nowrap}.dimtxt{color:var(--dim)}
+.savebar{font-family:var(--mono);font-size:12px;color:var(--muted);margin:6px 0 10px;min-height:18px}
+.savebar a{color:var(--signal)}
+.savebar .bad{color:var(--crit)}
+.linkbtn{background:none;border:0;color:var(--signal);font-family:var(--mono);font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+.pbtn2{background:#0f7a5c;color:#fff;border:0;border-radius:6px;font-family:var(--mono);font-size:11px;padding:3px 9px;cursor:pointer;margin-left:6px;white-space:nowrap}
+.tabs{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
+.tabbtn{background:var(--panel);border:1px solid var(--line);border-bottom:0;color:var(--muted);font-family:var(--mono);font-size:12.5px;padding:10px 16px;border-radius:10px 10px 0 0;cursor:pointer}
+.tabbtn.on{background:var(--paper);color:#11161c;border-color:var(--paper);font-weight:600}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;padding-bottom:6px}
+.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:7px 11px;border-radius:8px;cursor:pointer}
 .tbtn:hover{border-color:var(--signal)}
-.tbtn.primary{background:var(--signal);color:#04130d;border-color:var(--signal);font-weight:600}
-/* ---- the brief "paper" ---- */
-.paper{background:var(--paper);color:var(--p-ink);border-radius:14px;padding:48px 56px 52px;margin:14px 0 40px;box-shadow:0 24px 60px rgba(0,0,0,.4);font-family:var(--sans);font-size:15px;line-height:1.65}
-@media(max-width:720px){.paper{padding:26px 18px}}
+.paper{background:var(--paper);color:var(--p-ink);border-radius:0 14px 14px 14px;padding:40px 50px 46px;margin:0 0 40px;box-shadow:0 24px 60px rgba(0,0,0,.4);font-size:15px;line-height:1.6}
+@media(max-width:720px){.paper{padding:22px 16px}}
 .paper a{color:var(--p-accent)}
-.paper code{background:var(--p-soft);color:var(--p-ink)}
 .doc-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--p-accent)}
-.paper .doc-title{font-family:var(--serif);font-size:34px;line-height:1.15;margin:8px 0 10px;letter-spacing:-.01em;color:var(--p-head);font-weight:700}
-.doc-meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--p-muted);padding-bottom:18px;border-bottom:2px solid var(--p-head)}
-.toc{background:var(--p-soft);border-radius:10px;padding:14px 18px;margin:22px 0 6px;font-size:13.5px}
-.toc ol{columns:2;margin:6px 0 0;padding-left:22px}
-.toc li{margin:2px 0;break-inside:avoid}
-.toc a{text-decoration:none}
-@media(max-width:720px){.toc ol{columns:1}}
-.paper section{margin-top:36px}
-.paper h2.sec{font-family:var(--serif);font-size:22px;margin:0 0 12px;color:var(--p-head);display:flex;gap:12px;align-items:baseline;font-weight:700}
-.paper h2.sec .sn{font-family:var(--mono);font-size:12px;color:var(--p-accent);letter-spacing:.06em;font-weight:600}
-.paper h3{font-size:15px;margin:22px 0 8px;color:var(--p-head)}
-.paper p{margin:0 0 10px}
-.muted{color:var(--p-muted);font-size:13.5px}
+.paper .doc-title{font-family:var(--serif);font-size:32px;line-height:1.15;margin:8px 0 8px;color:var(--p-head);font-weight:700}
+.doc-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--p-muted);padding-bottom:14px;border-bottom:2px solid var(--p-head)}
+.paper section{margin-top:28px}
+.paper h2.sec{font-family:var(--serif);font-size:21px;margin:26px 0 8px;color:var(--p-head);font-weight:700}
+.paper h3{font-size:14.5px;margin:18px 0 8px;color:var(--p-head)}
+.paper p{margin:0 0 8px}
+.muted{color:var(--p-muted);font-size:13px}
+.small{font-size:11.5px}
 .mono{font-family:var(--mono);font-size:12.5px}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{border:1px solid var(--p-line);border-radius:10px;padding:12px 14px;background:#fff}
+.kpi{border:1px solid var(--p-line);border-radius:10px;padding:11px 14px;background:#fff}
 .kpi .v{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--p-head)}
-.kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted);margin-top:2px}
-.kpi .s{font-size:11.5px;color:var(--p-muted);margin-top:4px;line-height:1.4}
-.callout{border-left:3px solid var(--p-accent);background:#eef6f2;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+.kpi .l{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-muted);margin-top:2px}
+.callout{border-left:3px solid var(--p-accent);background:#eef6f2;padding:11px 15px;border-radius:0 8px 8px 0;margin:10px 0;font-size:14px}
 .callout.warn{border-color:#c98a22;background:#fbf3e4}
-.callout.crit{border-color:#c0473a;background:#fbecea}
-.tw{overflow-x:auto;margin:8px 0 6px}
-table.dt{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff}
-table.dt th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-muted);border-bottom:2px solid var(--p-line);padding:8px 10px;background:#f6f4ef;white-space:nowrap}
-table.dt td{border-bottom:1px solid var(--p-line);padding:8px 10px;vertical-align:top}
+ul.plain{margin:6px 0 4px;padding-left:20px}
+ul.plain li{margin:3px 0}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+table.dt th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-muted);border-bottom:2px solid var(--p-line);padding:7px 9px;background:#f6f4ef;white-space:nowrap}
+table.dt td{border-bottom:1px solid var(--p-line);padding:7px 9px;vertical-align:top}
+table.dt tr.trk td{background:#fdf6f4}
+table.dt tr.ours td{background:#eef7f2}
+table.dt tr.dim td{color:var(--p-muted)}
+td.ctr{text-align:center}
+.yes{color:#0f7a5c;font-weight:700}
+.no{color:#b23b2e;font-weight:700}
+.nodim{color:#c9c4ba}
 .ptag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:4px;text-transform:uppercase;vertical-align:middle;white-space:nowrap}
 .ptag.must{background:#fde3df;color:#a33a2e}
 .ptag.should{background:#fbefd9;color:#93621a}
-.ptag.differentiator{background:#dff1ea;color:#0f7a5c}
-.yes{color:#0f7a5c;font-weight:700}
-.no{color:#b23b2e;font-weight:700}
-.outline{list-style:none;padding:0;margin:10px 0}
-.oi{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:10px}
-.oh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
-.oh .hn{font-family:var(--mono);font-size:11px;color:var(--p-muted)}
-.oh b{font-size:15.5px;color:var(--p-head)}
-.oh .ow{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--p-muted)}
-.op{color:var(--p-muted);font-size:13.5px;margin:4px 0 6px}
-.oi ul{margin:4px 0 6px;padding-left:20px}
-.oi li{margin:2px 0}
-.od{font-size:12.5px;color:#3c4652;background:#f6f4ef;border-radius:6px;padding:6px 10px;margin-top:6px}
-.oi ul.h3s{list-style:none;padding-left:0;margin-top:8px;border-top:1px dashed var(--p-line);padding-top:6px}
-.h3s li::before{content:"H3 · ";font-family:var(--mono);font-size:10.5px;color:var(--p-muted)}
-.pills{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
-.pill{border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:3px 10px;font-size:12.5px}
-.pill i{font-style:normal;color:var(--p-muted);font-family:var(--mono);font-size:11px;margin-left:5px}
-.checklist{list-style:none;padding:0;margin:6px 0 10px}
-.checklist li{padding:6px 0 6px 28px;position:relative;border-bottom:1px solid #efece6}
-.checklist li::before{content:"";position:absolute;left:2px;top:11px;width:14px;height:14px;border:1.5px solid #8a96a3;border-radius:3px}
-.donts{list-style:none;padding:0;margin:6px 0}
-.donts li{padding:6px 0 6px 26px;position:relative;border-bottom:1px solid #efece6}
-.donts li::before{content:"✗";position:absolute;left:4px;top:6px;color:#b23b2e;font-weight:700}
-.policy{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:720px){.policy{grid-template-columns:1fr}}
-.pcard{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 14px;font-size:13.5px}
-.pcard .pw{font-family:var(--mono);font-size:10.5px;color:var(--p-muted)}
-.pcard b{display:block;margin:2px 0 4px;color:var(--p-head)}
-.pcard .pr{margin-top:7px;color:#0f5e48;font-weight:600}
-.opt{border:1px solid var(--p-line);background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0}
+.ptag.opt{background:#e3eef8;color:#2c5f8a}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:1px 6px;border-radius:4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.tag.trk{background:#fde3df;color:#a33a2e}
+.tag.you{background:#dff1ea;color:#0f7a5c}
+.tag.src{background:#e3eef8;color:#2c5f8a}
+.tag.cat{background:#efe9f8;color:#5b3f8a}
+.pill{display:inline-block;border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:1px 9px;font-size:12.5px;margin:2px 4px 2px 0}
+.kwbox{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 15px;margin:6px 0 10px}
+.kwl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted)}
+.kwp{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--p-head);margin:2px 0 4px}
+.opt{border:1px solid var(--p-line);background:#fff;border-radius:8px;padding:6px 10px;margin:3px 0;font-size:14px}
 .cc{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:4px;margin-left:8px;white-space:nowrap}
 .cc.ok{background:#dff1ea;color:#0f7a5c}
 .cc.bad{background:#fde3df;color:#a33a2e}
-.skel div{height:12px;border-radius:6px;background:linear-gradient(90deg,#ece9e3,#f7f5f1,#ece9e3);background-size:200% 100%;animation:sh 1.2s infinite;margin:9px 0}
-.skel div:nth-child(2){width:86%}
-.skel div:nth-child(3){width:64%}
-@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.doc-foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--p-line);font-size:12px;color:var(--p-muted)}
+.ev{font-family:var(--mono);font-size:10.5px;color:var(--p-muted)}
+.job{border:2px solid var(--p-accent);border-radius:12px;padding:14px 18px;margin:16px 0 12px;background:#f3faf7}
+.job .jl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--p-accent);margin-bottom:4px}
+.job p{margin:0;font-size:15.5px}
+.skmeta{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:10px 14px;margin:8px 0 16px}
+.skrow{display:grid;grid-template-columns:84px 1fr;gap:10px;margin:4px 0;align-items:start}
+.lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted);padding-top:5px}
+.lvl{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;background:var(--p-head);color:#fff;border-radius:4px;padding:1px 6px;margin-right:8px;vertical-align:middle}
+.lvl.h3{background:#e9e5dd;color:var(--p-head)}
+.skh1{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--p-head);margin:12px 0 4px}
+.skdesc{border:1px dashed #cfc8bb;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:14px;background:#fff}
+.skbyline{font-family:var(--mono);font-size:12px;color:var(--p-muted);margin:6px 0 14px}
+.h3guide{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:10px 14px;margin:10px 0 14px;font-size:13.5px}
+.h3guide b{color:var(--p-head)}
+ol.skh2s{list-style:none;padding:0;margin:0}
+.skh2{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:10px}
+.skh2.optional{border-style:dashed;background:#fdfdfb}
+.skhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.skhead b{font-size:15.5px;color:var(--p-head)}
+.box{width:16px;height:16px;border:2px solid #8a96a3;border-radius:4px;flex:none}
+.skbody{margin:4px 0 0 24px;font-size:14px}
+.skw{margin:4px 0}
+.h3hint{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-accent);margin:8px 0 2px}
+ul.skh3{list-style:none;padding:0;margin:2px 0 6px}
+ul.skh3 li{margin:4px 0}
+ul.skc{margin:4px 0;padding-left:18px}
+ul.skc li{margin:2px 0}
+.skx{margin:6px 0;line-height:1.9}
+.skx .lab{margin-right:8px}
+.edge{background:#f3faf7;border-radius:6px;padding:4px 8px}
+ul.donts{list-style:none;padding:0;margin:6px 0}
+ul.donts li{padding:5px 0 5px 24px;position:relative}
+ul.donts li::before{content:"✗";position:absolute;left:4px;color:#b23b2e;font-weight:700}
+.pl{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted);margin:14px 0 5px}
+.pin{width:100%;border:1px solid var(--p-line);border-radius:8px;padding:10px 12px;font:inherit;font-size:14px;background:#fff;color:var(--p-ink)}
+.cnt{font-family:var(--mono);font-size:11px;color:var(--p-muted);margin-top:3px}
+.pastebox{min-height:260px;max-height:520px;overflow:auto;border:1px dashed #b9b2a5;border-radius:8px;padding:14px;background:#fff;font-size:14px}
+.pastebox:empty::before{content:attr(data-ph);color:#9aa3ad}
+.prow{display:flex;gap:12px;align-items:center;margin-top:12px}
+.pbtn{background:var(--p-accent);color:#fff;border:0;border-radius:8px;padding:11px 20px;font-weight:600;cursor:pointer;font-size:14px}
+.score{border-radius:10px;padding:12px 16px;margin:16px 0 8px;font-size:15px}
+.score.good{background:#dff1ea;color:#0f5e48}
+.score.mid{background:#fbefd9;color:#7a5113}
+.score.bad{background:#fde3df;color:#8f2f25}
+.score b{font-size:22px}
+ul.res{list-style:none;padding:0;margin:0}
+ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;font-size:14px}
+.ri{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.r-pass .ri{background:#dff1ea;color:#0f7a5c}
+.r-warn .ri{background:#fbefd9;color:#93621a}
+.r-fail .ri{background:#fde3df;color:#a33a2e}
+.rf{font-size:13px;color:var(--p-muted);margin-top:2px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--signal);color:#04130d;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;opacity:0;transition:all .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
   html,body{background:#fff !important}
-  .ribbon,header,.console,.steps,#health,.serp,.toolbar,footer.app,.toast{display:none !important}
+  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast,.pbtn2{display:none !important}
   .wrap{max-width:none;padding:0}
   .paper{box-shadow:none;border-radius:0;padding:0;margin:0;background:#fff}
-  .oi,.kpi,.pcard,.callout,tr{break-inside:avoid}
-  .paper a{color:inherit;text-decoration:none}
+  .skh2,.kpi,.callout,tr{break-inside:avoid}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="ribbon">
+    <a class="brand" href="/">Ranking X-Ray</a>
+    <a class="tab" href="/">X-Ray</a>
+    <a class="tab" href="/bulk">Bulk Search Console</a>
+    <a class="tab" href="/planner" target="_blank" rel="noopener">Content Planner</a>
+    <a class="tab active" href="/brief">Content Brief</a>
+  </nav>
 
-<nav class="ribbon">
-  <a class="brand" href="/">Ranking X-Ray</a>
-  <a class="tab" href="/">X-Ray</a>
-  <a class="tab" href="/bulk">Bulk Search Console</a>
-  <a class="tab" href="/planner" target="_blank" rel="noopener">Content Planner</a>
-  <a class="tab active" href="/brief">Content Brief</a>
-</nav>
+  <header>
+    <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
+    <h1>Content <span class="x">Brief</span></h1>
+    <p class="lede">Type a keyword and pick a country. Writers get a skeleton in the Kings Research report format — every H2 with
+      what to write, suggested H3s and the few keywords that belong there. The SEO tab has the full competitor analysis.
+      Every brief is saved to Google Drive and the tracking sheet.</p>
+  </header>
 
-<header>
-  <p class="eyebrow">Keyword → Google page 1 → analyst brief</p>
-  <h1>Content <span class="x">Brief</span></h1>
-  <p class="lede">Type a keyword. The tool pulls who ranks on Google page 1 right now, X-rays every page,
-  and writes a brief your research analysts can follow to out-rank them — aligned with Google's 2026 core,
-  spam and AI-search guidance.</p>
-</header>
+  <div id="health"></div>
 
-<div id="health"></div>
-
-<div class="console">
-  <div class="grid">
-    <div class="full">
-      <label for="kw">Keyword</label>
-      <input type="text" id="kw" placeholder="plywood market" autocomplete="off" />
-    </div>
-    <div>
-      <label>Page type</label>
-      <div class="seg">
-        <button type="button" class="seg-btn active" data-type="report">Report page</button>
-        <button type="button" class="seg-btn" data-type="blog">Blog post</button>
-      </div>
-    </div>
-    <div>
-      <label for="gl">Google country</label>
-      <select id="gl">
-        <option value="us">United States</option><option value="in">India</option>
-        <option value="gb">United Kingdom</option><option value="ca">Canada</option>
-        <option value="au">Australia</option><option value="de">Germany</option>
-        <option value="fr">France</option><option value="jp">Japan</option>
-        <option value="sg">Singapore</option><option value="ae">United Arab Emirates</option>
-        <option value="sa">Saudi Arabia</option><option value="za">South Africa</option>
-        <option value="br">Brazil</option>
-      </select>
-    </div>
-    <!-- NEW: team access key (checked by lib/guard.js on POST /api/brief; shared with /planner) -->
-    <div class="full">
-      <label for="accessKey">Team access key</label>
-      <input type="password" id="accessKey" placeholder="ask the SEO team · stored only in this browser" autocomplete="off" />
-    </div>
-  </div>
-  <details class="adv">
-    <summary>Optional — your existing page &amp; search language</summary>
+  <div class="console">
     <div class="grid">
       <div class="full">
-        <label for="ourUrl">Your current page URL (adds a gap analysis)</label>
-        <input type="text" id="ourUrl" placeholder="https://www.kingsresearch.com/report/plywood-market-3073" />
+        <label for="kw">Keyword</label>
+        <input type="text" id="kw" placeholder="hospital at home market" autocomplete="off" />
       </div>
       <div>
-        <label for="hl">Search language</label>
-        <select id="hl">
-          <option value="en">English</option><option value="de">German</option><option value="fr">French</option>
-          <option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ja">Japanese</option>
-          <option value="ko">Korean</option><option value="ar">Arabic</option>
+        <label>Page type</label>
+        <div class="seg">
+          <button type="button" class="seg-btn active" data-type="report">Report page</button>
+          <button type="button" class="seg-btn" data-type="blog">Blog post</button>
+        </div>
+      </div>
+      <div>
+        <label for="gl">Google country</label>
+        <select id="gl">
+          <option value="us">United States</option><option value="in">India</option>
+          <option value="gb">United Kingdom</option><option value="ca">Canada</option>
+          <option value="au">Australia</option><option value="de">Germany</option>
+          <option value="fr">France</option><option value="jp">Japan</option>
+          <option value="sg">Singapore</option><option value="ae">United Arab Emirates</option>
+          <option value="sa">Saudi Arabia</option><option value="za">South Africa</option>
+          <option value="br">Brazil</option>
         </select>
       </div>
     </div>
-  </details>
-  <div class="row-actions">
-    <button class="run" id="runBtn">Generate brief</button>
-    <span class="status" id="status"></span>
+    <details class="adv">
+      <summary>Optional — your existing page &amp; search language</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="ourUrl">Your current page URL (if you're updating an existing report)</label>
+          <input type="text" id="ourUrl" placeholder="https://www.kingsresearch.com/report/..." />
+        </div>
+        <div>
+          <label for="hl">Search language</label>
+          <select id="hl">
+            <option value="en">English</option><option value="de">German</option><option value="fr">French</option>
+            <option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ja">Japanese</option>
+            <option value="ko">Korean</option><option value="ar">Arabic</option>
+          </select>
+        </div>
+      </div>
+    </details>
+    <details class="adv" id="manualBox">
+      <summary>Add competitor pages yourself — for pages the tool missed or couldn't read</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="mUrl">Competitor page URL</label>
+          <input type="text" id="mUrl" placeholder="https://www.precedenceresearch.com/pharmaceutical-market" />
+        </div>
+        <div class="full">
+          <label>Page content — only needed if the site blocks us</label>
+          <div id="mPaste" class="mbox" contenteditable="true" data-ph="Open the page in your browser → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
+        </div>
+        <div class="full">
+          <button type="button" class="ghost" id="mAdd">Add page</button>
+          <div id="mList"></div>
+        </div>
+      </div>
+    </details>
+    <div class="row-actions">
+      <button class="run" id="runBtn">Generate brief</button>
+      <button class="ghost" id="savedBtn">Saved briefs</button>
+      <span class="status" id="status"></span>
+    </div>
   </div>
-</div>
 
-<div class="steps hidden" id="steps">
-  <div class="step" data-s="1"><span class="sn">1</span>Google page 1</div>
-  <div class="step" data-s="2"><span class="sn">2</span>X-ray every result</div>
-  <div class="step" data-s="3"><span class="sn">3</span>Write the brief</div>
-</div>
+  <div id="saved"></div>
 
-<div id="out"></div>
+  <div class="steps hidden" id="steps">
+    <div class="step" data-s="1"><span class="sn">1</span>Google rankings &amp; competitors</div>
+    <div class="step" data-s="2"><span class="sn">2</span>Reading every page</div>
+    <div class="step" data-s="3"><span class="sn">3</span>Writing &amp; saving</div>
+  </div>
 
-<footer class="app">Content Brief · API at <code>/api/brief</code> · Google policy baseline lives in <code>lib/google-policy.js</code></footer>
+  <div id="out"></div>
+
+  <footer class="app">Content Brief · API at <code>/api/brief</code> · briefs saved to Google Drive + the tracking sheet</footer>
 </div>
 
 <script>
@@ -277,32 +311,48 @@ table.dt td{border-bottom:1px solid var(--p-line);padding:8px 10px;vertical-alig
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (n) => (n == null || n === "" || Number.isNaN(+n) ? "—" : Number(n).toLocaleString("en-US"));
-const titleCase = (s) => String(s || "").replace(/\b([a-z])/g, (m) => m.toUpperCase());
-const slug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "brief";
-const shortDom = (d) => String(d || "").replace(/\.(co\.uk|com|net|org|io|co|in)$/i, "");
+const slug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "brief";
+const round100 = (n) => Math.max(100, Math.round((Number(n) || 0) / 100) * 100);
+const shortUrl = (u) => String(u || "").replace(/^https?:\/\/(www\.)?/, "");
 const table = (heads, rows) =>
   `<div class="tw"><table class="dt"><thead><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
 const TYPE = { ours: "You", tracked: "Tracked competitor", publisher: "Research publisher", authority: "Gov / authority",
-  press: "Press release", news: "News / media", ugc: "UGC / social", other: "Other" };
-const TIER = { must: "Must", should: "Should", differentiator: "Edge" };
+  press: "Press release", news: "News / media", ugc: "Social / UGC", other: "Other" };
+const TIER = { must: "Must have", should: "Good to have", opt: "Optional" };
 const tierTag = (t) => `<span class="ptag ${esc(t)}">${esc(TIER[t] || t)}</span>`;
-const TRUST_BASE = [
-  "Named analyst byline linking to an author page with credentials and coverage area",
-  "“Reviewed by” a second analyst or practice head",
-  "Visible “Last updated” date that matches dateModified in the structured data",
-  "Short methodology box: primary interviews, secondary sources, estimation model, base year",
-  "Inline source for every statistic that isn't our own estimate",
-];
-const DEV_CHECKS = [
-  "Main content is in the server-rendered HTML (not injected only by JavaScript or hidden behind click-to-load tabs)",
-  "Self-referencing canonical; hreflang only for genuinely translated versions",
-  "Page is indexable: no noindex, not blocked for Googlebot in robots.txt",
-  "Markup matches visible content — no schema for FAQs, ratings or authors that aren't on the page",
-  "No Product / AggregateRating markup unless ratings are genuine user reviews",
-  "Descriptive alt text on charts; data tables built as real HTML <table> elements, not images",
-];
+const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com"];
+const GENERIC = new Set(["market", "markets", "report", "reports", "size", "share", "growth", "industry", "analysis", "global", "forecast", "trends", "outlook", "and", "the", "for"]);
+const stem = (w) => (w.length > 4 && w.endsWith("ies") ? w.slice(0, -3) + "y" : w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w);
+const kwTokens = (k) => String(k || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/[\s-]+/).filter((t) => t.length > 2 && !GENERIC.has(t));
+const countryName = (gl) => { const o = [...$("gl").options].find((x) => x.value === gl); return o ? o.textContent : String(gl || "").toUpperCase(); };
+const sameDomain = (d, base) => !!d && !!base && (d === base || d.endsWith("." + base));
+const pending = () => `<div class="muted">Adding AI suggestions…</div>`;
+const aiOk = () => (S && S.ai && !S.ai.error && !S.ai.skipped ? S.ai : null);
+const SMALL = new Set(["a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "vs", "with"]);
+const UPPER = new Set(["us", "uk", "uae", "eu", "usa", "ai", "ev", "iot", "api", "gcc", "apac", "mea"]);
+const niceTitle = (s) => String(s || "").toLowerCase().split(/\s+/).filter(Boolean)
+  .map((w, i) => (UPPER.has(w) ? w.toUpperCase() : i > 0 && SMALL.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
+// Kings Research H3 style: every word capitalised, acronyms kept correct (AI, M&A, U.S.…).
+const ACR = { ai: "AI", "m&a": "M&A", us: "U.S.", "u.s.": "U.S.", uk: "UK", uae: "UAE", otc: "OTC", api: "API", apis: "APIs", iot: "IoT",
+  ev: "EV", evs: "EVs", cagr: "CAGR", gcc: "GCC", apac: "APAC", mea: "MEA", "r&d": "R&D", rd: "R&D", ccrcs: "CCRCs", reits: "REITs", saas: "SaaS" };
+const tcAll = (s) => String(s || "").split(/\s+/).filter(Boolean)
+  .map((w) => ACR[w.toLowerCase()] || (/^[A-Z0-9&.]{2,}$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
+
 let pageType = "report";
-let S = null; // { collected, ai, aiPending, internalLinks }
+let HEALTH = {};
+let S = null;
+let EXPORTING = false;
+let MANUAL = [];
+let pendingPaste = null;
+
+function newState(collected, extra = {}) {
+  return {
+    collected, ai: null, aiPending: true, internalLinks: null,
+    saved: null, saveState: "idle", saveError: "",
+    tab: "analyst", draft: { title: "", meta: "", html: "", result: null },
+    ...extra,
+  };
+}
 
 /* ================= init ================= */
 function setType(t) {
@@ -313,46 +363,103 @@ document.querySelectorAll(".seg-btn").forEach((b) => b.addEventListener("click",
 $("kw").addEventListener("input", (e) => { if (/\b(market|industry)\b/i.test(e.target.value)) setType("report"); });
 $("kw").addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
 $("runBtn").addEventListener("click", generate);
+$("savedBtn").addEventListener("click", toggleSaved);
 $("out").addEventListener("click", onAction);
-
+$("saved").addEventListener("click", onAction);
 (function initPrefs() {
   try {
     const saved = localStorage.getItem("brief.gl");
     if (saved && [...$("gl").options].some((o) => o.value === saved)) $("gl").value = saved;
     $("gl").addEventListener("change", () => localStorage.setItem("brief.gl", $("gl").value));
-    /* NEW: remember the team access key in this browser (same key name the Planner uses) */
-    const savedKey = localStorage.getItem("brief.accessKey");
-    if (savedKey) $("accessKey").value = savedKey;
-    $("accessKey").addEventListener("change", () => localStorage.setItem("brief.accessKey", $("accessKey").value.trim()));
+    MANUAL = JSON.parse(sessionStorage.getItem("brief.manual") || "[]");
   } catch { /* storage unavailable */ }
+  renderManual();
   const qp = new URLSearchParams(location.search);
   if (qp.get("kw")) $("kw").value = qp.get("kw");
   if (qp.get("url")) $("ourUrl").value = qp.get("url");
+  if (qp.get("id")) loadSaved(qp.get("id"));
 })();
-
 checkHealth();
+
 async function checkHealth() {
   try {
-    const h = await (await fetch("/api/brief")).json();
+    HEALTH = await (await fetch("/api/brief")).json();
     const notes = [];
-    if (!h.serpProvider) notes.push("<b>No Google results provider set.</b> Add <code>SERPER_API_KEY</code> (serper.dev) in Vercel → Settings → Environment Variables and redeploy. This is what finds the page-1 competitors.");
-    else if (h.serpProvider === "google-cse") notes.push("Running on the legacy Google CSE fallback: no People Also Ask data, and Google switches it off on 1 Jan 2027. Add <code>SERPER_API_KEY</code>.");
-    if (!h.ai) notes.push("<code>OPENAI_API_KEY</code> is not set — you'll get every data section, but not the written outline, titles and FAQs.");
-    if (!h.ourDomain) notes.push("Set <code>OUR_DOMAIN</code> (or <code>GSC_SITE_URL</code>) so the brief can spot your own ranking page.");
+    if (!HEALTH.serpProvider) notes.push("<b>No Google results provider set.</b> Add <code>SERPER_API_KEY</code> in Vercel and redeploy.");
+    if (!HEALTH.ai) notes.push("<code>OPENAI_API_KEY</code> isn't set — the brief still works, with template titles and placeholder H3s.");
+    if (!HEALTH.storage) notes.push("Saving is off — add <code>STORAGE_WEBAPP_URL</code> and <code>STORAGE_SECRET</code> in Vercel to save briefs to Google Drive.");
+    if (!HEALTH.ourDomain) notes.push("Set <code>OUR_DOMAIN</code> so the brief can find your own pages.");
     $("health").innerHTML = notes.map((n) => `<div class="banner warnb">${n}</div>`).join("");
   } catch { /* best effort */ }
 }
 
+/* ================= competitor pages added by hand ================= */
+const textToHtml = (t) => String(t).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join("");
+
+$("mPaste").addEventListener("paste", (e) => {
+  e.preventDefault();
+  const html = e.clipboardData.getData("text/html");
+  const text = e.clipboardData.getData("text/plain");
+  const val = html && html.length > 300 ? html : /<\s*(html|body|div|h1|h2|p)\b/i.test(text) ? text : text ? textToHtml(text) : "";
+  if (!val || val.length < 1000) {
+    pendingPaste = null;
+    $("mPaste").classList.remove("got");
+    $("mPaste").textContent = "That looks too short — on the competitor page press Ctrl+A first, then Ctrl+C.";
+    return;
+  }
+  pendingPaste = val;
+  $("mPaste").classList.add("got");
+  $("mPaste").textContent = `✓ Page content captured (${val.length.toLocaleString()} characters)`;
+});
+$("mPaste").addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
+
+$("mAdd").addEventListener("click", () => {
+  const url = $("mUrl").value.trim();
+  if (!/^https?:\/\//i.test(url)) { toast("Enter the page URL first (starting with https://)"); $("mUrl").focus(); return; }
+  MANUAL = MANUAL.filter((m) => m.url !== url);
+  MANUAL.push({ url, html: pendingPaste });
+  if (MANUAL.length > 8) MANUAL.shift();
+  pendingPaste = null;
+  $("mUrl").value = "";
+  $("mPaste").textContent = "";
+  $("mPaste").classList.remove("got");
+  renderManual();
+  saveManual();
+  toast("Page added — press Generate brief to use it");
+});
+
+$("mList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]");
+  if (!b) return;
+  MANUAL.splice(Number(b.dataset.rm), 1);
+  renderManual();
+  saveManual();
+});
+
+function renderManual() {
+  $("mList").innerHTML = MANUAL.map((m, i) =>
+    `<span class="chip">${esc(shortUrl(m.url).slice(0, 60))} · ${m.html ? "pasted" : "URL"}<button data-rm="${i}" title="Remove">✕</button></span>`).join("") +
+    (MANUAL.length ? `<div class="hint2">${MANUAL.length} page(s) will be used the next time you press Generate brief.</div>` : "");
+}
+function saveManual() { try { sessionStorage.setItem("brief.manual", JSON.stringify(MANUAL)); } catch { /* too large — kept in memory */ } }
+
+function openManual(url) {
+  const box = $("manualBox");
+  box.open = true;
+  $("mUrl").value = url || "";
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => (url ? $("mPaste") : $("mUrl")).focus(), 350);
+}
+const pasteBtn = (url, label = "Paste page") => (EXPORTING ? "" : `<button class="pbtn2" data-act="paste" data-url="${esc(url || "")}">${esc(label)}</button>`);
+
 /* ================= run ================= */
 async function post(body) {
-  /* NEW: send the team access key (lib/guard.js checks it on POST /api/brief) */
-  const key = ($("accessKey")?.value || "").trim();
-  const r = await fetch("/api/brief", { method: "POST", headers: { "Content-Type": "application/json", ...(key ? { "x-brief-key": key } : {}) }, body: JSON.stringify(body) });
+  const r = await fetch("/api/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   let d;
   try { d = await r.json(); }
   catch {
     const e = new Error(`Server returned HTTP ${r.status}`);
-    e.hint = r.status === 504 ? "The request hit the 60-second limit. Try again — slow competitor pages are the usual cause." : "";
+    e.hint = r.status === 504 ? "The request hit the 60-second limit. Try again — slow competitor sites are the usual cause." : "";
     throw e;
   }
   if (!r.ok || d.error) { const e = new Error(d.error || `HTTP ${r.status}`); e.hint = d.hint || ""; throw e; }
@@ -370,6 +477,8 @@ async function generate() {
   const btn = $("runBtn");
   btn.disabled = true;
   S = null;
+  closeSaved();
+  history.replaceState(null, "", "/brief");
   $("out").innerHTML = "";
   $("steps").classList.remove("hidden");
   [1, 2, 3].forEach((n) => step(n, ""));
@@ -379,28 +488,31 @@ async function generate() {
   const tick = setInterval(() => {
     const s = Math.round((Date.now() - t0) / 1000);
     $("status").innerHTML = `<span class="dot"></span>Working… ${s}s`;
-    if (s === 3 && !collectedYet) { step(1, "done"); step(2, "active"); }
+    if (s === 4 && !collectedYet) { step(1, "done"); step(2, "active"); }
   }, 1000);
+
   try {
     const r1 = await post({
       stage: "collect", keyword, gl: $("gl").value, hl: $("hl").value,
       contentType: pageType, ourUrl: $("ourUrl").value.trim() || undefined,
+      manual: MANUAL.length ? MANUAL : undefined,
     });
     collectedYet = true;
     step(1, "done"); step(2, "done"); step(3, "active");
-    S = { collected: r1.collected, ai: null, aiPending: true, internalLinks: null };
+    S = newState(r1.collected);
     render();
     try {
       const r2 = await post({ stage: "write", collected: r1.collected });
       S.ai = r2.ai;
       S.internalLinks = r2.internalLinks;
-      step(3, r2.ai && r2.ai.error ? "err" : "done");
     } catch (e) {
       S.ai = { error: e.message };
-      step(3, "err");
     }
     S.aiPending = false;
     render();
+    if (HEALTH.storage !== false) await saveBrief();
+    else { S.saveState = "off"; renderSaveBar(); }
+    step(3, S.saveState === "error" ? "err" : "done");
   } catch (e) {
     document.querySelectorAll(".step.active").forEach((el) => (el.className = "step err"));
     $("out").innerHTML = `<div class="banner err"><b>${esc(e.message)}</b>${e.hint ? `<div class="hint">${esc(e.hint)}</div>` : ""}</div>`;
@@ -411,346 +523,814 @@ async function generate() {
   }
 }
 
+/* ================= saving & saved briefs ================= */
+async function saveBrief() {
+  if (!S) return;
+  S.saveState = "saving";
+  renderSaveBar();
+  try {
+    const r = await post({
+      stage: "save",
+      brief: { collected: S.collected, ai: S.ai, internalLinks: S.internalLinks },
+      html: docHtml(),
+      country: countryName(S.collected.gl),
+    });
+    S.saved = r;
+    S.saveState = "saved";
+    history.replaceState(null, "", "/brief?id=" + encodeURIComponent(r.id));
+  } catch (e) {
+    S.saveState = "error";
+    S.saveError = e.message;
+  }
+  renderSaveBar();
+}
+
+function saveBarHtml() {
+  if (!S) return "";
+  const s = S.saved || {};
+  switch (S.saveState) {
+    case "saving": return `<span class="dot"></span>Saving to Google Drive…`;
+    case "saved": return `✓ Saved${s.id ? ` as ${esc(s.id)}` : ""} · ${s.docUrl ? `<a href="${esc(s.docUrl)}" target="_blank" rel="noopener">Open Google Doc</a> · ` : ""}${s.sheetUrl ? `<a href="${esc(s.sheetUrl)}" target="_blank" rel="noopener">Tracking sheet</a> · ` : ""}<button class="linkbtn" data-act="share">Copy share link</button>`;
+    case "error": return `<span class="bad">Couldn't save: ${esc(S.saveError)}</span> · <button class="linkbtn" data-act="save">Try again</button>`;
+    case "off": return `Saving to Drive is off (storage not configured).`;
+    default: return S.aiPending ? "" : `<button class="linkbtn" data-act="save">Save to Google Drive</button>`;
+  }
+}
+function renderSaveBar() { const el = $("saveBar"); if (el) el.innerHTML = saveBarHtml(); }
+
+function closeSaved() { $("saved").dataset.open = ""; $("saved").innerHTML = ""; }
+
+async function toggleSaved() {
+  const box = $("saved");
+  if (box.dataset.open === "1") { closeSaved(); return; }
+  box.dataset.open = "1";
+  box.innerHTML = `<div class="panel"><span class="dot"></span>Loading saved briefs…</div>`;
+  try {
+    const r = await post({ stage: "list", limit: 100 });
+    const rows = r.briefs || [];
+    box.innerHTML = `<div class="panel"><div class="ph2"><b>Saved briefs</b>${r.sheetUrl ? `<a href="${esc(r.sheetUrl)}" target="_blank" rel="noopener">Open tracking sheet ↗</a>` : ""}</div>` +
+      (rows.length
+        ? `<div class="tw"><table class="st"><thead><tr><th>Date</th><th>Keyword</th><th>Country</th><th>Rank at brief</th><th>Latest</th><th>Change</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(savedRow).join("")}</tbody></table></div>`
+        : `<p class="dimtxt">No saved briefs yet — generate one and it saves automatically.</p>`) + `</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="banner err">${esc(e.message)}</div>`;
+  }
+}
+
+function rankCell(v) { const n = Number(v); return n ? `#${n}` : String(v || "—"); }
+function fmtDate(v) { const d = new Date(v); return isNaN(d) ? String(v || "") : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); }
+
+function savedRow(b) {
+  const id = b["Brief ID"];
+  const ch = String(b["Change"] || "—");
+  const cls = ch.startsWith("▲") ? "up" : ch.startsWith("▼") ? "down" : "";
+  return `<tr><td class="nowrap">${esc(fmtDate(b["Created (IST)"]))}</td><td><b>${esc(b["Keyword"])}</b></td><td>${esc(b["Country"])}</td>
+    <td>${esc(rankCell(b["Your rank at brief"]))}</td><td>${esc(rankCell(b["Latest rank"]))}</td><td class="${cls}">${esc(ch)}</td>
+    <td>${esc(b["Status"] || "")}</td>
+    <td class="nowrap"><a href="/brief?id=${encodeURIComponent(id)}" data-open="${esc(id)}">Open</a>${b["Brief (Google Doc)"] ? ` · <a href="${esc(b["Brief (Google Doc)"])}" target="_blank" rel="noopener">Doc</a>` : ""}</td></tr>`;
+}
+
+async function loadSaved(id) {
+  closeSaved();
+  $("status").innerHTML = `<span class="dot"></span>Opening saved brief…`;
+  try {
+    const r = await post({ stage: "get", id });
+    const b = r.brief || {};
+    if (!b.collected) throw new Error("This saved brief has no data.");
+    const row = r.row || {};
+    S = newState(b.collected, {
+      ai: b.ai || null, aiPending: false, internalLinks: b.internalLinks || null, saveState: "saved",
+      saved: { id, docUrl: row["Brief (Google Doc)"] || "", openUrl: row["Open in tool"] || "", sheetUrl: r.sheetUrl || "" },
+    });
+    $("kw").value = b.collected.keyword || "";
+    if ([...$("gl").options].some((o) => o.value === b.collected.gl)) $("gl").value = b.collected.gl;
+    setType(b.collected.contentType === "blog" ? "blog" : "report");
+    history.replaceState(null, "", "/brief?id=" + encodeURIComponent(id));
+    render();
+  } catch (e) {
+    $("out").innerHTML = `<div class="banner err"><b>${esc(e.message)}</b></div>`;
+  } finally {
+    $("status").textContent = "";
+  }
+}
+
+/* ================= render ================= */
 function render() {
+  if (!S) return;
   const c = S.collected;
-  $("out").innerHTML = serpPanel(c) + toolbar() + `<article class="paper" id="briefDoc">${paper(c)}</article>`;
+  const warns = (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") +
+    (S.ai && S.ai.error ? `<div class="banner warnb">AI step: ${esc(S.ai.error)} — templates are shown instead.</div>` : "");
+  const tabs = [["analyst", "Writer's skeleton"], ["seo", "SEO details"], ["draft", "Check my draft"]]
+    .map(([k, l]) => `<button class="tabbtn ${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("");
+  const tools = S.tab === "draft" ? "" : `<div class="toolbar">
+      <button class="tbtn" data-act="copy">Copy this tab</button>
+      <button class="tbtn" data-act="doc">Download Word</button>
+      <button class="tbtn" data-act="print">Print / PDF</button>
+      <button class="tbtn" data-act="links">Copy top-10 links</button></div>`;
+  const body = S.tab === "seo" ? seoHtml(c) : S.tab === "draft" ? draftHtml(c) : analystHtml(c);
+  $("out").innerHTML = `<div id="warns">${warns}</div><div id="saveBar" class="savebar">${saveBarHtml()}</div>
+    <div class="tabs">${tabs}${tools}</div><article class="paper" id="briefDoc">${body}</article>`;
+  if (S.tab === "draft") bindDraft();
 }
 
-/* ================= page-1 panel ================= */
-function serpPanel(c) {
-  const s = c.serp;
-  const chips = Object.entries(s.composition || {})
-    .map(([k, v]) => `<span class="chip t-${esc(k)}">${v} × ${esc(TYPE[k] || k)}</span>`).join("");
-  const pos = s.ourPosition
-    ? `<div class="banner okb">You rank <b>#${s.ourPosition}</b> with <a href="${esc(s.ourRankingUrl)}" target="_blank" rel="noopener">${esc(s.ourRankingUrl)}</a>. The brief below shows how to climb above the pages ahead of you.</div>`
-    : `<div class="banner warnb">${c.ourDomain ? `<b>${esc(c.ourDomain)}</b> is` : "Your site is"} not on page 1 for this keyword in ${esc(c.gl.toUpperCase())}.</div>`;
-  const ao = s.aiOverview?.present
-    ? `<div class="banner note"><b>Google shows an AI Overview here.</b> Cited: ${esc((s.aiOverview.sources || []).map((x) => x.domain).filter(Boolean).slice(0, 8).join(", ") || "sources not returned")}.</div>`
-    : "";
-  const warns = (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("");
-  return `<section class="serp">
-    <div class="serp-head"><h3>Google page 1 — “${esc(c.keyword)}”</h3>
-    <span class="serp-sub">${esc(c.gl.toUpperCase())} · ${esc(c.hl)} · via ${esc(c.provider)} · ${esc(new Date(c.generatedAt).toLocaleString())}</span></div>
-    <div class="comp-chips">${chips}</div>${pos}${ao}${warns}
-    ${s.organic.map(serpRow).join("")}
-    <div class="toolbar"><button class="tbtn" data-act="links">Copy all page-1 links</button></div>
-  </section>`;
+function docHead(c, label) {
+  const date = new Date(c.generatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return `<div class="doc-kicker">${esc(label)} · ${c.contentType === "blog" ? "Blog article" : "Report page"}</div>
+    <h1 class="doc-title">${esc(niceTitle(c.keyword))}</h1>
+    <div class="doc-meta"><span>${esc(date)}</span><span>Google ${esc(countryName(c.gl))}</span>
+      <span>${(c.competitors || []).filter((x) => x.fetched).length} competitor pages analysed</span>
+      ${S.saved && S.saved.id ? `<span>Brief ${esc(S.saved.id)}</span>` : ""}</div>`;
+}
+const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`;
+const sec = (title, body) => (body ? `<section><h2 class="sec">${esc(title)}</h2>${body}</section>` : "");
+const pills = (arr) => arr.map((w) => `<span class="pill">${esc(w)}</span>`).join("");
+
+/* ================= relevance filters ================= */
+const JUNK_COMPANY_RE = /\b(population|diseases?|demand|growth|rising|increasing|adoption|prevalence|awareness|markets?|segments?|regulations?|investments?|expansion|chronic|aging|ageing|trends?|factors?|drivers?|challenges?|opportunit\w*|innovation|technolog\w*)\b/i;
+const BAD_PHRASE_RE = /frequently asked|table of contents|key takeaways|related reports?|request (?:a )?sample|key questions|report scope|research methodology|buy now|contact us|get in touch/i;
+const NEWS_Q_RE = /\b(today|yesterday|tomorrow|this week|right now|trump|biden|harris|modi|election|politic\w*|donat\w*|lobby\w*|bribe\w*|scandal|lawsuit|layoffs?|stocks?|share price|stock price|falling|crash\w*|plunge\w*|tariff war|news)\b/i;
+const Q_STOP = new Set(["what", "which", "who", "how", "why", "when", "where", "is", "are", "the", "of", "in", "for", "and", "does", "do", "will"]);
+const MODS = new Set(["market", "markets", "size", "share", "growth", "trends", "trend", "forecast", "analysis", "outlook", "demand", "revenue",
+  "cagr", "players", "companies", "company", "segmentation", "segment", "segments", "regional", "region", "opportunities", "opportunity",
+  "drivers", "driver", "industry", "report", "statistics", "value", "volume", "insights", "insight", "research", "landscape", "competitive",
+  "applications", "application", "types", "type", "overview", "scope", "global", "key", "future", "latest", "manufacturers", "manufacturer",
+  "leading", "top", "major", "list", "pdf", "stats", "strategic", "estimated", "estimate", "projected", "expected", "worth", "rate",
+  "country", "countries", "regions", "world", "worldwide", "sales", "current", "example", "examples", "definition", "meaning", "sector",
+  "business", "user", "users", "end", "yearly", "annual"].map(stem));
+const STOPW = new Set(["the", "of", "and", "in", "for", "to", "by", "a", "an", "on", "with", "its", "is", "are", "what", "how", "which", "who",
+  "why", "will", "from", "at", "as", "or", "vs", "into", "&", "this", "that", "be", "can", "do", "does", "per", "more", "most", "new", "best", "all"].map(stem));
+const COUNTRY_NAMES = ["united states", "usa", "u s", "canada", "mexico", "brazil", "argentina", "chile", "colombia", "peru",
+  "united kingdom", "uk", "britain", "england", "germany", "france", "italy", "spain", "netherlands", "belgium", "switzerland",
+  "sweden", "norway", "denmark", "finland", "poland", "russia", "turkey", "ukraine", "ireland", "portugal", "austria", "greece",
+  "czech", "hungary", "romania", "india", "china", "japan", "south korea", "korea", "indonesia", "vietnam", "thailand",
+  "malaysia", "singapore", "philippines", "australia", "new zealand", "pakistan", "bangladesh", "sri lanka", "nepal",
+  "saudi arabia", "saudi", "uae", "emirates", "dubai", "qatar", "kuwait", "oman", "bahrain", "israel", "egypt", "nigeria",
+  "kenya", "south africa", "morocco", "ethiopia", "ghana", "iran", "iraq", "taiwan", "hong kong"];
+const REGION_NAMES = ["north america", "south and central america", "central america", "south america", "latin america",
+  "asia pacific", "middle east", "europe", "european", "asia", "apac", "africa", "mea", "emea", "gcc", "asean", "nordic"];
+const normP = (s) => String(s || "").toLowerCase().replace(/([a-z0-9])-([a-z0-9])/g, "$1 $2").replace(/[^a-z0-9& ]/g, " ").replace(/\s+/g, " ").trim();
+function stripPlaces(text, list) {
+  let t = " " + normP(text) + " ";
+  for (const p of [...list].sort((a, b) => b.length - a.length)) t = t.split(" " + p + " ").join(" ");
+  return t.replace(/\s+/g, " ").trim();
+}
+// Same rule as the server: no other countries, and (for market keywords) no other markets.
+function onTopic(keyword, phrase) {
+  const p = normP(phrase);
+  if (!p) return false;
+  const kwN = " " + normP(keyword) + " ";
+  const noRegions = " " + stripPlaces(p, REGION_NAMES) + " ";
+  if (COUNTRY_NAMES.some((c) => noRegions.includes(" " + c + " ") && !kwN.includes(" " + c + " "))) return false;
+  if (!/\bmarkets?\b/i.test(keyword)) return true;
+  const kwS = new Set(normP(keyword).split(" ").map(stem));
+  const left = stripPlaces(stripPlaces(p, REGION_NAMES), COUNTRY_NAMES).split(" ").filter(Boolean).map(stem)
+    .filter((w) => !/^\d+$/.test(w) && !kwS.has(w) && !MODS.has(w) && !STOPW.has(w));
+  return left.length === 0;
+}
+function sameMarketQ(keyword, q) {
+  const m = String(q || "").match(/((?:[A-Z][\w&'.-]*\s+){1,6})Markets?\b/);
+  if (!m) return true;
+  const kw = new Set(String(keyword || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).map(stem));
+  const words = m[1].toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w)).map(stem);
+  return words.every((w) => kw.has(w));
+}
+function goodQuestion(keyword, q) {
+  if (!q || NEWS_Q_RE.test(q)) return false;
+  const noRegions = " " + stripPlaces(q, REGION_NAMES) + " ";
+  const kwN = " " + normP(keyword) + " ";
+  if (COUNTRY_NAMES.some((c) => noRegions.includes(" " + c + " ") && !kwN.includes(" " + c + " "))) return false;
+  return sameMarketQ(keyword, q);
+}
+const normQ = (q) => String(q || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+const hasAllKw = (keyword, phrase) => {
+  const need = kwTokens(keyword).map(stem);
+  const have = new Set(normQ(phrase).split(" ").map(stem));
+  return need.length > 0 && need.every((t) => have.has(t));
+};
+const REGION_PLACES = new Set(["Europe", "Asia Pacific", "Middle East", "Latin America", "GCC", "Africa"]);
+const PLACES = [
+  ["India"], ["China"], ["Japan"], ["Germany"], ["France"], ["Brazil"], ["Canada"], ["Australia"], ["Mexico"],
+  ["Indonesia"], ["Vietnam"], ["Italy"], ["Spain"], ["Singapore"], ["South Korea", "south korea", "korea"],
+  ["Saudi Arabia", "saudi arabia", "saudi", "ksa"], ["UAE", "uae", "united arab emirates"],
+  ["United Kingdom", "united kingdom", "uk", "britain"], ["United States", "united states", "usa", "us", "u s"],
+  ["South Africa", "south africa"], ["Europe"], ["Asia Pacific", "asia pacific", "apac"], ["Middle East", "middle east"],
+  ["Latin America", "latin america"], ["GCC", "gcc"], ["Africa"],
+];
+function placeIn(keyword) {
+  const k = " " + String(keyword || "").toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ") + " ";
+  for (const [display, ...aliases] of PLACES) {
+    const list = aliases.length ? aliases : [display.toLowerCase()];
+    if (list.some((a) => k.includes(" " + a + " "))) return display;
+  }
+  return null;
 }
 
-function serpRow(r) {
-  const st = r.stats;
-  const stats = st
-    ? [
-        `<span><b>${fmt(st.words)}</b> words</span>`,
-        `<span><b>${fmt(st.sections)}</b> sections</span>`,
-        `<span><b>${fmt(st.tables)}</b> tables</span>`,
-        `<span><b>${fmt(st.faq)}</b> FAQs</span>`,
-        st.cagr != null ? `<span>CAGR <b>${esc(st.cagr)}%</b></span>` : "",
-        st.period ? `<span>${esc(st.period)}</span>` : "",
-        st.lastUpdated ? `<span>updated <b>${esc(st.lastUpdated)}</b></span>` : "",
-        `<span>schema: ${esc((st.schema || []).slice(0, 4).join(", ") || "none")}</span>`,
-      ].filter(Boolean).join("")
-    : `<span>${r.skipped ? esc(r.skipped) : r.blocked ? `Not analysed — bot-blocked (HTTP ${esc(r.status)})` : "Not analysed — fetch failed or timed out"}</span>`;
-  return `<div class="srow ${r.type === "ours" ? "is-ours" : ""}">
-    <div class="pos">${esc(r.position)}</div>
-    <div class="sbody">
-      <div><span class="chip t-${esc(r.type)}">${esc(TYPE[r.type] || r.type)}</span><span class="dom">${esc(r.domain)}</span></div>
-      <a class="stitle" href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.title || r.link)} ↗</a>
-      <div class="ssnip">${esc(r.snippet)}</div>
-      <div class="sstats">${stats}</div>
-    </div></div>`;
+/* ================= WRITER'S SKELETON — Kings Research house format ================= */
+const TOPIC_TESTS = [
+  ["FAQs", /\bfaqs?\b|frequently asked/],
+  ["Report scope & methodology", /\bscope\b|methodolog|research approach|assumption|data source|report coverage|report attribute|report highlights/],
+  ["Macro impact (tariffs, geopolitics, AI…)", /impact|tariff|covid|geopolit|inflation|recession|trade war/],
+  ["Competitive landscape & key players", /competit|key (?:market )?players|\bcompan(?:y|ies)\b|vendor|manufacturer|market share|\bshare\b|leading players|market leaders/],
+  ["Recent developments", /recent development|\bnews\b|merger|acquisition|partnership|\blaunch|expansion|strategic|collaboration/],
+  ["Regional & country analysis", /region|geograph|north america|europe|asia|latin america|middle east|africa|\bcountr|\bstates?\b|\bu\.s\.|\bunited states|china|india|japan|germany/],
+  ["Segmentation by application", /application|use case/],
+  ["Segmentation by end use / industry", /end[\s-]?use|end[\s-]?user|vertical|by industry|\bindustries\b|\bsector/],
+  ["Segmentation by type / product", /\btypes?\b|\bproducts?\b|\bcategor|\bgrade/],
+  ["Other segmentation (component, technology, channel…)", /component|technolog|deployment|distribution|channel|material|\bforms?\b|\bsources?\b|offering|solution|platform|\bservices?\b/],
+  ["Segmentation overview", /segment|\bby\b/],
+  ["Market dynamics & growth drivers", /dynamic|driver|driving|growth factor|propel|\bfuel/],
+  ["Restraints & challenges", /restrain|challenge|barrier|hinder|limitation|pitfall/],
+  ["Opportunities", /opportunit/],
+  ["Market trends & innovation", /trend|innovation|emerging|advancement|future/],
+  ["Pricing analysis", /\bpric|cost analysis/],
+  ["Value chain & industry analysis", /value chain|supply chain|ecosystem|porter|pest[le]{2}|\bswot/],
+  ["Regulatory landscape", /regulat|\bpolic(?:y|ies)\b|\bstandards?\b|compliance|reimbursement/],
+  ["Investment & funding", /invest|funding|venture/],
+  ["Market size & forecast", /\bsize\b|forecast|valuation|revenue|volume|projection|\bcagr\b|growth rate|\bworth\b|\bvalue\b|\bgrowth\b/],
+  ["Market overview & definition", /overview|introduction|definition|\bwhat is\b|summary|snapshot|at a glance|highlights|key (?:insights|findings|takeaways)/],
+  ["Analyst view & conclusion", /analyst|conclusion|recommendation|verdict|insight|perspective/],
+];
+// Which house H2 a topic / keyword belongs to.
+const HOUSE_OF = {
+  "Market overview & definition": "overview", "Market size & forecast": "overview",
+  "Market dynamics & growth drivers": "dynamics", "Restraints & challenges": "dynamics", "Opportunities": "dynamics",
+  "Market trends & innovation": "trends", "Macro impact (tariffs, geopolitics, AI…)": "macro",
+  "Segmentation overview": "segmental", "Segmentation by type / product": "segmental", "Segmentation by application": "segmental",
+  "Segmentation by end use / industry": "segmental", "Other segmentation (component, technology, channel…)": "segmental",
+  "Regional & country analysis": "regional", "Competitive landscape & key players": "competitive", "Recent developments": "competitive",
+  "Pricing analysis": "pricing", "Regulatory landscape": "regulatory", "Value chain & industry analysis": "valuechain",
+  "Investment & funding": "competitive", "Report scope & methodology": "methodology", "FAQs": "faqs", "Analyst view & conclusion": "overview",
+};
+
+function stripKw(text, kwTok) {
+  let t = " " + String(text || "").toLowerCase().replace(/[^a-z0-9.&?\s-]/g, " ") + " ";
+  for (const k of kwTok) t = t.replace(new RegExp(`\\b${stem(k).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\w*\\b`, "g"), " ");
+  return t.replace(/\s+/g, " ").trim();
+}
+function labelOf(text, kwTok) {
+  const s = stripKw(text, kwTok);
+  for (const [label, re] of TOPIC_TESTS) if (re.test(s)) return label;
+  return null;
+}
+function dimTitle(label) {
+  const m = { "Type / product": "Type", "End user": "End User", "Distribution channel": "Distribution Channel", "Organization size": "Organization Size" };
+  return tcAll(m[label] || label);
 }
 
-function toolbar() {
-  return `<div class="toolbar">
-    <button class="tbtn primary" data-act="copy">Copy brief (paste into Google Docs / Word)</button>
-    <button class="tbtn" data-act="doc">Download Word (.doc)</button>
-    <button class="tbtn" data-act="md">Download Markdown</button>
-    <button class="tbtn" data-act="print">Print / Save PDF</button>
-    <button class="tbtn" data-act="json">Raw data (JSON)</button>
-  </div>`;
-}
+function buildSkeleton(c, ai) {
+  const isReport = c.contentType !== "blog";
+  const kw = String(c.keyword || "").trim();
+  const place = placeIn(kw);
+  const isGlobal = !place;
+  const kwNoGlobal = kw.replace(/^global\s+/i, "");
+  const Kshort = niceTitle(kwNoGlobal);
+  const Kfull = isGlobal ? `Global ${Kshort}` : niceTitle(kw);
+  const kwG = (isGlobal ? `global ${kwNoGlobal}` : kw).toLowerCase();
+  const KQ = tcAll(Kfull);                                   // used inside question-style H3s
+  const N = c.topics.pagesCompared || 0;
+  const kwTok = kwTokens(kw);
+  const F = c.figures || {};
+  const topicMap = {};
+  c.topics.topics.forEach((t) => { topicMap[t.label] = t; });
+  const companies = (c.companies || []).filter((x) => !JUNK_COMPANY_RE.test(x.name));
+  const dims = (c.segments || []).filter((x) => x.label !== "Region").slice(0, 4);
+  const dimNames = dims.length ? dims.map((d) => dimTitle(d.label)) : ["Type", "Application", "End User"];
+  const ideas = (ai && ai.h3Ideas) || {};
+  const idea = (v, ph) => (v ? tcAll(v) : `[${ph}]`);
+  const evidence = (labels) => {
+    const best = labels.map((l) => topicMap[l]).filter(Boolean).sort((a, b) => b.count - a.count)[0];
+    return best && N ? `${best.count} of ${N} competitors cover this` : "";
+  };
+  const sections = [];
+  const mk = (key, h2, extra = {}) => {
+    const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false, ...extra };
+    sections.push(s);
+    return s;
+  };
+  let tableNo = 0;
+  const addTable = (s, text) => { s.tables.push(`Table ${++tableNo}: ${text}`); };
 
-/* ================= the brief document ================= */
-const pending = () => `<div class="skel"><div></div><div></div><div></div></div>`;
-
-function aiOffNote() {
-  const why = S.ai?.error ? `AI step failed: ${S.ai.error}` : `AI writing is off${S.ai?.reason ? ` (${S.ai.reason})` : ""}.`;
-  return `<p class="muted">${esc(why)} The data sections of this brief are still complete.</p>`;
-}
-
-// Render an AI-dependent block: skeleton while writing, content when ready, fallback otherwise.
-function aiOr(ai, fn, fallback) {
-  if (S.aiPending) return pending();
-  if (ai) return fn(ai);
-  return fallback === undefined ? aiOffNote() : fallback;
-}
-
-function paper(c) {
-  const ai = S.ai && !S.ai.error && !S.ai.skipped ? S.ai : null;
-  const secs = [
-    ["b-glance", "Brief at a glance", glanceSec(c, ai)],
-    ["b-intent", "Search intent & what wins page 1", intentSec(c, ai)],
-    ["b-meta", "Title, meta description & H1", metaSec(c, ai)],
-    ["b-opening", "Opening summary (first ~100 words)", openingSec(c, ai)],
-    ["b-outline", "Recommended outline", outlineSec(c, ai)],
-    ["b-coverage", "Topic coverage vs page 1", coverageSec(c)],
-    ["b-scope", "Segmentation & regional scope", scopeSec(c)],
-    ["b-numbers", "Market numbers on page 1", numbersSec(c)],
-    ["b-companies", "Companies to profile", companiesSec(c, ai)],
-    ["b-questions", "Questions the page must answer", questionsSec(c, ai)],
-    ["b-gain", "How we beat page 1 — information gain", gainSec(c, ai)],
-    ["b-visuals", "Tables & charts to include", visualsSec(c, ai)],
-    ["b-links", "Links & sources", linksSec(c, ai)],
-    ["b-trust", "Trust & E-E-A-T checklist", trustSec(c, ai)],
-    c.ourPage ? ["b-gaps", "Gap vs your current page", gapsSec(c)] : null,
-    ["b-policy", `Google rules this brief follows (baseline ${c.policyBaseline})`, policySec(c, ai)],
-    ["b-dev", "Developer handoff", devSec(c)],
-    ["b-qa", "Pre-publish QA checklist", qaSec(c)],
+  // 1. Overview
+  const ov = mk("overview", `${Kshort} Overview`, { why: evidence(["Market overview & definition", "Market size & forecast"]) || "our standard first section" });
+  ov.write = "Open with our numbers in the first sentence, then two short paragraphs: what's driving demand, and what's changing (technology, regulation, buyer behaviour).";
+  ov.cover = [
+    `First sentence (house style): "According to Kings Research analysis, the ${kwG} size was recorded at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a CAGR of [Z]% over the forecast period from 20XX to 20XX."`,
+    F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}% — if ours is outside that range, explain why in one line` : null,
   ].filter(Boolean);
-  const dateStr = new Date(c.generatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const head = `<div class="doc-head">
-    <div class="doc-kicker">Content brief · ${c.contentType === "blog" ? "Blog article" : "Report page"}</div>
-    <h1 class="doc-title">${esc(titleCase(c.keyword))}</h1>
-    <div class="doc-meta"><span>Generated ${esc(dateStr)}</span><span>Google ${esc(c.gl.toUpperCase())} · ${esc(c.hl)}</span>
-    <span>${fmt(c.pagesCompared)} page-1 pages benchmarked</span><span>Policy baseline ${esc(c.policyBaseline)}</span>
-    ${S.ai?.model ? `<span>Written with ${esc(S.ai.model)}</span>` : ""}</div></div>`;
-  const toc = `<nav class="toc"><b>In this brief</b><ol>${secs.map(([id, t]) => `<li><a href="#${id}">${esc(t)}</a></li>`).join("")}</ol></nav>`;
-  const body = secs.map(([id, t, h], i) =>
-    `<section id="${id}"><h2 class="sec"><span class="sn">${String(i + 1).padStart(2, "0")}</span>${esc(t)}</h2>${h}</section>`).join("");
-  const foot = `<div class="doc-foot">Prepared by Ranking X-Ray from Google page 1 on ${esc(dateStr)}. Competitor figures and company lists are auto-extracted — verify before relying on them. Never copy competitor text, tables or numbers.</div>`;
-  return head + toc + body + foot;
-}
+  addTable(ov, "Market size by year, base year → forecast year (an HTML table next to the chart — Google can't read numbers inside images)");
 
-function glanceSec(c, ai) {
-  const t = c.targets, b = c.benchmarks;
-  const must = c.topics.topics.filter((x) => x.tier === "must").length;
-  const kpi = (v, l, s) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`;
-  return `<div class="kpis">
-    ${kpi(`${fmt(t.coverageWords[0])}–${fmt(t.coverageWords[1])}`, "Words (coverage)", `page-1 median ${fmt(b.words?.median)} · depth, not padding`)}
-    ${kpi(fmt(t.sections), "H2 sections", `${must} must-cover topics`)}
-    ${kpi(fmt(t.tables), "Data tables", `page-1 median ${fmt(b.tables?.median)}`)}
-    ${kpi(fmt(t.faqs), "FAQs", `${c.serp.peopleAlsoAsk.length} People Also Ask found`)}
-    ${kpi(fmt(t.internalLinks), "Internal links", "in-body, descriptive anchors")}
-    ${kpi(fmt(t.externalCitations), "External citations", "gov · associations · filings")}
-    ${kpi(c.serp.ourPosition ? "#" + c.serp.ourPosition : "—", "Your position", c.serp.ourPosition ? "on page 1 today" : "not on page 1")}
-    ${kpi(fmt(c.pagesCompared), "Pages benchmarked", esc(c.serp.intent?.label || ""))}
-  </div>` +
-    aiOr(ai, (a) => (a.winningFormula ? `<div class="callout"><b>How we win:</b> ${esc(a.winningFormula)}</div>` : ""), "") +
-    `<p class="muted">Google publishes no ideal page length. The word range shows how much ground page 1 covers — reach it by covering every must-cover topic properly, never by padding.</p>`;
-}
+  // 2. Key Market Highlights
+  const hi = mk("highlights", "Key Market Highlights", { why: "our standard section" });
+  hi.write = "6–7 bullets with our headline numbers — no extra text.";
+  hi.cover = [
+    `The ${kwG} size in 20XX and the forecast value for 20XX`,
+    "CAGR over the forecast period",
+    `Largest region: share % and value in 20XX${c.regionClaims && c.regionClaims.largest[0] ? ` (competitors say ${c.regionClaims.largest[0].label})` : ""}`,
+    `Largest ${dimNames[0].toLowerCase()} segment: share % and value`,
+    dimNames[1] ? `Fastest-growing ${dimNames[1].toLowerCase()} segment: CAGR and 20XX value` : null,
+    dimNames[2] ? `Leading ${dimNames[2].toLowerCase()} segment: share and value` : null,
+    "Fastest-growing region: CAGR",
+  ].filter(Boolean);
 
-function intentSec(c, ai) {
-  const it = c.serp.intent || {};
-  const mix = Object.entries(c.serp.composition || {}).map(([k, v]) => `${v} ${esc((TYPE[k] || k).toLowerCase())}`).join(" · ");
-  let h = `<p><b>${esc(it.label || "")}.</b> ${esc(it.detail || "")}</p><p class="muted">Page-1 makeup: ${mix}.</p>`;
-  h += aiOr(ai, (a) => (a.searchIntent ? `<p>${esc(a.searchIntent)}</p>` : ""), "");
-  if (c.serp.aiOverview?.present) {
-    const cited = (c.serp.aiOverview.sources || []).map((s) => s.domain).filter(Boolean).slice(0, 6).join(", ");
-    h += `<div class="callout">Google shows an AI Overview for this query${cited ? `, citing ${esc(cited)}` : ""}. AI Overviews draw on the same ranking systems, so the route in is the same: be the most useful, original source on page 1.</div>`;
-  }
-  if (c.serp.relatedSearches.length) {
-    h += `<h3>Related searches — answer these inside this page, don't create separate pages</h3><div class="pills">${c.serp.relatedSearches.map((q) => `<span class="pill">${esc(q)}</span>`).join("")}</div>`;
-  }
-  return h;
-}
-
-function metaSec(c, ai) {
-  const b = c.benchmarks.titles || {};
-  const facts = `<p class="muted">Page-1 patterns: ${b.yearPct ?? 0}% of titles include a year · ${b.sizeSharePct ?? 0}% say “size/share” · ${b.figureInMetaPct ?? 0}% of meta descriptions lead with a market-size figure · ${b.cagrInMetaPct ?? 0}% mention CAGR · median title ${fmt(c.benchmarks.titleLen?.median)} characters.</p>`;
-  const opt = (o, lo, hi) => `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span></div>`;
-  return facts + aiOr(ai, (a) => `
-    <h3>Title tag options (50–60 characters)</h3>${a.titleOptions.map((o) => opt(o, 50, 60)).join("") || '<p class="muted">None returned.</p>'}
-    <h3>Meta description options (140–155 characters)</h3>${a.metaDescriptionOptions.map((o) => opt(o, 140, 155)).join("") || '<p class="muted">None returned.</p>'}
-    ${a.h1 ? `<h3>H1</h3><div class="opt">${esc(a.h1)}</div>` : ""}
-    ${a.urlSlug ? `<h3>URL slug</h3><div class="opt"><code>/${esc(a.urlSlug)}</code></div>` : ""}
-    <p class="muted">Re-check the character counts after replacing the [placeholders] with your own published figures. Never put a competitor's numbers in your title or meta.</p>`);
-}
-
-function openingSec(c, ai) {
-  const base = c.contentType === "blog"
-    ? ["A direct answer to the search question in the first two sentences", "The single most useful number or fact, with its source", "Who this matters to and why now"]
-    : ["Base-year market size [USD X.X bn, 20XX]", "Forecast value and year [USD X.X bn by 20XX]", "CAGR and forecast period [X.X%, 20XX–20XX]",
-       "Largest region and its share", "Fastest-growing segment", "One line on what is moving the market (main driver)"];
-  const list = (items) => `<ul class="checklist">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
-  return aiOr(ai,
-    (a) => `${a.openingSummary.guidance ? `<p>${esc(a.openingSummary.guidance)}</p>` : ""}${list(a.openingSummary.mustInclude.length ? a.openingSummary.mustInclude : base)}`,
-    `<p>Open with a plain-language summary a buyer can read in 20 seconds. It must state:</p>${list(base)}`) +
-    `<p class="muted">Write it for people. Google's May 2026 AI-search guide says you don't need to chunk or rewrite content for AI — a clear, accurate summary serves readers and AI Overviews alike.</p>`;
-}
-
-function outlineSec(c, ai) {
-  if (S.aiPending) return pending();
-  const legend = `<p class="muted">${tierTag("must")} most of page 1 covers it · ${tierTag("should")} several competitors cover it · ${tierTag("differentiator")} few or none do — your chance to stand out.</p>`;
-  if (ai && ai.outline.length) {
-    return legend + `<ol class="outline">${ai.outline.map((o, i) => `<li class="oi">
-      <div class="oh"><span class="hn">H2 · ${i + 1}</span>${tierTag(o.priority)}<b>${esc(o.heading)}</b>${o.estWords ? `<span class="ow">~${fmt(o.estWords)} words</span>` : ""}</div>
-      ${o.purpose ? `<div class="op">${esc(o.purpose)}</div>` : ""}
-      ${o.analystNotes.length ? `<ul>${o.analystNotes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
-      ${o.dataNeeded.length || o.sources.length ? `<div class="od">${o.dataNeeded.length ? `<b>Data needed:</b> ${esc(o.dataNeeded.join("; "))}` : ""}${o.dataNeeded.length && o.sources.length ? " &nbsp;·&nbsp; " : ""}${o.sources.length ? `<b>Sources:</b> ${esc(o.sources.join("; "))}` : ""}</div>` : ""}
-      ${o.h3.length ? `<ul class="h3s">${o.h3.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
-    </li>`).join("")}</ol>`;
-  }
-  const list = c.topics.topics.filter((t) => t.tier !== "differentiator").slice().sort((a, b) => a.avgPos - b.avgPos);
-  if (!list.length) return aiOffNote() + `<p class="muted">Not enough comparable page-1 pages to derive an outline.</p>`;
-  return aiOffNote() + legend + `<p>Data-driven outline, ordered by where page-1 competitors place each topic:</p><ol class="outline">${list.map((t, i) => `<li class="oi">
-    <div class="oh"><span class="hn">H2 · ${i + 1}</span>${tierTag(t.tier)}<b>${esc(t.label)}</b><span class="ow">${t.count}/${c.topics.pagesCompared} competitors</span></div>
-    <div class="op">Page-1 headings: ${esc(t.examples.join(" · "))}</div></li>`).join("")}</ol>`;
-}
-
-function coverageSec(c) {
-  const T = c.topics;
-  if (!T.topics.length) return `<p class="muted">Not enough analysable competitor pages to build a coverage matrix.</p>`;
-  const you = !!c.ourPage;
-  const rows = T.topics.map((t) => `<tr>
-    <td><b>${esc(t.label)}</b><div class="muted">${esc(t.examples.slice(0, 2).join(" · "))}</div></td>
-    <td>${tierTag(t.tier)}</td><td class="mono">${t.count}/${T.pagesCompared}</td>
-    <td class="muted">${esc(t.sites.map(shortDom).join(", "))}</td>
-    ${you ? `<td>${t.ours ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'}</td>` : ""}</tr>`);
-  return `<p class="muted">Built from the section headings of ${T.pagesCompared} page-1 pages (${esc(c.comparedDomains.map(shortDom).join(", "))}). “Must” = covered by at least ${T.mustMin}.</p>` +
-    table(["Topic", "Tier", "Coverage", "Who covers it", ...(you ? ["You"] : [])], rows);
-}
-
-function scopeSec(c) {
-  const n = c.pagesCompared || 1;
-  const pills = (arr, empty) => arr.length
-    ? `<div class="pills">${arr.map((x) => `<span class="pill">${esc(x.label)}<i>${x.count}/${n}</i></span>`).join("")}</div>`
-    : `<p class="muted">${esc(empty)}</p>`;
-  const claim = (arr, label) => arr.length ? `<p><b>${label}:</b> ${arr.map((x) => `${esc(x.label)} (${x.count})`).join(", ")}</p>` : "";
-  return `<h3>Segmentation dimensions competitors use</h3>${pills(c.segments, "No clear segmentation pattern detected.")}
-    <h3>Regions with their own section</h3>${pills(c.regions, "No regional sections detected.")}
-    ${c.countries.length ? `<h3>Countries with their own section</h3>${pills(c.countries, "")}` : ""}
-    ${claim(c.regionClaims.largest, "Largest region claimed by page 1")}${claim(c.regionClaims.fastest, "Fastest-growing region claimed")}
-    <div class="callout">Match the segmentation searchers already see on page 1, then add at least one cut competitors don't offer if your data supports it. If your largest-region call differs from page 1, explain why in one sentence.</div>`;
-}
-
-function numbersSec(c) {
-  const F = c.figures;
-  if (!F.rows.length) return `<p class="muted">No comparable pages analysed.</p>`;
-  const rows = F.rows.map((r) => `<tr><td class="mono">#${esc(r.position)}</td><td>${esc(r.domain)}</td>
-    <td>${esc(r.values.slice(0, 2).join(" → ") || "—")}</td><td class="mono">${r.cagr != null ? esc(r.cagr) + "%" : "—"}</td>
-    <td class="mono">${esc(r.period || "—")}</td><td class="mono">${esc(r.lastUpdated || "—")}</td></tr>`);
-  const range = F.cagrMin != null ? `Page-1 CAGRs range from <b>${esc(F.cagrMin)}%</b> to <b>${esc(F.cagrMax)}%</b>` : "No CAGR figures were detected on page 1";
-  const period = F.periods[0] ? `; the most common forecast period is <b>${esc(F.periods[0].label)}</b>` : "";
-  return table(["Rank", "Publisher", "Market size (as stated)", "CAGR", "Period", "Updated"], rows) +
-    `<div class="callout warn">${range}${period}. Publish <b>your own</b> estimate with a short methodology note. If it falls outside this range, explain the scope difference in one sentence (product definition, revenue vs volume, base year). Never reuse a competitor's figure.</div>
-    <p class="muted">Figures are auto-extracted from page text (first mention) — verify before relying on them.</p>`;
-}
-
-function companiesSec(c, ai) {
-  const n = c.pagesCompared || 1;
-  const pills = (arr) => `<div class="pills">${arr.map((x) => `<span class="pill">${esc(x.name)}<i>${x.count}/${n}</i></span>`).join("")}</div>`;
-  const expected = c.companies.filter((x) => x.count >= 2), once = c.companies.filter((x) => x.count < 2);
-  let h = c.companies.length
-    ? (expected.length ? `<h3>Profiled by 2+ page-1 competitors — searchers expect these</h3>${pills(expected)}` : "") +
-      (once.length ? `<h3>Mentioned by one competitor</h3>${pills(once.slice(0, 20))}` : "")
-    : `<p class="muted">No key-player lists could be extracted from page 1 (often rendered by JavaScript or behind tabs).</p>`;
-  h += aiOr(ai, (a) => (a.companies.note || a.companies.consider.length)
-    ? `<div class="callout">${esc(a.companies.note)}${a.companies.consider.length ? `<div style="margin-top:6px"><b>Also consider:</b> ${esc(a.companies.consider.join(", "))}</div>` : ""}</div>` : "", "");
-  return h;
-}
-
-function questionsSec(c, ai) {
-  const paa = c.questions.filter((q) => q.source === "People Also Ask");
-  const comp = c.questions.filter((q) => q.source !== "People Also Ask");
-  let h = paa.length
-    ? `<h3>Google “People Also Ask”</h3><ul class="checklist">${paa.map((q) => `<li><b>${esc(q.question)}</b>${q.snippet ? `<div class="muted">Google currently shows: ${esc(q.snippet)}</div>` : ""}</li>`).join("")}</ul>`
-    : `<p class="muted">No People Also Ask box was returned for this query${c.provider === "google-cse" ? " (the legacy CSE fallback can't return it)" : ""}.</p>`;
-  if (comp.length) h += `<h3>Questions competitors answer</h3><ul class="checklist">${comp.slice(0, 15).map((q) => `<li>${esc(q.question)} <span class="muted">— ${esc(q.source)}</span></li>`).join("")}</ul>`;
-  h += `<h3>Recommended FAQ block</h3>` + aiOr(ai, (a) => a.faqs.length
-    ? table(["Question", "How to answer", "From"], a.faqs.map((f) => `<tr><td><b>${esc(f.question)}</b></td><td>${esc(f.answerGuidance)}</td><td class="muted">${esc(f.source)}</td></tr>`))
-    : `<p class="muted">No FAQ suggestions returned.</p>`);
-  return h;
-}
-
-function gainSec(c, ai) {
-  const edges = c.topics.topics.filter((t) => t.tier === "differentiator").slice(0, 12);
-  const edgeHtml = edges.length ? `<h3>Topics only one competitor covers</h3><div class="pills">${edges.map((t) => `<span class="pill">${esc(t.label)}<i>${esc(shortDom(t.sites[0]))}</i></span>`).join("")}</div>` : "";
-  return aiOr(ai, (a) => a.informationGain.length
-    ? a.informationGain.map((g) => `<div class="opt"><b>${esc(g.angle)}</b><div class="muted" style="margin-top:4px"><b>Why it wins:</b> ${esc(g.whyItWins)}</div><div style="margin-top:4px"><b>How:</b> ${esc(g.howToExecute)}</div></div>`).join("")
-    : `<p class="muted">No angles returned.</p>`,
-    aiOffNote() + `<p>Start from the “Edge” topics below and anything only your own data can show (proprietary estimates, primary interviews, pricing or trade data).</p>`) + edgeHtml;
-}
-
-function visualsSec(c, ai) {
-  return aiOr(ai, (a) => a.tablesAndCharts.length
-    ? table(["Table / chart", "Columns or axes", "Why"], a.tablesAndCharts.map((x) => `<tr><td><b>${esc(x.title)}</b></td><td>${esc(x.columnsOrAxes)}</td><td class="muted">${esc(x.why)}</td></tr>`))
-    : `<p class="muted">No suggestions returned.</p>`,
-    aiOffNote() + `<p>Minimum for a report page: market size by year (base → forecast), share by segment, share by region, and a key-players table.</p>`) +
-    `<p class="muted">Page-1 median: ${fmt(c.benchmarks.tables?.median)} tables. Build tables as real HTML so readers and Google can use them.</p>`;
-}
-
-function linksSec(c, ai) {
-  const t = c.targets;
-  let h = `<p>Targets: <b>${fmt(t.internalLinks)}</b> contextual internal links and <b>${fmt(t.externalCitations)}</b> citations to primary sources. Put links inside sentences where they help the reader — not in link lists.</p>`;
-  h += aiOr(ai, (a) =>
-    (a.internalLinkAnchors.length ? `<h3>Internal link plan</h3>` + table(["Anchor text", "Link to", "Section"], a.internalLinkAnchors.map((x) => `<tr><td>${esc(x.anchor)}</td><td>${esc(x.linkTo)}</td><td class="muted">${esc(x.section)}</td></tr>`)) : "") +
-    (a.externalSources.length ? `<h3>External sources to cite</h3>` + table(["Source type", "Use it for"], a.externalSources.map((x) => `<tr><td>${esc(x.sourceType)}</td><td>${esc(x.useFor)}</td></tr>`)) : ""), "");
-  const sug = S.internalLinks?.suggestions || [];
-  if (sug.length) {
-    const gsc = sug.some((s) => s.impressions != null);
-    h += `<h3>Live pages on our site to link to (from sitemaps)</h3>` + table(["Page", "Suggested anchor", ...(gsc ? ["GSC impressions"] : [])],
-      sug.map((s) => `<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title || s.url)}</a></td><td>${esc(s.anchor || s.anchorText || s.title || "")}</td>${gsc ? `<td class="mono">${fmt(s.impressions)}</td>` : ""}</tr>`));
-  } else if (!S.aiPending && (S.internalLinks?.error || S.internalLinks?.note)) {
-    h += `<p class="muted">Sitemap link lookup: ${esc(S.internalLinks.error || S.internalLinks.note)}</p>`;
-  }
-  return h;
-}
-
-function trustSec(c, ai) {
-  const e = c.benchmarks.eeat || {};
-  return `<p class="muted">On page 1: ${e.author ?? 0}% show an author, ${e.reviewer ?? 0}% a reviewer, ${e.dates ?? 0}% a date, ${e.methodology ?? 0}% a methodology section.</p>
-    <ul class="checklist">${TRUST_BASE.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` +
-    aiOr(ai, (a) => a.eeatChecklist.length ? `<h3>Specific to this page</h3><ul class="checklist">${a.eeatChecklist.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "", "");
-}
-
-function gapsSec(c) {
-  const g = c.gaps, o = c.ourPage;
-  const cls = { critical: "crit", warning: "warn", info: "" };
-  return `<p>Your page: <a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.url)}</a>${o.position ? ` — ranking <b>#${esc(o.position)}</b>` : ""} · ${fmt(o.words)} words · ${fmt(o.sections)} sections · ${fmt(o.tables)} tables · ${fmt(o.faq)} FAQs.</p>` +
-    (g.items.length ? g.items.map((i) => `<div class="callout ${cls[i.severity] || ""}">${esc(i.text)}</div>`).join("")
-      : `<div class="callout">No structural gaps vs page 1 — focus on information gain and freshness.</div>`);
-}
-
-function policySec(c, ai) {
-  return `<div class="policy">${(c.policy || []).map((p) => `<div class="pcard"><div class="pw">${esc(p.when)}</div><b>${esc(p.title)}</b><div>${esc(p.fact)}</div><div class="pr">→ ${esc(p.rule)}</div></div>`).join("")}</div>` +
-    aiOr(ai, (a) => a.doNot.length ? `<h3>Don't do this on this page</h3><ul class="donts">${a.doNot.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "", "");
-}
-
-function devSec(c) {
-  return table(["Structured data", "Notes"], c.targets.schema.map((s) => `<tr><td><b>${esc(s.type)}</b></td><td>${esc(s.why)}</td></tr>`)) +
-    `<ul class="checklist">${DEV_CHECKS.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
-}
-
-function qaItems(c) {
-  const t = c.targets;
-  return [
-    "Every “Must” topic in the coverage table has its own section",
-    c.contentType === "blog" ? "The first two sentences answer the search question directly" : "Opening summary states size, forecast, CAGR and period using OUR figures",
-    `${t.tables}+ data tables built as HTML tables`,
-    `${t.faqs}+ FAQs answering real searcher questions (People Also Ask first)`,
-    `${t.internalLinks} in-body internal links with descriptive anchors`,
-    `${t.externalCitations}+ citations to primary sources (government, associations, filings)`,
-    "Title 50–60 characters, meta description 140–155, exactly one H1",
-    "Named analyst, reviewer, methodology box and visible last-updated date",
-    "No sentence could be pasted onto another report page by swapping the market name (scaled-content check)",
-    "No competitor figures, text or tables reused",
+  // 3. Market Dynamics — suggested question H3s
+  const dy = mk("dynamics", "Market Dynamics", { why: evidence(["Market dynamics & growth drivers", "Restraints & challenges", "Opportunities"]) || "our standard section" });
+  dy.write = "One H3 each for the main driver, restraint and opportunity.";
+  dy.h3 = [
+    { text: `How Is ${idea(ideas.driver, "Main Growth Driver")} Driving Market Growth?`, tip: "driver" },
+    { text: `How Does ${idea(ideas.restraint, "Main Restraint")} Restrain The Development Of The ${KQ}?`, tip: "restraint" },
+    { text: `How Is ${idea(ideas.opportunity, "Main Opportunity")} Creating Growth Opportunities For The ${KQ}?`, tip: "opportunity" },
   ];
-}
-function qaSec(c) { return `<ul class="checklist">${qaItems(c).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`; }
+  dy.cover = ["Back each H3 with a cited source (government, association or company filing) and one dated example: \"For instance, in [Month YYYY], [Company] …\""];
 
-/* ================= export actions ================= */
+  // 4. Market Segmentation
+  const sg = mk("segmentation", "Market Segmentation", { why: evidence(["Segmentation overview"]) || "our standard section" });
+  sg.write = "One table: every split with its sub-segments, then regions with key countries.";
+  sg.cover = ["Build it as a real HTML table — not a bulleted list or an image",
+    `Rows: ${dimNames.map((d) => `By ${d}`).join(" · ")} · By Region (with key countries)`];
+  addTable(sg, `Segmentation — ${dimNames.map((d) => `By ${d}`).join(", ")}, By Region`);
+
+  // 5. Segmental Analysis — one suggested H3 per split
+  const sa = mk("segmental", "Segmental Analysis", { why: dims.length && N ? `competitors split by ${dims.map((d) => `${dimTitle(d.label).toLowerCase()} (${d.count}/${N})`).join(", ")}` : "our standard section" });
+  sa.write = "One H3 per split in the subtitle. Answer it in the first sentence with share % and value, then 2–3 sentences on why.";
+  const segQ = [
+    (d) => `Which ${d} Captured The Largest Share In The ${KQ}?`,
+    (d) => `Which ${d} Is Anticipated To Register The Fastest Growth Rate Over The Forecast Period?`,
+    (d) => `Which ${d} Held The Largest Market Share In 20XX?`,
+    (d) => `Which ${d} Segment Is Gaining The Most Traction?`,
+  ];
+  sa.h3 = dimNames.map((d, i) => ({ text: segQ[i % segQ.length](d) }));
+  sa.cover = ["Every \"By …\" in the subtitle needs its own H3 here — don't skip one"];
+  dimNames.slice(0, 2).forEach((d) => addTable(sa, `Share and growth by ${d.toLowerCase()}`));
+
+  // 6. Regional Analysis
+  const ra = mk("regional", "Regional Analysis", { why: evidence(["Regional & country analysis"]) || "our standard section" });
+  if (place && !REGION_PLACES.has(place)) {
+    ra.write = `Split ${place} by state or region and compare it with the global market.`;
+    ra.h3 = [{ text: `Which States Or Regions Lead The ${KQ}?` }, { text: `How Does The ${tcAll(place)} Market Compare With The Global Market?` }];
+    addTable(ra, `Share by state / region within ${place}`);
+  } else if (place) {
+    ra.write = `Split ${place} by country.`;
+    ra.h3 = [{ text: `Which Country Leads The ${KQ}?` }, ...(c.countries || []).slice(0, 5).map((x) => ({ text: x.label }))];
+    addTable(ra, `Share by country within ${place}`);
+  } else {
+    ra.write = "Start with the scenario H3, then one H3 per region with a share or CAGR figure.";
+    ra.h3 = [
+      { text: `What Is The Market Scenario Across Key Regions In The ${KQ}?` },
+      { text: "North America" }, { text: "Asia Pacific" }, { text: "Europe" },
+      { text: "Middle East & Africa" }, { text: "South & Central America" },
+    ];
+    ra.cover = [
+      "Give each big region its own H3 with a number — don't merge regions without figures",
+      c.regionClaims && c.regionClaims.largest[0] ? `Competitors call ${c.regionClaims.largest[0].label} the largest region — confirm or correct with our data` : null,
+      c.countries && c.countries.length ? `Key countries to mention: ${c.countries.slice(0, 5).map((x) => x.label).join(", ")}` : null,
+    ].filter(Boolean);
+    addTable(ra, "Market share by region");
+  }
+
+  // 7. Optional H2s — sections competitors have that our format doesn't
+  const optional = [
+    ["trends", "Market trends & innovation", "Market Trends", () => [{ text: `Which Trends Are Shaping The ${KQ}?` }]],
+    ["macro", "Macro impact (tariffs, geopolitics, AI…)", "Impact Of Tariffs, Policy & AI", () => [{ text: `How Are [Tariffs / AI / Policy Changes] Impacting The ${KQ}?` }]],
+    ["pricing", "Pricing analysis", "Pricing Analysis", () => [{ text: `How Are Prices Changing Across [Key Segment]?` }]],
+    ["regulatory", "Regulatory landscape", "Regulatory Landscape", () => [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }]],
+    ["valuechain", "Value chain & industry analysis", "Value Chain Analysis", () => [{ text: `How Is Value Created Across The ${KQ} Value Chain?` }]],
+  ];
+  optional.forEach(([key, label, h2, h3s]) => {
+    const t = topicMap[label];
+    if (!t || t.tier === "differentiator") return;
+    const s = mk(key, h2, { tier: "opt", optional: true, why: `${t.count} of ${N} competitors have it — optional in our format` });
+    s.write = "Add only if our research has something specific to say.";
+    s.h3 = h3s();
+  });
+
+  // 8. Competitive Landscape
+  const cl = mk("competitive", "Competitive Landscape", { why: evidence(["Competitive landscape & key players", "Recent developments"]) || "our standard section" });
+  cl.write = "How competition works in this market, then the key players.";
+  cl.h3 = [
+    { text: `How Is ${idea(ideas.competition, "Main Competitive Strategy, e.g. Mergers & Acquisitions")} Reshaping Competition In The ${KQ}?` },
+    { text: `Who Are The Key Players In The ${KQ}?` },
+  ];
+  cl.cover = [
+    "Under the first H3: 3 dated developments as bullets — month, year, company, what happened",
+    companies.length ? `Key players list (15–20 companies), e.g. ${companies.slice(0, 8).map((x) => x.name).join(", ")}` : "Key players list (15–20 companies)",
+  ];
+
+  // 9. Research Methodology
+  const rm = mk("methodology", "Research Methodology", { why: evidence(["Report scope & methodology"]) || "our standard section" });
+  rm.h3 = [{ text: "How We Gather This Information" }, { text: "Why Kings Research?" }];
+  rm.cover = ["Keep the standard text, but add 1–2 lines naming the main sources used for THIS market (government statistics, associations, company filings) — so it isn't identical on every report"];
+
+  // 10. FAQs — house-standard questions first, then real searcher questions about this market
+  const fq = mk("faqs", "Frequently Asked Questions", { why: "our standard section" });
+  fq.write = "Use each question as written and answer in 2–3 sentences with our numbers.";
+  const base = [
+    `What is the market size of the ${kwG}?`,
+    `What are the main factors driving the growth of the ${kwG}?`,
+    `What are the key challenges restraining the growth of the ${kwG}?`,
+    `What are emerging opportunities in the ${kwG}?`,
+    place && !REGION_PLACES.has(place) ? `Which states lead the ${kwG}?` : `What are the key regions in the ${kwG}?`,
+    `Who are the key players in the ${kwG}?`,
+  ];
+  const seenQ = new Set(base.map(normQ));
+  const extraQ = [...(c.serp.peopleAlsoAsk || []).map((p) => p.question), ...((ai && ai.faqs) || [])]
+    .filter((q) => goodQuestion(kw, q))
+    .filter((q) => { const k = normQ(q); if (!k || seenQ.has(k)) return false; seenQ.add(k); return true; })
+    .slice(0, 2);
+  fq.h3 = [...base, ...extraQ].map((t) => ({ text: t, plain: true }));
+
+  // "Our edge" ideas from the AI → the section they fit (else Market Dynamics)
+  ((ai && ai.extraActions) || []).forEach((a) => {
+    const lab = labelOf(a.where, kwTok) || labelOf(a.what, kwTok);
+    const target = sections.find((s) => s.key === HOUSE_OF[lab]) || dy;
+    target.extras.push(a.what);
+  });
+
+  // Keywords: on-topic only, max 2 per H2, each used once
+  const getSec = (k) => sections.find((s) => s.key === k);
+  const kwPool = [
+    ...(c.keywords.secondary || []).map((k) => ({ phrase: k.phrase, variant: k.variant })),
+    ...((c.dupes && c.dupes.queries) || []).map((q) => ({ phrase: q.query, variant: hasAllKw(kw, q.query) })),
+  ].filter((k) => k.phrase && !BAD_PHRASE_RE.test(k.phrase) && onTopic(kw, k.phrase) && !/^(what|how|why|which|who|is|are|does|can|will)\b/i.test(k.phrase));
+  const seenK = new Set([normQ(kw)]);
+  const titleWords = [];
+  const leftover = [];
+  kwPool.forEach((k) => {
+    const key = normQ(k.phrase);
+    if (seenK.has(key)) return;
+    seenK.add(key);
+    const target = getSec(HOUSE_OF[labelOf(k.phrase, kwTok)]);
+    if (target && !["faqs", "methodology", "segmentation"].includes(target.key) && target.words.length < 2) target.words.push(k.phrase);
+    else if (k.variant && titleWords.length < 2) titleWords.push(k.phrase);
+    else if (leftover.length < 5) leftover.push(k.phrase);
+  });
+  (c.keywords.google || []).filter((x) => x.source === "Google related search" && onTopic(kw, x.phrase)).forEach((x) => {
+    const target = getSec(HOUSE_OF[labelOf(x.phrase, kwTok)]) || ov;
+    if (target.also.length < 2 && !target.words.includes(x.phrase)) target.also.push(x.phrase);
+  });
+
+  // Title / meta / URL / descriptor — house style
+  const len = (t) => String(t).replace(/\[X\]|\[Y\]/g, "285.11").replace(/\[Z\]/g, "5.67").length;
+  let houseTitle = `${Kfull} Size, Share & Growth | Report 20XX`;
+  if (houseTitle.length > 60) houseTitle = `${Kshort} Size, Share & Growth | Report 20XX`;
+  const titles = [{ text: houseTitle, len: houseTitle.length, house: true }];
+  ((ai && ai.titles) || []).filter((t) => t.len >= 48 && t.len <= 62).slice(0, 1).forEach((t) => titles.push(t));
+  if (titles.length < 2) { const t2 = `${Kshort} Size, Share & Forecast, 20XX–20XX`; titles.push({ text: t2, len: t2.length }); }
+  const metaText = `The ${kwG} was valued at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a [Z]% CAGR.`;
+  const descriptor = `${Kshort} Size, Share, Growth & Industry Analysis, ${dimNames.map((d) => `By ${d} (…)`).join(", ")}, and Regional Analysis, 20XX - 20XX`;
+
+  return {
+    titles, meta: { text: metaText, len: len(metaText) }, url: `/report/${slug(kwG)}-[id]`,
+    h1: Kfull, descriptor, sections, titleWords, leftover,
+    tableCount: tableNo, faqCount: fq.h3.length,
+    coreCount: sections.filter((s) => !s.optional).length, optCount: sections.filter((s) => s.optional).length,
+    linkTarget: Math.min(8, Math.max(4, c.targets.internalLinks || 4)),
+    links: relevantLinks(c),
+  };
+}
+
+function opt(o, lo, hi) {
+  if (!o) return "";
+  return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span>${o.house ? `<span class="ev"> · our house format</span>` : ""}</div>`;
+}
+
+function skSectionHtml(s) {
+  return `<li class="skh2${s.optional ? " optional" : ""}"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
+    <div class="skbody">
+      ${s.write ? `<div class="skw">${esc(s.write)}</div>` : ""}
+      ${s.h3.length ? `<div class="h3hint">${s.key === "faqs" ? "FAQ questions" : "Suggested H3s — reword to match what your research shows"}</div>
+        <ul class="skh3">${s.h3.map((h) => `<li><span class="lvl h3">${s.key === "faqs" ? "Q" : "H3"}</span>${esc(h.text)}</li>`).join("")}</ul>` : ""}
+      ${s.cover.length ? `<ul class="skc">${s.cover.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${s.tables.map((t) => `<div class="skx"><span class="lab">Table</span>${esc(t)}</div>`).join("")}
+      ${s.extras.length ? `<div class="skx edge"><span class="lab">Our edge</span>${esc(s.extras.join(" · "))}</div>` : ""}
+      ${s.words.length ? `<div class="skx"><span class="lab">Keywords (once each)</span>${pills(s.words)}</div>` : ""}
+      ${s.also.length ? `<div class="skx"><span class="lab">Also cover</span>${pills(s.also)}</div>` : ""}
+    </div></li>`;
+}
+
+const H3_GUIDE = `<div class="h3guide"><b>How to write a good H3</b>
+  <ul class="plain">
+    <li>Ask the question a buyer would search — “Which…?”, “How is…?”.</li>
+    <li>Name the specific driver, segment or region — never just “Drivers” or “Segment Analysis”.</li>
+    <li>Answer it in the first sentence underneath, with a number (share %, value or CAGR).</li>
+    <li>One idea per H3, under ~15 words. Write AI, M&amp;A, U.S. and R&amp;D correctly.</li>
+  </ul></div>`;
+
+function skeletonHtml(sk) {
+  return `<div class="skmeta">
+      <div class="skrow"><span class="lab">Title tag</span><div>${sk.titles.slice(0, 2).map((t) => opt(t, 50, 60)).join("")}</div></div>
+      <div class="skrow"><span class="lab">Meta</span><div>${opt(sk.meta, 140, 160)}</div></div>
+      <div class="skrow"><span class="lab">URL</span><div class="mono" style="padding-top:4px">${esc(sk.url)}</div></div>
+    </div>
+    <div class="skh1"><span class="lvl">H1</span>${esc(sk.h1)}</div>
+    <div class="skdesc"><span class="lvl">H2</span>${esc(sk.descriptor)}
+      <div class="muted small">List the sub-segments in each bracket. Every “By …” here needs an H3 under Segmental Analysis.</div></div>
+    <div class="skbyline">Pages · Base Year: 20XX · Release: [Month YYYY] · Author: [Name — linked] · Reviewed By: [Name — linked] · Last Updated: [Month YYYY]</div>
+    ${sk.titleWords.length ? `<div class="skx"><span class="lab">Title / meta / overview</span>${pills(sk.titleWords)}</div>` : ""}
+    ${H3_GUIDE}
+    <ol class="skh2s">${sk.sections.map(skSectionHtml).join("")}</ol>
+    ${sk.leftover.length ? `<div class="skx"><span class="lab">Optional phrases — only if they fit</span>${pills(sk.leftover)}</div>` : ""}
+    <div class="callout">Add ${sk.linkTarget} links to related Kings Research reports <b>inside sentences</b> in the sections above (not as a list).
+      ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a></li>`).join("")}</ul>` : ""}</div>
+    <div class="muted small">Then: Author and Reviewed By bios at the end of the page, as on our other reports.</div>`;
+}
+
+const DONTS = [
+  "Copy any competitor's numbers, text or tables — use our own estimates.",
+  "Repeat keywords — use each one once where it reads naturally. Stuffing is spam under Google's rules.",
+  "Pad to hit the word count — cover each section properly instead.",
+  "Reuse template paragraphs from other reports — write for this market.",
+  "Make up numbers — leave a [placeholder] and ask the data team.",
+];
+
+function defaultJob(c) {
+  const rivals = (c.serp.organic || []).filter((r) => (r.type === "tracked" || r.type === "publisher") && r.kind !== "category").slice(0, 2).map((r) => r.name);
+  const beat = rivals.length ? rivals.join(" and ") : "the pages in Google's top 10";
+  return `Write a ${c.contentType === "blog" ? "blog article" : "report page"} on “${niceTitle(c.keyword)}” for buyers in ${countryName(c.gl)}. ` +
+    `Beat ${beat} with our own numbers, every section in the skeleton below, and clear answers to what buyers ask.`;
+}
+
+function dupesNote(c) {
+  const d = c.dupes;
+  if (!d || !d.checked) return "";
+  if (d.verdict === "clear") return `<div class="callout">✓ ${esc(d.message)}</div>`;
+  if (d.verdict === "ok") return "";
+  const list = d.pages.slice(0, d.verdict === "related" ? 3 : 4).map((p) =>
+    `<li><b>${esc(p.role)}:</b> <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a> — ${esc(p.action)}</li>`).join("");
+  return `<div class="callout warn"><b>Before you write:</b> ${esc(d.message)}<ul class="plain">${list}</ul></div>`;
+}
+
+function analystHtml(c) {
+  const ai = aiOk();
+  const sk = buildSkeleton(c, ai);
+  const t = c.targets;
+  const med = c.benchmarks.words && c.benchmarks.words.median;
+  const lo = med ? round100(med) : t.coverageWords[0];
+  const hi = Math.max(lo + 500, t.coverageWords[0]);
+  return docHead(c, "Writer's skeleton") +
+    `<div class="job"><div class="jl">Your job</div><p>${esc((ai && ai.howToWin) || defaultJob(c))}</p></div>` +
+    `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div>` +
+    dupesNote(c) +
+    `<h2 class="sec">Writer's skeleton</h2>` +
+    `<p class="muted">Our report format, top to bottom. Tick each H2 off. H3s are suggestions — keep the question style, change the wording to fit your findings.</p>` +
+    (S.aiPending ? pending() : "") +
+    skeletonHtml(sk) +
+    `<h2 class="sec">Don't</h2><ul class="donts">${DONTS.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` +
+    `<div class="callout">Finished writing? Open the <b>Check my draft</b> tab and paste it in.</div>`;
+}
+
+/* ================= SEO DETAILS ================= */
+function seoHtml(c) {
+  return docHead(c, "SEO details") +
+    sec(`Google top 10 — ${countryName(c.gl)}`, top10Sec(c)) +
+    sec("Your existing pages for this keyword", dupesSec(c)) +
+    sec("Competitor scorecard", scoreSec(c)) +
+    sec("Keywords competitors target", kwTheySec(c)) +
+    sec("Topics each competitor covers", gridSec(c)) +
+    sec("Keywords to use", kwSec(c)) +
+    sec(`Google rules (as of ${c.policyBaseline})`, `<ul class="plain">${(c.rules || []).map((r) => `<li>${esc(r)}</li>`).join("")}</ul>`);
+}
+
+function top10Sec(c) {
+  const rows = c.serp.organic.map((r) => {
+    const cls = r.type === "ours" ? "ours" : r.type === "tracked" ? "trk" : "";
+    const tag = r.type === "tracked" ? '<span class="tag trk">tracked</span>' : r.type === "ours" ? '<span class="tag you">you</span>' : "";
+    const viaNote = r.via === "pasted" ? "pasted" : r.via === "ai-reader" ? "approx · via ChatGPT" : "";
+    const wordsCell = r.words != null
+      ? fmt(r.words) + (viaNote ? `<div class="muted small">${viaNote}</div>` : "")
+      : `<span class="muted">${esc(r.note || "—")}</span>${r.note === "blocked" || r.note === "not read" ? pasteBtn(r.link) : ""}`;
+    return `<tr class="${cls}"><td class="mono">${esc(r.position)}</td>
+      <td><b>${esc(r.name)}</b>${tag}<div class="muted small">${esc(TYPE[r.type] || r.type)}</div></td>
+      <td><a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.title || r.link)}</a></td>
+      <td class="mono">${wordsCell}</td></tr>`;
+  });
+  let h = table(["#", "Site", "Ranking page", "Words"], rows);
+  const outside = c.competitors.filter((x) => x.tracked && !x.onPage1);
+  if (outside.length) h += `<p class="muted">Tracked competitors outside the top 10: ${outside.map((x) => `<b>${esc(x.name)}</b> ${x.position ? `#${x.position}` : "not in top 20"}`).join(" · ")}</p>`;
+  if (c.serp.listingCount >= 2) {
+    h += `<div class="callout warn"><b>Broad topic:</b> ${c.serp.listingCount} of the top 10 are category pages (${esc((c.serp.listingSites || []).slice(0, 3).join(", "))}). Google treats this keyword as a broad topic — consider a hub page that links to all our related reports, not just one narrow report.</div>`;
+  }
+  const ao = c.serp.aiOverview;
+  if (ao && ao.present) {
+    const flag = (d) => (sameDomain(d, c.ourDomain) ? " (you)" : TRACKED_DOMAINS.some((t) => sameDomain(d, t)) ? " (tracked)" : "");
+    const src = ao.sources || [];
+    h += `<div class="callout"><b>Google shows an AI Overview for this search.</b> It cites: ${src.length ? src.slice(0, 8).map((s) => esc(s.domain + flag(s.domain))).join(", ") : "no sources returned"}.` +
+      `${src.some((s) => sameDomain(s.domain, c.ourDomain)) ? "" : " We're not cited yet — clear numbers, definitions and FAQs make a page easier to cite."}</div>`;
+  } else if (HEALTH.aiOverview === false) {
+    h += `<p class="muted">Add <code>SERPAPI_KEY</code> in Vercel to see which sites Google's AI Overview cites.</p>`;
+  } else if (HEALTH.aiOverview) {
+    h += `<p class="muted">Google didn't show an AI Overview for this search.</p>`;
+  }
+  return h;
+}
+
+function dupeRank(p) {
+  if (p.googleRank) return `#${p.googleRank}<div class="muted small">Google today</div>`;
+  if (p.kwRank) return `~${Math.round(p.kwRank)}<div class="muted small">avg · Search Console</div>`;
+  return `<span class="muted">Not ranking</span>`;
+}
+
+function dupesSec(c) {
+  const d = c.dupes;
+  if (!d) return `<p class="muted">Not available for this brief.</p>`;
+  if (!d.checked) return `<p class="muted">${esc(d.reason || "Skipped.")}</p>`;
+  let h = `<div class="callout ${d.verdict === "clear" || d.verdict === "ok" ? "" : "warn"}">${esc(d.message)}</div>`;
+  if (d.pages.length) {
+    h += table(["Role", "Page", "Type", "Rank for this keyword", "Search Console (90 days)", "What to do"], d.pages.map((p) =>
+      `<tr><td><b>${esc(p.role)}</b></td><td><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a></td>
+        <td>${esc(p.type)}</td><td class="mono">${dupeRank(p)}</td>
+        <td class="mono">${p.gsc ? `${fmt(p.gsc.impressions)} impr · pos ${p.gsc.position ?? "—"}${p.gsc.topQuery ? `<div class="muted small">“${esc(p.gsc.topQuery)}”</div>` : ""}` : "—"}</td>
+        <td>${esc(p.action)}</td></tr>`));
+    h += `<p class="muted small">Rank for this keyword: "#" = position in today's Google top 10; "~" = average position over 90 days for searches containing the keyword (Search Console).</p>`;
+  }
+  const s = d.sources || {};
+  h += `<p class="muted small">Checked with Google${s.searchConsole === true ? " and Search Console" : ""}.${typeof s.searchConsole === "string" && s.searchConsole !== "not configured" ? " Search Console: " + esc(s.searchConsole) : ""}</p>`;
+  return h;
+}
+
+function nameCell(x) {
+  const n = x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name);
+  const via = x.via === "pasted" ? `<div class="muted small">from the page you pasted</div>`
+    : x.via === "ai-reader" ? `<div class="muted small">read via ChatGPT web search — check figures</div>`
+    : x.via === "archive" ? `<div class="muted small">read from archive copy ${esc(x.archivedAt || "")}</div>`
+    : x.via ? `<div class="muted small">read via fallback</div>` : "";
+  return n + (x.tracked ? '<span class="tag trk">tracked</span>' : "") + via;
+}
+const rankTxt = (x) => (x.position ? `#${x.position}` : x.onPage1 ? "—" : "Not in top 20");
+const useTxt = (k) => (k ? ["Title", "H1", "Meta"].map((l, i) => `${[k.title, k.h1, k.meta][i] ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'} ${l}`).join(" &nbsp;") : "—");
+
+function scoreSec(c) {
+  const rows = c.competitors.map((x) => {
+    if (x.fetched) {
+      const ap = x.stats.approx ? "~" : "";
+      return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${ap}${fmt(x.stats.words)}</td>
+        <td class="mono">${ap}${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
+        <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}</td>
+        <td class="mono">${x.stats.cagr != null ? esc(x.stats.cagr) + "%" : "—"}</td>
+        <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}</td></tr>`;
+    }
+    const fix = x.blocked ? pasteBtn(x.link, "Paste page") : pasteBtn(x.link || "", x.link ? "Use a different page" : "Add the right page");
+    return `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")} ${fix}</td></tr>`;
+  });
+  let h = table(["Competitor", "Google rank", "Words", "Tables", "FAQs", "Market size (as stated)", "CAGR", "Period", "Updated"], rows);
+  const F = c.figures;
+  if (F && F.cagrMin != null) {
+    h += `<div class="callout warn">Competitor CAGRs range from <b>${esc(F.cagrMin)}%</b> to <b>${esc(F.cagrMax)}%</b>${F.periods[0] ? `; most use <b>${esc(F.periods[0].label)}</b>` : ""}. Publish our own estimate and explain in one line why it differs.</div>`;
+  }
+  if (c.competitors.some((x) => x.stats && x.stats.approx)) h += `<p class="muted small">~ = approximate (page read via ChatGPT web search).</p>`;
+  return h;
+}
+
+function kwTheySec(c) {
+  const rows = c.competitors.filter((x) => x.fetched || x.kwUse).map((x) => `<tr><td>${nameCell(x)}${x.kind === "category" ? `<div><span class="tag cat" style="margin-left:0">category page</span><span class="muted small"> keywords only</span></div>` : ""}</td>
+    <td>${esc(x.mainKeyword || "—")}</td>
+    <td class="mono">${useTxt(x.kwUse)}</td>
+    <td>${(x.secondary || []).length ? pills(x.secondary.filter((s) => !BAD_PHRASE_RE.test(s))) : '<span class="muted">—</span>'}</td></tr>`);
+  return rows.length ? table(["Competitor", "Main keyword (from their title)", "Uses the keyword in", "Secondary keywords they use"], rows) : "";
+}
+
+function gridSec(c) {
+  const cols = c.topics.columns || [];
+  const topics = c.topics.topics.filter((t) => t.tier !== "differentiator");
+  if (!topics.length || !cols.length) return "";
+  const N = c.topics.pagesCompared;
+  const you = !!c.ourPage;
+  const head = ["Topic", ...cols.map((k) => esc(k.short)), ...(you ? ["You"] : []), "Total"];
+  const body = topics.map((t) => `<tr><td>${tierTag(t.tier === "must" ? "must" : "should")} ${esc(t.label)}</td>
+    ${cols.map((k) => `<td class="ctr">${t.sites.includes(k.domain) ? '<span class="yes">✓</span>' : '<span class="nodim">·</span>'}</td>`).join("")}
+    ${you ? `<td class="ctr">${t.ours ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'}</td>` : ""}
+    <td class="mono">${t.count}/${N}</td></tr>`);
+  return table(head, body);
+}
+
+function srcCell(k) {
+  if (!k.source || k.source === "Competitors") {
+    return `${k.count}/${k.of} competitor sites<div class="muted small">${esc((k.names || []).slice(0, 4).join(", "))}</div>`;
+  }
+  return `<span class="tag src">${esc(k.source)}</span>`;
+}
+
+function kwSec(c) {
+  const K = c.keywords;
+  const all = (K.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase));
+  const sk = all.filter((k) => onTopic(c.keyword, k.phrase));
+  const hiddenHere = all.length - sk.length + (K.hidden || 0);
+  let h = `<div class="kwbox"><div class="kwl">Primary keyword</div><div class="kwp">${esc(K.primary.phrase)}</div>
+    <div class="muted">Use in: ${esc(K.primary.where)}. Competitors put it in their title ${K.primary.inTitlePct}%, H1 ${K.primary.inH1Pct}% and meta ${K.primary.inMetaPct}% of the time.</div></div>`;
+  if (sk.length) {
+    h += `<h3>Secondary keywords (${sk.length})</h3>` +
+      table(["Keyword", "Source", "Where to use it"], sk.map((k) =>
+        `<tr><td><b>${esc(k.phrase)}</b></td><td class="mono">${srcCell(k)}</td><td>${esc(k.where)}</td></tr>`));
+  }
+  if (hiddenHere > 0) h += `<p class="muted small">${hiddenHere} off-topic phrase(s) hidden — other countries or other markets.</p>`;
+  const gqAll = (c.dupes && c.dupes.queries) || [];
+  const gq = gqAll.filter((q) => onTopic(c.keyword, q.query));
+  if (gq.length) {
+    h += `<h3>Searches your site already shows up for (${gq.length})</h3><p class="muted">From Search Console, last 90 days — real searches. Use the best ones as headings or FAQ questions.</p>` +
+      table(["Search", "Impressions", "Avg position"], gq.map((q) => `<tr><td>${esc(q.query)}</td><td class="mono">${fmt(q.impressions)}</td><td class="mono">${esc(q.position)}</td></tr>`));
+  }
+  const rel = K.google.filter((g) => g.source === "Google related search" && onTopic(c.keyword, g.phrase));
+  if (rel.length) h += `<h3>Google related searches</h3><div>${pills(rel.map((g) => g.phrase))}</div>`;
+  const paa = K.google.filter((g) => g.source === "People Also Ask");
+  if (paa.length) h += `<h3>People Also Ask</h3><ul class="plain">${paa.map((g) => `<li>${esc(g.phrase)}${goodQuestion(c.keyword, g.phrase) ? "" : ' <span class="muted small">(not used — off-topic or news)</span>'}</li>`).join("")}</ul>`;
+  return h;
+}
+
+function relevantLinks(c) {
+  const toks = kwTokens(c.keyword).map(stem);
+  return ((S.internalLinks && S.internalLinks.suggestions) || [])
+    .filter((s) => s.url && toks.some((t) => s.url.toLowerCase().includes(t))).slice(0, 6);
+}
+
+/* ================= CHECK MY DRAFT ================= */
+function draftHtml(c) {
+  const d = S.draft;
+  return `<div class="doc-kicker">Check my draft</div><h1 class="doc-title">${esc(niceTitle(c.keyword))}</h1>
+    <p class="muted">Paste the full draft from Google Docs or Word — headings and tables are kept. Add the planned title tag and meta description, then press Check.</p>
+    <label class="pl" for="dTitle">Title tag</label>
+    <input id="dTitle" class="pin" type="text" value="${esc(d.title)}" placeholder="${esc(niceTitle(c.keyword))} Size, Share & Growth | Report 20XX">
+    <div class="cnt" id="dTitleCnt"></div>
+    <label class="pl" for="dMeta">Meta description</label>
+    <textarea id="dMeta" class="pin" rows="2">${esc(d.meta)}</textarea>
+    <div class="cnt" id="dMetaCnt"></div>
+    <label class="pl">Draft</label>
+    <div id="dBody" class="pastebox" contenteditable="true" data-ph="Paste the draft here…">${d.html || ""}</div>
+    <div class="prow"><button class="pbtn" data-act="check">Check draft</button><span id="dStatus" class="muted"></span></div>
+    <div id="dResult">${d.result ? resultHtml(d.result) : ""}</div>`;
+}
+
+function bindDraft() {
+  const upd = () => {
+    $("dTitleCnt").textContent = `${$("dTitle").value.length} characters (aim for 50–60)`;
+    $("dMetaCnt").textContent = `${$("dMeta").value.length} characters (aim for 140–155)`;
+  };
+  $("dTitle").addEventListener("input", (e) => { S.draft.title = e.target.value; upd(); });
+  $("dMeta").addEventListener("input", (e) => { S.draft.meta = e.target.value; upd(); });
+  $("dBody").addEventListener("input", (e) => { S.draft.html = e.target.innerHTML; });
+  upd();
+}
+
+async function runCheck() {
+  const html = $("dBody").innerHTML;
+  S.draft.html = html;
+  $("dStatus").innerHTML = "Checking…";
+  try {
+    const r = await post({ stage: "check", collected: S.collected, title: S.draft.title, meta: S.draft.meta, html });
+    S.draft.result = r;
+    $("dResult").innerHTML = resultHtml(r);
+    $("dStatus").textContent = "";
+  } catch (e) {
+    $("dStatus").textContent = e.message;
+  }
+}
+
+function resultHtml(r) {
+  const cls = r.score >= 80 ? "good" : r.score >= 55 ? "mid" : "bad";
+  const icon = { pass: "✓", warn: "!", fail: "✗" };
+  const order = { fail: 0, warn: 1, pass: 2 };
+  const rows = (r.results || []).slice().sort((a, b) => order[a.status] - order[b.status]);
+  return `<div class="score ${cls}"><b>${r.score}%</b> · ${r.passed} of ${r.total} checks passed · ${fmt(r.words)} words</div>
+    <ul class="res">${rows.map((x) => `<li class="r-${x.status}"><span class="ri">${icon[x.status]}</span>
+      <div><b>${esc(x.check)}</b> — ${esc(x.detail)}${x.fix ? `<div class="rf">Fix: ${esc(x.fix)}</div>` : ""}</div></li>`).join("")}</ul>`;
+}
+
+/* ================= actions & export ================= */
 function onAction(e) {
+  const open = e.target.closest("[data-open]");
+  if (open) { e.preventDefault(); loadSaved(open.dataset.open); return; }
+  const tabBtn = e.target.closest("[data-tab]");
+  if (tabBtn && S) { S.tab = tabBtn.dataset.tab; render(); return; }
   const b = e.target.closest("[data-act]");
-  if (!b || !S) return;
+  if (!b) return;
+  if (b.dataset.act === "paste") { openManual(b.dataset.url); return; }
+  if (!S) return;
   const name = `content-brief-${slug(S.collected.keyword)}`;
   switch (b.dataset.act) {
     case "copy": copyBrief(); break;
-    case "doc": downloadDoc(name); break;
-    case "md": download(`${name}.md`, toMarkdown(), "text/markdown;charset=utf-8"); break;
+    case "doc": download(`${name}.doc`, "\ufeff" + docHtml(), "application/msword"); break;
     case "print": window.print(); break;
-    case "json": download(`${name}.json`, JSON.stringify({ collected: S.collected, ai: S.ai, internalLinks: S.internalLinks }, null, 2), "application/json"); break;
-    case "links": copyText(S.collected.serp.organic.map((r) => `${r.position}. ${r.link}`).join("\n"), "Page-1 links copied"); break;
+    case "links": copyText(S.collected.serp.organic.map((r) => `${r.position}. ${r.name} — ${r.link}`).join("\n"), "Top-10 links copied"); break;
+    case "save": saveBrief(); break;
+    case "share": if (S.saved && S.saved.id) copyText(`${location.origin}/brief?id=${encodeURIComponent(S.saved.id)}`, "Share link copied"); break;
+    case "check": runCheck(); break;
+  }
+}
+
+const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1b2129;line-height:1.45}
+h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
+table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
+.ptag,.tag,.lvl{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
+.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
+
+function docHtml() {
+  const c = S.collected;
+  EXPORTING = true;
+  try {
+    return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + c.keyword)}</title><style>${DOC_CSS}</style></head>` +
+      `<body>${analystHtml(c)}<br><hr><br>${seoHtml(c)}</body></html>`;
+  } finally {
+    EXPORTING = false;
   }
 }
 
@@ -761,15 +1341,15 @@ async function copyBrief() {
       "text/html": new Blob([`<meta charset="utf-8">${el.innerHTML}`], { type: "text/html" }),
       "text/plain": new Blob([el.innerText], { type: "text/plain" }),
     })]);
-    toast("Brief copied — paste into Google Docs or Word");
+    toast("Copied — paste into Google Docs or Word");
   } catch {
     const range = document.createRange();
     range.selectNode(el);
     const sel = getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-    try { document.execCommand("copy"); toast("Brief copied"); }
-    catch { toast("Copy blocked by the browser — use Download instead"); }
+    try { document.execCommand("copy"); toast("Copied"); }
+    catch { toast("Copy blocked by the browser — use Download Word instead"); }
     sel.removeAllRanges();
   }
 }
@@ -777,20 +1357,6 @@ async function copyBrief() {
 async function copyText(text, msg) {
   try { await navigator.clipboard.writeText(text); toast(msg); }
   catch { toast("Copy blocked by the browser"); }
-}
-
-const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1b2129;line-height:1.45}
-h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:18pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:12pt 0 4pt}
-table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
-.ptag{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt}.sn{color:#0f7a5c;margin-right:6pt}
-.muted,.op,.pw,.doc-meta,.doc-kicker,.doc-foot{color:#5a6675}.callout,.opt,.oi,.pcard,.kpi{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
-.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.pr{color:#0f5e48;font-weight:bold}`;
-
-function downloadDoc(name) {
-  const el = $("briefDoc").cloneNode(true);
-  el.querySelectorAll(".toc, .skel").forEach((n) => n.remove());
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + S.collected.keyword)}</title><style>${DOC_CSS}</style></head><body>${el.innerHTML}</body></html>`;
-  download(`${name}.doc`, "\ufeff" + html, "application/msword");
 }
 
 function download(filename, content, type) {
@@ -809,109 +1375,6 @@ function toast(msg) {
   t.classList.add("show");
   clearTimeout(t._h);
   t._h = setTimeout(() => t.classList.remove("show"), 2200);
-}
-
-function toMarkdown() {
-  const c = S.collected;
-  const a = S.ai && !S.ai.error && !S.ai.skipped ? S.ai : null;
-  const L = [];
-  const p = (s = "") => L.push(s);
-  const cell = (s) => String(s ?? "").replace(/\|/g, "/").replace(/\n/g, " ");
-  const t = c.targets;
-  p(`# Content brief: ${titleCase(c.keyword)}`);
-  p(`_${c.contentType === "blog" ? "Blog article" : "Report page"} · Google ${c.gl.toUpperCase()}/${c.hl} · ${new Date(c.generatedAt).toLocaleDateString()} · Google policy baseline ${c.policyBaseline}_`);
-  p();
-  p("## Google page 1");
-  c.serp.organic.forEach((r) => p(`${r.position}. [${cell(r.title || r.link)}](${r.link}) — ${r.domain} (${TYPE[r.type] || r.type})${r.stats ? ` · ${fmt(r.stats.words)} words` : ""}`));
-  p();
-  p("## At a glance");
-  p(`- Coverage: ${fmt(t.coverageWords[0])}–${fmt(t.coverageWords[1])} words (page-1 median ${fmt(c.benchmarks.words?.median)}) — depth, not padding`);
-  p(`- H2 sections: ${t.sections} · Data tables: ${t.tables} · FAQs: ${t.faqs}`);
-  p(`- Internal links: ${t.internalLinks} · External citations: ${t.externalCitations}`);
-  p(`- Search intent: ${c.serp.intent?.label || ""} — ${c.serp.intent?.detail || ""}`);
-  if (a?.winningFormula) p(`- How we win: ${a.winningFormula}`);
-  p();
-  if (a) {
-    p("## Title, meta & H1");
-    a.titleOptions.forEach((o) => p(`- Title (${o.len} chars): ${o.text}`));
-    a.metaDescriptionOptions.forEach((o) => p(`- Meta (${o.len} chars): ${o.text}`));
-    if (a.h1) p(`- H1: ${a.h1}`);
-    if (a.urlSlug) p(`- Slug: /${a.urlSlug}`);
-    p();
-    p("## Opening summary");
-    if (a.openingSummary.guidance) p(a.openingSummary.guidance);
-    a.openingSummary.mustInclude.forEach((x) => p(`- [ ] ${x}`));
-    p();
-    p("## Recommended outline");
-    a.outline.forEach((o, i) => {
-      p(`### ${i + 1}. ${o.heading} [${TIER[o.priority] || o.priority}]${o.estWords ? ` · ~${o.estWords} words` : ""}`);
-      if (o.purpose) p(`_${o.purpose}_`);
-      o.analystNotes.forEach((n) => p(`- ${n}`));
-      if (o.dataNeeded.length) p(`- **Data needed:** ${o.dataNeeded.join("; ")}`);
-      if (o.sources.length) p(`- **Sources:** ${o.sources.join("; ")}`);
-      o.h3.forEach((h) => p(`  - H3: ${h}`));
-      p();
-    });
-  }
-  p("## Topic coverage vs page 1");
-  const you = !!c.ourPage;
-  p(`| Topic | Tier | Coverage | Example headings |${you ? " You |" : ""}`);
-  p(`|---|---|---|---|${you ? "---|" : ""}`);
-  c.topics.topics.forEach((x) => p(`| ${cell(x.label)} | ${TIER[x.tier]} | ${x.count}/${c.topics.pagesCompared} | ${cell(x.examples.slice(0, 2).join(" · "))} |${you ? (x.ours ? " ✓ |" : " ✗ |") : ""}`));
-  p();
-  p("## Segmentation & regions");
-  const join = (arr) => arr.map((x) => `${x.label} (${x.count})`).join(", ") || "—";
-  p(`- Segmentation: ${join(c.segments)}`);
-  p(`- Regions: ${join(c.regions)}`);
-  if (c.countries.length) p(`- Countries: ${join(c.countries)}`);
-  if (c.regionClaims.largest.length) p(`- Largest region claimed: ${join(c.regionClaims.largest)}`);
-  if (c.regionClaims.fastest.length) p(`- Fastest-growing region claimed: ${join(c.regionClaims.fastest)}`);
-  p();
-  p("## Market numbers on page 1");
-  p("| Rank | Publisher | Market size | CAGR | Period | Updated |");
-  p("|---|---|---|---|---|---|");
-  c.figures.rows.forEach((r) => p(`| #${r.position} | ${r.domain} | ${cell(r.values.slice(0, 2).join(" → ") || "—")} | ${r.cagr != null ? r.cagr + "%" : "—"} | ${r.period || "—"} | ${r.lastUpdated || "—"} |`));
-  p();
-  p("Publish your own estimate with a methodology note. Never reuse a competitor's figure.");
-  p();
-  if (c.companies.length) {
-    p("## Companies to profile");
-    p(c.companies.map((x) => `${x.name} (${x.count})`).join(", "));
-    if (a?.companies?.note) p(a.companies.note);
-    p();
-  }
-  p("## Questions to answer");
-  c.questions.forEach((q) => p(`- [ ] ${q.question} _(${q.source})_`));
-  if (a?.faqs.length) {
-    p();
-    p("### Recommended FAQ block");
-    a.faqs.forEach((f) => { p(`**${f.question}**`); p(f.answerGuidance); p(); });
-  }
-  p();
-  if (a) {
-    if (a.informationGain.length) { p("## Information gain — how we beat page 1"); a.informationGain.forEach((g) => p(`- **${g.angle}** — ${g.whyItWins} _How:_ ${g.howToExecute}`)); p(); }
-    if (a.tablesAndCharts.length) { p("## Tables & charts"); a.tablesAndCharts.forEach((x) => p(`- **${x.title}** (${x.columnsOrAxes}) — ${x.why}`)); p(); }
-    if (a.internalLinkAnchors.length) { p("## Internal link plan"); a.internalLinkAnchors.forEach((x) => p(`- "${x.anchor}" → ${x.linkTo} (${x.section})`)); p(); }
-    if (a.externalSources.length) { p("## External sources"); a.externalSources.forEach((x) => p(`- ${x.sourceType}: ${x.useFor}`)); p(); }
-  }
-  const sug = S.internalLinks?.suggestions || [];
-  if (sug.length) { p("## Live pages on our site to link to"); sug.forEach((s) => p(`- [${cell(s.title || s.url)}](${s.url})${s.anchor ? ` — anchor: ${s.anchor}` : ""}`)); p(); }
-  p("## Trust & E-E-A-T");
-  TRUST_BASE.forEach((x) => p(`- [ ] ${x}`));
-  (a?.eeatChecklist || []).forEach((x) => p(`- [ ] ${x}`));
-  p();
-  if (c.gaps) { p("## Gap vs your current page"); p(c.ourPage.url); c.gaps.items.forEach((i) => p(`- **${i.severity}:** ${i.text}`)); p(); }
-  p(`## Google rules this brief follows (baseline ${c.policyBaseline})`);
-  (c.policy || []).forEach((x) => p(`- **${x.title}** (${x.when}): ${x.rule}`));
-  (a?.doNot || []).forEach((x) => p(`- Don't: ${x}`));
-  p();
-  p("## Developer handoff");
-  c.targets.schema.forEach((s) => p(`- **${s.type}** — ${s.why}`));
-  DEV_CHECKS.forEach((x) => p(`- [ ] ${x}`));
-  p();
-  p("## Pre-publish QA");
-  qaItems(c).forEach((x) => p(`- [ ] ${x}`));
-  return L.join("\n");
 }
 </script>
 </body>
