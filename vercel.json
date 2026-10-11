@@ -10,5 +10,8 @@
     "api/bulk-compare.js": { "maxDuration": 60 },
     "api/sitemaps.js": { "maxDuration": 60 },
     "api/crawl.js": { "maxDuration": 60 }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/brief?health=1" }
+  ]
 }
