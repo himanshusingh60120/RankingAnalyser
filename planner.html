@@ -1,4 +1,4 @@
-<!-- planner.html (repo root · served at /planner, and at /brief via vercel.json rewrite) -->
+<!-- planner.html (repo root · served at /planner and at /brief via the vercel.json rewrite) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,11 +36,12 @@ h1 .x { color: var(--info); }
   padding: 22px; margin: 28px 0; }
 label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
-input[type=text], textarea {
+input[type=text], input[type=password], input[type=date], textarea {
   width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
   padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
 }
-input[type=text]:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(90,169,224,.15); }
+input[type=date] { color-scheme: dark; }
+input:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(90,169,224,.15); }
 textarea { min-height: 280px; resize: vertical; line-height: 1.55; font-size: 13px; }
 .field { margin-bottom: 16px; }
 .wc { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 6px; }
@@ -51,6 +52,11 @@ textarea { min-height: 280px; resize: vertical; line-height: 1.55; font-size: 13
   cursor: pointer; transition: all .15s; }
 .seg-btn:hover { color: var(--ink); }
 .seg-btn.active { background: var(--info); color: #04101a; font-weight: 600; }
+details.opt { margin: 4px 0 16px; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; background: var(--panel-2); }
+details.opt summary { cursor: pointer; font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .06em; }
+details.opt[open] summary { margin-bottom: 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 14px; }
 .row-actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
 button.run {
   background: var(--info); color: #04101a; border: 0; border-radius: 10px;
@@ -59,6 +65,7 @@ button.run {
 }
 button.run:hover { filter: brightness(1.08); }
 button.run:disabled { opacity: .5; cursor: wait; }
+button.run.ghost { background: transparent; color: var(--info); border: 1px solid var(--info); }
 .status { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: var(--info); margin-right: 8px; animation: pulse 1.1s infinite; }
@@ -71,14 +78,12 @@ button.run:disabled { opacity: .5; cursor: wait; }
 .banner { border-radius: 10px; padding: 13px 16px; font-size: 13.5px; margin-bottom: 12px; }
 .banner.note { background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.35); color: var(--ink); }
 .banner.err { background: rgba(224,106,90,.08); border: 1px solid rgba(224,106,90,.4); }
-/* Stat tiles */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
 .tile .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
 .tile .v { font-size: 26px; font-weight: 700; margin-top: 6px; color: var(--ink); }
 .tile .v.accent { color: var(--signal); }
 .tile .s { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 4px; }
-/* Outline */
 .outline { font-family: var(--mono); font-size: 13px; }
 .ol-row { display: flex; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line); align-items: baseline; }
 .ol-row:last-child { border-bottom: 0; }
@@ -87,9 +92,8 @@ button.run:disabled { opacity: .5; cursor: wait; }
 .ol-lvl.h2 { color: var(--info); }
 .ol-lvl.h3 { color: var(--muted); padding-left: 14px; }
 .ol-text { color: var(--ink); }
-.ol-text .addtag { color: var(--warn); font-weight: 700; }
 .ol-map { color: var(--dim); font-size: 11px; margin-top: 2px; }
-/* Meta cards */
+.ol-map.warn { color: var(--warn); }
 .meta-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
   padding: 13px 14px; margin-bottom: 9px; position: relative; }
 .meta-card .txt { font-size: 14px; padding-right: 70px; }
@@ -109,7 +113,8 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: to
 tr:last-child td { border-bottom: 0; }
 td.site { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .why { color: var(--muted); font-size: 12px; }
-/* Brief additions: chips, schema block */
+.tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--signal); border: 1px solid var(--signal-dim); border-radius: 5px; padding: 1px 5px; margin-left: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { font-family: var(--mono); font-size: 11.5px; padding: 6px 11px; border-radius: 999px;
   border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
@@ -117,6 +122,8 @@ td.site { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 pre.code { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
   padding: 14px; font-family: var(--mono); font-size: 11.5px; color: var(--ink);
   overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 420px; }
+.exportbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sharebox { display: flex; gap: 8px; margin-top: 12px; }
 footer { margin-top: 70px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
 code { color: var(--signal); }
 </style>
@@ -127,11 +134,15 @@ code { color: var(--signal); }
 <header>
   <p class="eyebrow">Kings Research · New-Content Mode</p>
   <h1>Content <span class="x">Brief</span></h1>
-  <p class="lede">Paste your draft before publishing. The brief checks the live SERP for your keyword, benchmarks the same 5 competitors, then returns word &amp; link targets, draft health checks, the content gaps competitors cover, your H-tag structure, meta title &amp; description, PAA-style FAQs, and ready-to-paste JSON-LD schema.</p>
+  <p class="lede">Paste your draft before publishing. The brief checks who actually ranks on Google, benchmarks the same 5 competitors (weighted by rank), checks your forecast period against theirs, and returns word &amp; link targets, content gaps, a fact-checked H-tag structure, meta, FAQs and JSON-LD — then lets you share the brief with the team.</p>
   <p style="margin-top:14px"><a class="back" href="/">← back to Ranking X-Ray (existing pages)</a></p>
 </header>
 
 <div class="console">
+  <div class="field">
+    <label for="accessKey">Team access key</label>
+    <input type="password" id="accessKey" placeholder="ask the SEO team · stored only in this browser" autocomplete="off" />
+  </div>
   <div class="field">
     <label>Content type</label>
     <div class="seg">
@@ -148,6 +159,16 @@ code { color: var(--signal); }
     <textarea id="content" placeholder="Paste the full text of the article you're about to publish…"></textarea>
     <div class="wc" id="wc">0 words</div>
   </div>
+  <details class="opt">
+    <summary>Schema &amp; author details (optional — makes the JSON-LD accurate)</summary>
+    <div class="grid2">
+      <div class="field"><label for="pageUrl">Page URL</label><input type="text" id="pageUrl" placeholder="https://www.kingsresearch.com/report/…" /></div>
+      <div class="field"><label for="publishedDate">Original publish date (updates only)</label><input type="date" id="publishedDate" /></div>
+      <div class="field"><label for="authorName">Author (analyst) name</label><input type="text" id="authorName" placeholder="Full name" /></div>
+      <div class="field"><label for="authorTitle">Author job title</label><input type="text" id="authorTitle" placeholder="Senior Research Analyst" /></div>
+      <div class="field"><label for="authorUrl">Author profile URL</label><input type="text" id="authorUrl" placeholder="https://www.kingsresearch.com/author/…" /></div>
+    </div>
+  </details>
   <div class="row-actions">
     <button class="run" id="runBtn" onclick="plan()">Build Brief</button>
     <span class="status" id="status"></span>
@@ -156,12 +177,29 @@ code { color: var(--signal); }
 
 <div class="results" id="results"></div>
 
-<footer>Content Brief · API at <code>/api/plan</code></footer>
+<footer>Content Brief · API at <code>/api/plan</code> · sharing via <code>/api/brief</code></footer>
 </div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const v = (id) => (($(id) && $(id).value) || '').trim();
+function fmtDate(s){ try { return new Date(s).toLocaleString(); } catch(e) { return String(s||''); } }
+
+// ---- Inputs remembered in this browser only ----
+const PERSIST = ['accessKey','authorName','authorTitle','authorUrl'];
+function restoreInputs(){ PERSIST.forEach(id=>{ try { const s = localStorage.getItem('brief.'+id); if(s && $(id)) $(id).value = s; } catch(e){} }); }
+function persistInput(id){ try { localStorage.setItem('brief.'+id, $(id).value.trim()); } catch(e){} }
+
+// All API calls carry the team key (lib/guard.js checks it server-side).
+function apiFetch(url, opts){
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  const key = v('accessKey');
+  if (key) headers['x-brief-key'] = key;
+  return fetch(url, Object.assign({}, opts, { headers }));
+}
 
 let contentType = 'blog';
 let userPickedType = false;
@@ -170,7 +208,6 @@ function setType(t){
   userPickedType = true;
   document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
 }
-// Auto-detect page type from the keyword until the user picks one manually.
 function autoDetectType(){
   if (userPickedType) return;
   const kw = ($("keyword").value || '').toLowerCase();
@@ -180,15 +217,20 @@ function autoDetectType(){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  restoreInputs();
+  PERSIST.forEach(id => $(id) && $(id).addEventListener('change', ()=>persistInput(id)));
   $("content").addEventListener('input', e=>{
-    const w = e.target.value.split(/\s+/).filter(Boolean).length;
-    $("wc").textContent = w + " words";
+    $("wc").textContent = e.target.value.split(/\s+/).filter(Boolean).length + " words";
   });
   $("keyword").addEventListener('input', autoDetectType);
+  // Shared links: /brief?b=<id> (server-saved) or /brief#z=<data> (self-contained)
+  const b = new URLSearchParams(location.search).get('b');
+  if (b) loadShared(b);
+  else if (location.hash.indexOf('#z=') === 0) loadHash(location.hash.slice(3));
 });
 
 async function plan(){
-  const keyword = $("keyword").value.trim();
+  const keyword = v('keyword');
   const content = $("content").value.trim();
   autoDetectType();
   if(!keyword){ $("status").textContent = "Enter the primary keyword."; return; }
@@ -199,55 +241,73 @@ async function plan(){
   $("results").className = "results";
   $("results").innerHTML = "";
   let secs = 0;
-  $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; building brief… 0s';
-  const timer = setInterval(()=>{ secs++; $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; building brief… '+secs+'s'; }, 1000);
+  const tick = () => { $("status").innerHTML = '<span class="dot"></span>Checking Google, benchmarking competitors &amp; building brief… '+secs+'s'; };
+  tick();
+  const timer = setInterval(()=>{ secs++; tick(); }, 1000);
+  const done = () => { clearInterval(timer); $("status").textContent = ""; btn.disabled = false; };
 
   try {
-    const res = await fetch("/api/plan", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ keyword, content, contentType })
-    });
-    const data = await res.json();
-    clearInterval(timer);
-    $("status").textContent = "";
-    btn.disabled = false;
-    if(data.error){ renderError(data.error); return; }
+    const res = await apiFetch("/api/plan", { method: "POST", body: JSON.stringify({
+      keyword, content, contentType,
+      url: v('pageUrl'), publishedDate: v('publishedDate'),
+      authorName: v('authorName'), authorTitle: v('authorTitle'), authorUrl: v('authorUrl')
+    })});
+    let data;
+    try { data = await res.json(); }
+    catch(e) { data = { error: res.status === 504 ? 'The brief took longer than 60s (slow competitor sites). Please run it again.' : 'Server returned HTTP '+res.status }; }
+    done();
+    if(!res.ok || data.error){ renderError(data.error || ('HTTP '+res.status), res.status); return; }
+    history.replaceState(null, '', location.pathname); // drop any old share id from the URL
     render(data);
   } catch(e) {
-    clearInterval(timer);
-    $("status").textContent = "";
-    btn.disabled = false;
-    renderError(String(e && e.message || e));
+    done();
+    renderError(String((e && e.message) || e));
   }
 }
 
-function renderError(msg){
+function renderError(msg, status){
+  let extra = '';
+  if (status === 401) {
+    extra = '<br>Enter the team access key at the top of the form, then try again.';
+    if (window.__pendingShare) extra += ' <button class="copybtn" style="position:static;margin-left:8px" onclick="loadShared(window.__pendingShare)">Retry</button>';
+    setTimeout(()=>$("accessKey").focus(), 50);
+  }
+  if (status === 429) extra = '<br>This limit protects the OpenAI budget — wait a few minutes.';
   $("results").className = "results show";
-  $("results").innerHTML = '<div class="banner err"><b>Error:</b> '+escapeHtml(msg)+'</div>';
+  $("results").innerHTML = '<div class="banner err"><b>Error:</b> '+escapeHtml(msg)+extra+'</div>';
 }
 
-function render(d){
-  window.__plan = d; // for Markdown export
+function render(d, opts){
+  opts = opts || {};
+  window.__plan = d;
+  window.__pendingShare = null;
+  const lt = d.linkTargets || {}, ai = d.ai || {}, dh = d.draftHealth || {}, tg = d.topicGaps || {}, sp = d.serp || {}, fr = d.freshness || {};
   let html = '';
-  const lt = d.linkTargets || {};
-  const ai = d.ai || {};
-  const dh = d.draftHealth || {};
-  const tg = d.topicGaps || {};
 
-  // ---- Targets ----
-  html += '<h3 class="section">Targets — derived from competitor benchmarks</h3>';
+  if (opts.shared) {
+    html += '<div class="banner note"><b>Shared brief</b> — “'+escapeHtml(d.keyword)+'” · generated '+escapeHtml(fmtDate(d.generatedAt))+
+      '. Read-only snapshot · <a href="/brief" style="color:var(--info)">build a new brief</a></div>';
+    if (d.keyword) $("keyword").value = d.keyword;
+  } else if (typeof d.security === 'string' && d.security.indexOf('open') === 0) {
+    html += '<div class="banner err"><b>Security:</b> this API is open to anyone right now — set <code>BRIEF_ACCESS_KEY</code> in Vercel → Settings → Environment Variables to lock it.</div>';
+  }
+
+  // ---- Targets (SERP-weighted when Google data is available) ----
+  const weighted = lt.basis === 'serp-weighted';
+  html += '<h3 class="section">Targets — '+(weighted ? 'weighted by live Google rank' : 'derived from competitor benchmarks')+'</h3>';
   html += '<div class="tiles">';
   html += tile('Your draft', (lt.ourWords||d.ourWords||0).toLocaleString(), 'words');
-  if(lt.avgCompetitorWords) html += tile('Competitor avg', lt.avgCompetitorWords.toLocaleString(), 'words');
   if(lt.recommendedWords) html += tile('Word target', lt.recommendedWords.toLocaleString(),
       lt.wordGap>0 ? ('add ~'+lt.wordGap.toLocaleString()+' words') : 'target met ✓', true);
+  if(lt.leader) html += tile('Rank leader', '#'+lt.leader.position, lt.leader.site+' · '+Number(lt.leader.words).toLocaleString()+'w');
+  if(lt.avgCompetitorWords) html += tile(weighted ? 'Weighted avg' : 'Competitor avg', lt.avgCompetitorWords.toLocaleString(),
+      weighted && lt.plainAverageWords ? ('plain avg '+lt.plainAverageWords.toLocaleString()+'w') : 'words');
   html += tile('Internal links to add', lt.recommendedInternalLinks ?? '—', lt.competitorInternalPer1000Words!=null ? ('they avg '+lt.competitorInternalPer1000Words+'/1000w') : 'editorial ratio', true);
   html += tile('External links to add', lt.recommendedExternalLinks ?? '—', 'editorial ratio', true);
   html += '</div>';
   if(lt.note) html += '<div class="banner note" style="margin-top:12px">'+escapeHtml(lt.note)+'</div>';
 
   // ---- Who actually ranks (live SERP) ----
-  const sp = d.serp || {};
   if (sp.available && (sp.top10||[]).length){
     html += '<h3 class="section">Live SERP — who you have to beat for "'+escapeHtml(d.keyword)+'"</h3>';
     html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Pos</th><th>Site</th><th>Title</th></tr>';
@@ -259,12 +319,26 @@ function render(d){
     }
     html += '</table></div>';
     html += '<div class="banner note">Benchmark hardest against the highest-ranked competitor above — match its depth and structure first, then exceed it. '+
-      ((sp.top10||[]).some(r=>/\(you\)/.test(r.site)) ? 'You are already in the top 10 — this brief is about moving up.' : 'kingsresearch.com is not in the top 10 for this query yet.')+'</div>';
+      (sp.top10.some(r=>/\(you\)/.test(r.site)) ? 'You are already in the top 10 — this brief is about moving up.' : 'kingsresearch.com is not in the top 10 for this query yet.')+'</div>';
   } else if (sp.reason){
-    html += '<div class="banner note">Live SERP check unavailable ('+escapeHtml(sp.reason)+') — set GOOGLE_CSE_KEY/CX with a whole-web engine to see which competitors actually rank.</div>';
+    html += '<div class="banner note">Live SERP check unavailable ('+escapeHtml(sp.reason)+') — targets count all competitors equally.</div>';
   }
 
-  // ---- Draft health (deterministic) ----
+  // ---- Freshness (forecast period vs competitors) ----
+  const frComps = (fr.competitors||[]).filter(c=>c.period);
+  if (fr.ours || frComps.length) {
+    const newest = frComps.slice().sort((a,b)=> (b.period.end-a.period.end) || (b.period.start-a.period.start))[0];
+    const label = { ahead:'Ahead ✓', level:'Level', behind:'Behind ✗', unknown:'Unknown' }[fr.status] || '—';
+    html += '<h3 class="section">Freshness — forecast period vs competitors</h3><div class="tiles">';
+    html += tile('Your forecast', fr.ours ? fr.ours.start+'–'+fr.ours.end : 'Not found', fr.ours ? 'detected in draft' : 'add it to the page', !!fr.ours && fr.status!=='behind');
+    if (newest) html += tile('Newest competitor', newest.period.start+'–'+newest.period.end, newest.site+(newest.source?' · from '+newest.source:''));
+    html += tile('Status', label, 'as of '+(fr.currentYear||''), fr.status==='ahead');
+    html += '</div>';
+    if ((fr.flags||[]).length) html += '<div class="banner err" style="margin-top:12px">'+fr.flags.map(escapeHtml).join('<br>')+'</div>';
+    else if (fr.status==='ahead' || fr.status==='level') html += '<div class="banner note" style="margin-top:12px">Your forecast period is as new as or newer than every benchmarked competitor ✓ — keep it in the title and meta, where searchers compare years.</div>';
+  }
+
+  // ---- Draft health ----
   html += '<h3 class="section">Draft health</h3>';
   html += '<div class="tiles">';
   html += tile('Keyword uses', dh.keywordCount ?? '—', (dh.keywordDensityPct!=null?dh.keywordDensityPct+'% density':''));
@@ -272,40 +346,41 @@ function render(d){
   html += tile('Avg sentence', dh.avgSentenceWords ?? '—', 'words (aim ≤ 25)');
   html += tile('Paragraphs', dh.paragraphs ?? '—', (dh.longParagraphs||0)+' over 150w');
   html += '</div>';
-  if((dh.flags||[]).length){
-    html += '<div class="banner err" style="margin-top:12px">'+ dh.flags.map(escapeHtml).join('<br>') +'</div>';
-  } else {
-    html += '<div class="banner note" style="margin-top:12px">No on-draft issues detected ✓</div>';
-  }
+  if((dh.flags||[]).length) html += '<div class="banner err" style="margin-top:12px">'+dh.flags.map(escapeHtml).join('<br>')+'</div>';
+  else html += '<div class="banner note" style="margin-top:12px">No on-draft issues detected ✓</div>';
 
-  // ---- Competitor benchmark table ----
-  const comps = (d.competitors||[]);
+  // ---- Competitor benchmarks ----
+  const comps = d.competitors || [];
   const matched = comps.filter(c=>c.keywordMatch);
-  html += '<h3 class="section">Competitor benchmarks ('+d.contentType+')</h3>';
+  html += '<h3 class="section">Competitor benchmarks ('+escapeHtml(d.contentType)+')</h3>';
   if(matched.length){
-    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Site</th><th>Words</th><th>Headings</th><th>Internal</th><th>External</th><th>Title</th></tr>';
+    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Site</th><th>Google</th><th>Weight</th><th>Words</th><th>Headings</th><th>Int.</th><th>Ext.</th><th>Forecast</th><th>Title</th></tr>';
     for(const c of matched){
-      html += '<tr><td class="site"><a href="'+escapeHtml(c.url)+'" target="_blank" style="color:var(--muted)">'+escapeHtml(c.site)+'</a></td>'+
-        '<td>'+c.contentWords.toLocaleString()+'</td><td>'+(c.headings||[]).length+'</td>'+
-        '<td>'+c.internalLinks+'</td><td>'+c.externalLinks+'</td>'+
+      const pos = c.serpPosition
+        ? '<span style="font-family:var(--mono);font-weight:700;color:'+(c.serpPosition<=3?'var(--good)':'var(--warn)')+'">#'+c.serpPosition+'</span>'
+        : '<span style="color:var(--dim)">—</span>';
+      const wt = c.weight!=null ? (Math.round(c.weight*10)/10)+'×' : '<span style="color:var(--dim)">thin · excluded</span>';
+      html += '<tr><td class="site"><a href="'+escapeHtml(c.url)+'" target="_blank" style="color:var(--muted)">'+escapeHtml(c.site)+'</a>'+(c.isRankingUrl?'<span class="tag">ranking page</span>':'')+'</td>'+
+        '<td>'+pos+'</td><td style="font-family:var(--mono);font-size:12px">'+wt+'</td>'+
+        '<td>'+Number(c.contentWords||0).toLocaleString()+'</td><td>'+(c.headings||[]).length+'</td>'+
+        '<td>'+(c.internalLinks ?? '—')+'</td><td>'+(c.externalLinks ?? '—')+'</td>'+
+        '<td style="font-family:var(--mono);font-size:12px">'+(c.period ? c.period.start+'–'+c.period.end : '—')+'</td>'+
         '<td style="font-size:12px;color:var(--muted)">'+escapeHtml(c.title||'')+'</td></tr>';
     }
     html += '</table></div>';
   } else {
-    const blogHint = d.contentType==='blog' ? ' If you are optimizing a market report, switch "Content type" to "Report page" — competitors publish these as reports, not blog posts, so report mode finds them without an API key.' : '';
-    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios.'+blogHint+' (Blog discovery also needs GOOGLE_CSE_KEY/CX env vars.)</div>';
+    const blogHint = d.contentType==='blog' ? ' If you are optimizing a market report, switch "Content type" to "Report page" — competitors publish these as reports, not blog posts.' : '';
+    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios.'+blogHint+'</div>';
   }
   const excluded = comps.filter(c=>c.found && c.keywordMatch===false);
-  if(excluded.length){
-    html += '<div class="banner note">Excluded as wrong-topic: '+excluded.map(c=>escapeHtml(c.site)).join(', ')+'</div>';
-  }
+  if(excluded.length) html += '<div class="banner note">Excluded as wrong-topic: '+excluded.map(c=>escapeHtml(c.site)).join(', ')+'</div>';
 
-  // ---- Topic gaps ----
+  // ---- Content gaps ----
   const gapRecs = ai.gapRecommendations || [];
   if((tg.missing||[]).length || (tg.partial||[]).length){
     html += '<h3 class="section">Content gaps — competitors cover this, your draft doesn\'t</h3>';
     if((tg.missing||[]).length){
-      const recBy = {}; for(const g of gapRecs){ if(g&&g.topic) recBy[g.topic.toLowerCase()]=g.addWhat; }
+      const recBy = {}; for(const g of gapRecs){ if(g && g.topic) recBy[g.topic.toLowerCase()] = g.addWhat; }
       html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Competitor section</th><th>Seen on</th><th>What to add</th></tr>';
       for(const g of tg.missing){
         html += '<tr><td style="font-size:12.5px">'+escapeHtml(g.topic)+'</td>'+
@@ -314,22 +389,18 @@ function render(d){
       }
       html += '</table></div>';
     }
-    if((tg.partial||[]).length){
-      html += '<div class="banner note">Only partially covered: '+tg.partial.map(g=>escapeHtml(g.topic)).join(' · ')+'</div>';
-    }
+    if((tg.partial||[]).length) html += '<div class="banner note">Only partially covered: '+tg.partial.map(g=>escapeHtml(g.topic)).join(' · ')+'</div>';
     if(tg.note) html += '<div class="banner note">'+escapeHtml(tg.note)+'</div>';
   }
 
-  // ---- Internal links (sitemaps, GSC-enriched) ----
+  // ---- Internal links ----
   const il = d.internalLinks || {};
   const ilSugs = il.suggestions || [];
   html += '<h3 class="section">Internal links — '+(lt.recommendedInternalLinks||ilSugs.length)+' to add (from your sitemaps)</h3>';
   if(ilSugs.length){
     const showGsc = il.gscEnriched;
-    window.__ilSugs = ilSugs;
     html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copyAllAnchors(this)">📋 Copy all as HTML anchor tags</button></div>';
-    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Anchor text (from your draft)</th><th>Target page (live URL)</th>'+
-      (showGsc?'<th>Avg pos</th><th>Impr</th>':'')+'<th>Type</th></tr>';
+    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Anchor text (from your draft)</th><th>Target page (live URL)</th>'+(showGsc?'<th>Avg pos</th><th>Impr</th>':'')+'<th>Type</th></tr>';
     for(const s of ilSugs){
       const posCell = s.position!=null
         ? '<td style="font-family:var(--mono);color:'+(s.position<=10?'var(--good)':s.position<=20?'var(--warn)':'var(--muted)')+'">'+s.position+'</td>'
@@ -337,36 +408,35 @@ function render(d){
       const imprCell = s.impressions!=null
         ? '<td style="font-family:var(--mono)">'+Number(s.impressions).toLocaleString()+'</td>'
         : (showGsc?'<td style="color:var(--dim)">—</td>':'');
-      html += '<tr>'+
-        '<td style="font-family:var(--mono);font-size:12.5px;color:var(--signal)">'+escapeHtml(s.anchor||'')+'</td>'+
-        '<td><a href="'+escapeHtml(s.url)+'" target="_blank" style="color:var(--info);font-size:12px;text-decoration:none">'+escapeHtml(s.url.replace(/^https?:\/\/(www\.)?kingsresearch\.com/,''))+'</a></td>'+
+      html += '<tr><td style="font-family:var(--mono);font-size:12.5px;color:var(--signal)">'+escapeHtml(s.anchor||'')+'</td>'+
+        '<td><a href="'+escapeHtml(s.url)+'" target="_blank" style="color:var(--info);font-size:12px;text-decoration:none">'+escapeHtml(String(s.url||'').replace(/^https?:\/\/(www\.)?kingsresearch\.com/,''))+'</a></td>'+
         (showGsc?(posCell+imprCell):'')+
-        '<td style="font-family:var(--mono);font-size:11px;color:var(--dim)">'+escapeHtml(s.type||'')+'</td>'+
-        '</tr>';
+        '<td style="font-family:var(--mono);font-size:11px;color:var(--dim)">'+escapeHtml(s.type||'')+'</td></tr>';
     }
     html += '</table></div>';
-    html += '<div class="banner note">Each anchor is a phrase that already appears in your pasted draft, linked to the matching live kingsresearch.com page. '+
-      (showGsc
-        ? 'Avg position &amp; impressions are from Search Console (last 90 days) — prioritise linking to pages with impressions, they pass more authority.'
-        : 'Connect GSC (env vars) to also see each page\'s avg position &amp; impressions here.')+'</div>';
+    html += '<div class="banner note">Each anchor is a phrase already in your draft, linked to the matching live kingsresearch.com page. '+
+      (showGsc ? 'Avg position &amp; impressions are from Search Console (last 90 days) — prioritise pages with impressions.' : 'Connect GSC (env vars) to also see each page\'s avg position &amp; impressions here.')+'</div>';
   } else if(il.error){
     html += '<div class="banner err">Could not load sitemaps: '+escapeHtml(il.error)+'</div>';
   } else {
     html += '<div class="banner note">No internal-link matches found in the sitemaps for this topic.</div>';
   }
 
+  // ---- AI output (fact-checked) ----
   if(ai.error){
     html += '<div class="banner err"><b>AI step failed:</b> '+escapeHtml(ai.error)+'</div>';
   } else if(ai.skipped){
     html += '<div class="banner note">AI planning skipped: '+escapeHtml(ai.reason||'')+'</div>';
   } else {
+    const gd = ai.guards || {};
+    if ((gd.issues||[]).length) html += '<div class="banner err" style="margin-top:24px"><b>Fact-check guard:</b><br>'+gd.issues.map(escapeHtml).join('<br>')+'</div>';
+    else if (ai.guards) html += '<div class="banner note" style="margin-top:24px"><b>Fact-check guard:</b> every number in the meta and FAQs was found in your draft, and every heading and FAQ maps to a real passage ✓</div>';
+
     if (ai.figuresNote) {
       const usedData = (ai.detectedFigures||{}).hasFigures;
-      html += '<div class="banner note" style="margin-bottom:8px">'+(usedData?'📊 ':'⚠️ ')+escapeHtml(ai.figuresNote)+'</div>';
+      html += '<div class="banner note">'+(usedData?'📊 ':'⚠️ ')+escapeHtml(ai.figuresNote)+'</div>';
     }
-    if((ai.metaChecks||[]).length){
-      html += '<div class="banner err">'+ai.metaChecks.map(escapeHtml).join('<br>')+'</div>';
-    }
+    if((ai.metaChecks||[]).length) html += '<div class="banner err">'+ai.metaChecks.map(escapeHtml).join('<br>')+'</div>';
 
     html += '<h3 class="section">Meta title</h3>';
     html += metaCard(ai.metaTitle, 50, 60, true, 'title-0');
@@ -378,39 +448,39 @@ function render(d){
 
     if((ai.secondaryKeywords||[]).length){
       html += '<h3 class="section">Secondary keywords to carry</h3><div class="panel"><div class="chips">'+
-        ai.secondaryKeywords.map(k=>'<span class="chip'+(k.inDraft===false?' miss':'')+'">'+escapeHtml(k.phrase||String(k))+(k.inDraft===false?' · not in draft':'')+'</span>').join('')+
+        ai.secondaryKeywords.map(k=>'<span class="chip'+(k.inDraft===false?' miss':'')+'">'+escapeHtml(k.phrase||'')+(k.inDraft===false?' · not in draft yet':'')+'</span>').join('')+
         '</div></div>';
     }
 
     if((ai.headingOutline||[]).length){
-      html += '<h3 class="section">H-tag structure for your draft</h3>';
-      html += '<div class="panel outline">';
+      html += '<h3 class="section">H-tag structure for your draft</h3><div class="panel outline">';
       for(const h of ai.headingOutline){
         const lvl = String(h.level||'H2').toLowerCase();
-        const text = (h.text||'').replace(/^\[ADD\]\s*/i,'');
         html += '<div class="ol-row"><div class="ol-lvl '+escapeHtml(lvl)+'">'+escapeHtml((h.level||'H2').toUpperCase())+'</div>'+
-          '<div><div class="ol-text">'+escapeHtml(text)+'</div>'+
+          '<div><div class="ol-text">'+escapeHtml(String(h.text||'').replace(/^\[ADD\]\s*/i,''))+'</div>'+
           (h.mapsTo?'<div class="ol-map">↳ starts at: "'+escapeHtml(h.mapsTo)+'…"</div>':'')+
+          (h.verified===false?'<div class="ol-map warn">⚠ this start passage wasn\'t found in your draft — check where the heading belongs</div>':'')+
           '</div></div>';
       }
-      html += '</div>';
-      html += '<div class="banner note">Headings are derived only from sections already present in your draft — each one maps to where that content begins.</div>';
+      html += '</div><div class="banner note">Headings are derived only from sections already in your draft — each maps to where that content begins.</div>';
     }
 
-    // ---- FAQs for PAA / AI Overviews ----
     if((ai.faq||[]).length){
       html += '<h3 class="section">FAQ block — People-Also-Ask / AI-Overview targets</h3>';
       ai.faq.forEach((f,i)=>{
         html += '<div class="meta-card"><div class="txt" id="faq-'+i+'"><b>'+escapeHtml(f.question||'')+'</b><br>'+escapeHtml(f.answer||'')+'</div>'+
           (f.mapsTo?'<div class="len">↳ from: "'+escapeHtml(f.mapsTo)+'…"</div>':'')+
+          (f.verified===false
+            ? '<div class="len off">⚠ excluded from schema — '+escapeHtml((f.guardReasons||[]).join('; '))+'</div>'
+            : '<div class="len ok">✓ verified against your draft · included in schema</div>')+
           '<button class="copybtn" onclick="copyText(\'faq-'+i+'\', this)">Copy</button></div>';
       });
-      html += '<div class="banner note">Add these as an on-page FAQ section (the matching FAQPage schema is below). First sentence of each answer is written to be extractable verbatim.</div>';
+      html += '<div class="banner note">Publish these as a visible on-page FAQ section. The first sentence of each answer is written to be quoted directly.</div>';
     }
 
-    const lp = ai.linkPlan||{};
+    const lp = ai.linkPlan || {};
     if((lp.externalSuggestions||[]).length){
-      html += '<h3 class="section">External links — '+(lp.externalSuggestions.length)+' citations</h3>';
+      html += '<h3 class="section">External links — '+lp.externalSuggestions.length+' citations</h3>';
       html += '<div class="panel" style="padding:0"><table><tr><th>Anchor text</th><th>Source type</th><th>Why</th></tr>';
       for(const s of lp.externalSuggestions){
         html += '<tr><td style="font-family:var(--mono);font-size:12.5px;color:var(--info)">'+escapeHtml(s.anchorText||'')+'</td><td style="font-size:12px">'+escapeHtml(s.sourceType||'')+'</td><td class="why">'+escapeHtml(s.why||'')+'</td></tr>';
@@ -420,106 +490,289 @@ function render(d){
 
     if((ai.notes||[]).length){
       html += '<h3 class="section">Editorial notes</h3><div class="panel">'+
-        ai.notes.map(n=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtml(n)+'</div>').join('')+
-        '</div>';
+        ai.notes.map(n=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtml(n)+'</div>').join('')+'</div>';
     }
   }
 
-  // ---- Schema (always available) ----
+  // ---- Schema ----
   if(d.schema){
-    const schemaStr = '<scr'+'ipt type="application/ld+json">\n'+JSON.stringify(d.schema, null, 2)+'\n</scr'+'ipt>';
     html += '<h3 class="section">Structured data — paste into the page &lt;head&gt;</h3>';
     html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copySchema(this)">📋 Copy JSON-LD</button></div>';
-    html += '<pre class="code" id="schemaBlock">'+escapeHtml(schemaStr)+'</pre>';
-    window.__schemaStr = schemaStr;
+    html += '<pre class="code">'+escapeHtml(schemaString(d))+'</pre>';
+    if((d.schemaNotes||[]).length) html += '<div class="banner note">'+d.schemaNotes.map(escapeHtml).join('<br>')+'</div>';
   }
 
-  // ---- Export whole brief ----
-  html += '<div style="margin-top:28px"><button class="run" onclick="copyBriefMarkdown(this)">📄 Copy full brief as Markdown</button></div>';
+  // ---- Share & export ----
+  html += '<h3 class="section">Share &amp; export</h3>';
+  html += '<div class="exportbar">'+
+    '<button class="run" onclick="shareBrief(this)">🔗 Share link</button>'+
+    '<button class="run ghost" onclick="copyForDocs(this)">📄 Copy for Google Docs</button>'+
+    '<button class="run ghost" onclick="downloadDoc()">⬇ Download .doc</button>'+
+    '<button class="run ghost" onclick="copyBriefMarkdown(this)">Copy Markdown</button>'+
+    '</div><div id="shareOut"></div>';
 
   $("results").className = "results show";
   $("results").innerHTML = html;
 }
 
-function tile(k, v, s, accent){
-  return '<div class="tile"><div class="k">'+escapeHtml(k)+'</div><div class="v'+(accent?' accent':'')+'">'+escapeHtml(String(v))+'</div><div class="s">'+escapeHtml(s||'')+'</div></div>';
+function tile(k, val, s, accent){
+  return '<div class="tile"><div class="k">'+escapeHtml(k)+'</div><div class="v'+(accent?' accent':'')+'">'+escapeHtml(String(val))+'</div><div class="s">'+escapeHtml(s||'')+'</div></div>';
 }
 
 function metaCard(text, min, max, primary, cid){
   if(!text) return '';
   const len = text.length;
   const ok = len>=min && len<=max;
-  return '<div class="meta-card">'+
-    (primary?'<div class="primary-tag">recommended</div>':'')+
+  return '<div class="meta-card">'+(primary?'<div class="primary-tag">recommended</div>':'')+
     '<div class="txt" id="'+cid+'">'+escapeHtml(text)+'</div>'+
     '<div class="len '+(ok?'ok':'off')+'">'+len+' chars '+(ok?'✓ in range':'(target '+min+'–'+max+')')+'</div>'+
     '<button class="copybtn" onclick="copyText(\''+cid+'\', this)">Copy</button></div>';
 }
 
+function schemaString(d){
+  return d && d.schema ? '<scr'+'ipt type="application/ld+json">\n'+JSON.stringify(d.schema, null, 2)+'\n</scr'+'ipt>' : '';
+}
+
+function flash(btn, text, ms){
+  if(!btn) return;
+  if(!btn.dataset.label) btn.dataset.label = btn.textContent;
+  btn.textContent = text;
+  clearTimeout(btn.__t);
+  btn.__t = setTimeout(()=>{ btn.textContent = btn.dataset.label; }, ms || 2200);
+}
+
 function copyText(id, btn){
   const t = document.getElementById(id);
   if(!t) return;
-  navigator.clipboard.writeText(t.textContent).then(()=>{
-    btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy', 1500);
-  });
+  navigator.clipboard.writeText(t.textContent).then(()=>flash(btn, 'Copied ✓', 1500));
 }
 
 function copyAllAnchors(btn){
-  const sugs = window.__ilSugs || [];
+  const sugs = ((window.__plan||{}).internalLinks||{}).suggestions || [];
   const lines = sugs.map(s => '<a href="'+s.url+'">'+s.anchor+'</a>');
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
-    const o = btn.textContent;
-    btn.textContent='Copied '+lines.length+' anchor tags ✓'; setTimeout(()=>btn.textContent=o, 1800);
-  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>flash(btn, 'Copied '+lines.length+' anchor tags ✓'));
 }
 
 function copySchema(btn){
-  navigator.clipboard.writeText(window.__schemaStr || '').then(()=>{
-    const o = btn.textContent; btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent=o, 1500);
-  });
+  navigator.clipboard.writeText(schemaString(window.__plan)).then(()=>flash(btn, 'Copied ✓', 1500));
 }
 
-function copyBriefMarkdown(btn){
-  const d = window.__plan; if(!d) return;
-  const lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{}, sp = d.serp||{};
+// ---------- Exports ----------
+function briefMarkdown(d){
+  const lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{}, sp = d.serp||{}, fr = d.freshness||{};
   const L = [];
   L.push('# Content brief — '+d.keyword+' ('+d.contentType+')');
   L.push('Generated: '+d.generatedAt);
   L.push('');
   if(sp.available && (sp.top10||[]).length){
-    L.push('## Live SERP (who to beat)');
+    L.push('## Who ranks (live Google)');
     sp.top10.forEach(r=>L.push('- #'+r.position+' '+r.site+' — '+r.title));
     L.push('');
   }
-  L.push('## Targets');
+  L.push('## Targets'+(lt.basis==='serp-weighted'?' (weighted by Google rank)':''));
   L.push('- Draft words: '+(lt.ourWords||d.ourWords));
   if(lt.recommendedWords) L.push('- Word target: '+lt.recommendedWords+(lt.wordGap>0?' (add ~'+lt.wordGap+')':' (met)'));
+  if(lt.leader) L.push('- Rank leader: '+lt.leader.site+' (#'+lt.leader.position+', '+lt.leader.words+' words)');
   L.push('- Internal links to add: '+lt.recommendedInternalLinks);
   L.push('- External citations to add: '+lt.recommendedExternalLinks);
+  if(fr.ours || (fr.flags||[]).length){
+    L.push(''); L.push('## Freshness');
+    L.push('- Your forecast period: '+(fr.ours ? fr.ours.start+'–'+fr.ours.end : 'not found'));
+    (fr.competitors||[]).filter(c=>c.period).forEach(c=>L.push('- '+c.site+': '+c.period.start+'–'+c.period.end));
+    (fr.flags||[]).forEach(f=>L.push('- ⚠ '+f));
+  }
   if((dh.flags||[]).length){ L.push(''); L.push('## Draft health flags'); dh.flags.forEach(f=>L.push('- '+f)); }
-  if(ai.metaTitle){ L.push(''); L.push('## Meta title'); L.push(ai.metaTitle);
-    (ai.metaTitleAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
-  if(ai.metaDescription){ L.push(''); L.push('## Meta description'); L.push(ai.metaDescription);
-    (ai.metaDescriptionAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
+  const gd = ai.guards||{};
+  if((gd.issues||[]).length){ L.push(''); L.push('## Fact-check guard'); gd.issues.forEach(i=>L.push('- '+i)); }
+  if(ai.metaTitle){ L.push(''); L.push('## Meta title'); L.push(ai.metaTitle); (ai.metaTitleAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
+  if(ai.metaDescription){ L.push(''); L.push('## Meta description'); L.push(ai.metaDescription); (ai.metaDescriptionAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
   if((ai.headingOutline||[]).length){ L.push(''); L.push('## Heading structure');
-    ai.headingOutline.forEach(h=>L.push('- '+(h.level||'H2')+': '+h.text)); }
+    ai.headingOutline.forEach(h=>L.push('- '+(h.level||'H2')+': '+h.text+(h.verified===false?' ⚠ (start passage not found)':''))); }
   if((tg.missing||[]).length){ L.push(''); L.push('## Content gaps (competitors cover, draft doesn\'t)');
     tg.missing.forEach(g=>L.push('- '+g.topic+' (seen on '+g.sites.length+' of 5)')); }
   if((ai.gapRecommendations||[]).length){ L.push(''); L.push('## What to add');
     ai.gapRecommendations.forEach(g=>L.push('- **'+g.topic+'**: '+g.addWhat)); }
+  if((ai.secondaryKeywords||[]).length){ L.push(''); L.push('## Secondary keywords');
+    ai.secondaryKeywords.forEach(k=>L.push('- '+k.phrase+(k.inDraft===false?' (not in draft yet)':''))); }
   if((ai.faq||[]).length){ L.push(''); L.push('## FAQ block');
-    ai.faq.forEach(f=>{ L.push('**Q: '+f.question+'**'); L.push('A: '+f.answer); L.push(''); }); }
+    ai.faq.forEach(f=>{ L.push('**Q: '+f.question+'**'); L.push('A: '+f.answer+(f.verified===false?' ⚠ (not verified — excluded from schema)':'')); L.push(''); }); }
   const ilS = (d.internalLinks||{}).suggestions||[];
   if(ilS.length){ L.push('## Internal links');
     ilS.forEach(s=>L.push('- ['+s.anchor+']('+s.url+')'+(s.position!=null?' (pos '+s.position+', '+(s.impressions||0)+' impr)':''))); }
   const ext = ((ai.linkPlan||{}).externalSuggestions)||[];
-  if(ext.length){ L.push(''); L.push('## External citations');
-    ext.forEach(s=>L.push('- "'+s.anchorText+'" → '+s.sourceType+' — '+s.why)); }
+  if(ext.length){ L.push(''); L.push('## External citations'); ext.forEach(s=>L.push('- "'+s.anchorText+'" → '+s.sourceType+' — '+s.why)); }
   if((ai.notes||[]).length){ L.push(''); L.push('## Editorial notes'); ai.notes.forEach(n=>L.push('- '+n)); }
-  if(window.__schemaStr){ L.push(''); L.push('## JSON-LD schema'); L.push('```html'); L.push(window.__schemaStr); L.push('```'); }
-  navigator.clipboard.writeText(L.join('\n')).then(()=>{
-    const o = btn.textContent; btn.textContent='Brief copied ✓'; setTimeout(()=>btn.textContent=o, 1800);
-  });
+  if(d.schema){ L.push(''); L.push('## JSON-LD schema'); L.push('```html'); L.push(schemaString(d)); L.push('```');
+    (d.schemaNotes||[]).forEach(n=>L.push('- '+n)); }
+  return L.join('\n');
+}
+
+function briefHtml(d){
+  const e = escapeHtml, lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{}, sp = d.serp||{}, fr = d.freshness||{};
+  const T = (head, rows) => '<table border="1" cellpadding="5" style="border-collapse:collapse"><tr>'+head.map(h=>'<th align="left">'+e(h)+'</th>').join('')+'</tr>'+
+    rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</table>';
+  const UL = (items) => '<ul>'+items.map(i=>'<li>'+i+'</li>').join('')+'</ul>';
+  const H = [];
+  H.push('<h1>Content brief — '+e(d.keyword)+'</h1>');
+  H.push('<p><i>'+e(d.contentType)+' · generated '+e(fmtDate(d.generatedAt))+'</i></p>');
+  if(sp.available && (sp.top10||[]).length){
+    H.push('<h2>Who ranks (live Google)</h2>'+T(['Pos','Site','Title'], sp.top10.map(r=>['#'+e(r.position), e(r.site), '<a href="'+e(r.url)+'">'+e(r.title)+'</a>'])));
+  }
+  const tl = ['Draft words: '+e(lt.ourWords||d.ourWords)];
+  if(lt.recommendedWords) tl.push('Word target: <b>'+e(lt.recommendedWords)+'</b>'+(lt.wordGap>0?' (add ~'+e(lt.wordGap)+')':' (met)'));
+  if(lt.leader) tl.push('Rank leader: '+e(lt.leader.site)+' (#'+e(lt.leader.position)+', '+e(lt.leader.words)+' words)');
+  tl.push('Internal links to add: '+e(lt.recommendedInternalLinks));
+  tl.push('External citations to add: '+e(lt.recommendedExternalLinks));
+  H.push('<h2>Targets</h2>'+UL(tl));
+  if(lt.note) H.push('<p><i>'+e(lt.note)+'</i></p>');
+  if(fr.ours || (fr.competitors||[]).some(c=>c.period)){
+    const fl = ['Your forecast period: <b>'+(fr.ours ? e(fr.ours.start+'–'+fr.ours.end) : 'not found')+'</b>'];
+    (fr.competitors||[]).filter(c=>c.period).forEach(c=>fl.push(e(c.site)+': '+e(c.period.start+'–'+c.period.end)));
+    (fr.flags||[]).forEach(f=>fl.push('⚠ '+e(f)));
+    H.push('<h2>Freshness</h2>'+UL(fl));
+  }
+  if((dh.flags||[]).length) H.push('<h2>Draft health</h2>'+UL(dh.flags.map(e)));
+  const gd = ai.guards||{};
+  if((gd.issues||[]).length) H.push('<h2>Fact-check guard</h2>'+UL(gd.issues.map(e)));
+  if(ai.metaTitle) H.push('<h2>Meta title</h2><p><b>'+e(ai.metaTitle)+'</b></p>'+((ai.metaTitleAlternates||[]).length ? UL(ai.metaTitleAlternates.map(t=>'alt: '+e(t))) : ''));
+  if(ai.metaDescription) H.push('<h2>Meta description</h2><p><b>'+e(ai.metaDescription)+'</b></p>'+((ai.metaDescriptionAlternates||[]).length ? UL(ai.metaDescriptionAlternates.map(t=>'alt: '+e(t))) : ''));
+  if((ai.headingOutline||[]).length) H.push('<h2>Heading structure</h2>'+UL(ai.headingOutline.map(h=>'<b>'+e((h.level||'H2').toUpperCase())+'</b> '+e(h.text)+(h.verified===false?' ⚠ start passage not found in draft':''))));
+  if((tg.missing||[]).length){
+    const recBy = {}; (ai.gapRecommendations||[]).forEach(g=>{ if(g && g.topic) recBy[g.topic.toLowerCase()] = g.addWhat; });
+    H.push('<h2>Content gaps</h2>'+T(['Competitor section','Seen on','What to add'], tg.missing.map(g=>[e(g.topic), e(g.sites.length+' of 5: '+g.sites.join(', ')), e(recBy[(g.topic||'').toLowerCase()]||'—')])));
+  }
+  if((ai.secondaryKeywords||[]).length) H.push('<h2>Secondary keywords</h2>'+UL(ai.secondaryKeywords.map(k=>e(k.phrase)+(k.inDraft===false?' (not in draft yet)':''))));
+  if((ai.faq||[]).length) H.push('<h2>FAQ block</h2>'+ai.faq.map(f=>'<p><b>Q: '+e(f.question)+'</b><br>A: '+e(f.answer)+
+    (f.verified===false?'<br><i>⚠ not verified ('+e((f.guardReasons||[]).join('; '))+') — excluded from schema</i>':'')+'</p>').join(''));
+  const ilS = (d.internalLinks||{}).suggestions||[];
+  if(ilS.length) H.push('<h2>Internal links</h2>'+T(['Anchor','Target URL','Avg pos','Impr'], ilS.map(s=>[e(s.anchor), '<a href="'+e(s.url)+'">'+e(s.url)+'</a>', s.position!=null?e(s.position):'—', s.impressions!=null?e(Number(s.impressions).toLocaleString()):'—'])));
+  const ext = ((ai.linkPlan||{}).externalSuggestions)||[];
+  if(ext.length) H.push('<h2>External citations</h2>'+T(['Anchor text','Source type','Why'], ext.map(s=>[e(s.anchorText), e(s.sourceType), e(s.why)])));
+  if((ai.notes||[]).length) H.push('<h2>Editorial notes</h2>'+UL(ai.notes.map(e)));
+  if(d.schema) H.push('<h2>JSON-LD schema</h2><pre style="font-family:Consolas,monospace;font-size:9pt">'+e(schemaString(d))+'</pre>'+((d.schemaNotes||[]).length ? UL(d.schemaNotes.map(e)) : ''));
+  return H.join('\n');
+}
+
+function copyBriefMarkdown(btn){
+  const d = window.__plan; if(!d) return;
+  navigator.clipboard.writeText(briefMarkdown(d)).then(()=>flash(btn, 'Brief copied ✓'));
+}
+
+// Rich-text copy: pasting into Google Docs keeps headings, tables and links.
+async function copyForDocs(btn){
+  const d = window.__plan; if(!d) return;
+  try {
+    if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw new Error('unsupported');
+    await navigator.clipboard.write([ new ClipboardItem({
+      'text/html': new Blob(['<meta charset="utf-8">'+briefHtml(d)], { type: 'text/html' }),
+      'text/plain': new Blob([briefMarkdown(d)], { type: 'text/plain' })
+    }) ]);
+    flash(btn, 'Copied ✓');
+    $("shareOut").innerHTML = '<div class="banner note" style="margin-top:12px">Formatted brief copied. Open <a href="https://docs.new" target="_blank" rel="noopener" style="color:var(--info)">docs.new ↗</a> and paste (Ctrl/Cmd+V) — headings, tables and links are kept.</div>';
+  } catch(e) {
+    flash(btn, 'Not supported here — use Download .doc');
+  }
+}
+
+// Word-compatible HTML file — opens in Word, and Google Drive converts it to a Doc.
+function downloadDoc(){
+  const d = window.__plan; if(!d) return;
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escapeHtml('Content brief — '+d.keyword)+'</title></head>'+
+    '<body style="font-family:Arial,sans-serif">'+briefHtml(d)+'</body></html>';
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'brief-'+String(d.keyword||'content').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.doc';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+// ---------- Share links ----------
+async function compressToB64(str){
+  if (!('CompressionStream' in window)) throw new Error('this browser cannot compress');
+  const stream = new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function decompressFromB64(b64){
+  b64 = b64.replace(/-/g,'+').replace(/_/g,'/');
+  while (b64.length % 4) b64 += '=';
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).text();
+}
+
+function renderShareMsg(msg, err){
+  $("shareOut").innerHTML = '<div class="banner '+(err?'err':'note')+'" style="margin-top:12px">'+escapeHtml(msg)+'</div>';
+}
+
+// Server-saved short link first; falls back to a self-contained link if
+// storage isn't configured, so sharing works on day one either way.
+async function shareBrief(btn){
+  const d = window.__plan; if(!d) return;
+  flash(btn, 'Saving…', 15000);
+  let link = null, note = '';
+  try {
+    const res = await apiFetch('/api/brief', { method: 'POST', body: JSON.stringify({ brief: d }) });
+    const out = await res.json().catch(()=>({}));
+    if (res.ok && out.id) {
+      link = location.origin + '/brief?b=' + out.id;
+      note = 'Saved. Teammates with the access key can open this link.';
+    } else if (res.status === 401) {
+      flash(btn, 'Access key needed');
+      renderShareMsg('Enter the team access key in the form to save shared briefs.', true);
+      return;
+    } else {
+      note = 'Server storage unavailable ('+(out.error || ('HTTP '+res.status))+') — ';
+    }
+  } catch(e) {
+    note = 'Server storage unavailable ('+((e && e.message) || e)+') — ';
+  }
+  if (!link) {
+    try {
+      link = location.origin + '/brief#z=' + await compressToB64(JSON.stringify(d));
+      note += 'created a self-contained link instead: the brief is packed into the URL, nothing is stored on the server, and anyone with the link can view it.';
+    } catch(e) {
+      flash(btn, 'Share failed');
+      renderShareMsg('Could not create a share link in this browser: '+((e && e.message) || e), true);
+      return;
+    }
+  }
+  try { await navigator.clipboard.writeText(link); flash(btn, 'Link copied ✓'); } catch(e) { flash(btn, 'Link ready ↓'); }
+  $("shareOut").innerHTML = '<div class="sharebox"><input type="text" readonly value="'+escapeHtml(link)+'" onclick="this.select()" /></div>'+
+    '<div class="banner note" style="margin-top:10px">'+escapeHtml(note)+'</div>';
+}
+
+async function loadShared(id){
+  $("status").innerHTML = '<span class="dot"></span>Loading shared brief…';
+  try {
+    const res = await apiFetch('/api/brief?id='+encodeURIComponent(id));
+    const out = await res.json().catch(()=>({ error: 'Server returned HTTP '+res.status }));
+    $("status").textContent = '';
+    if (!res.ok || out.error || !out.brief) {
+      if (res.status === 401) window.__pendingShare = id;
+      renderError(out.error || 'Brief not found.', res.status);
+      return;
+    }
+    render(out.brief, { shared: { savedAt: out.savedAt } });
+  } catch(e) {
+    $("status").textContent = '';
+    renderError('Could not load shared brief: '+((e && e.message) || e));
+  }
+}
+
+async function loadHash(z){
+  try {
+    const d = JSON.parse(await decompressFromB64(z));
+    render(d, { shared: { savedAt: d.generatedAt } });
+  } catch(e) {
+    renderError('Could not open this shared link — it may have been cut off when pasted. ('+((e && e.message) || e)+')');
+  }
 }
 </script>
 </body>
