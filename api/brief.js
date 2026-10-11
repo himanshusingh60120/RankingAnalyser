@@ -1,7 +1,10 @@
 // api/brief.js
 // CONTENT BRIEF — keyword in -> live Google page 1 -> analyst-ready brief.
+// Also serves GET /api/health (via a rewrite in vercel.json) so the project stays within
+// the Vercel Hobby limit of 12 functions per deployment.
 //
-// GET  /api/brief  -> { serpProvider, ai, ourDomain }  (UI health check)
+// GET  /api/brief   -> { serpProvider, ai, ourDomain }  (UI health check)
+// GET  /api/health  -> { ok, service, competitors, time } (liveness, unchanged output)
 // POST /api/brief
 // {
 //   keyword: "plywood market",        // required
@@ -19,6 +22,7 @@ import { searchGoogle, serpProviderName } from "../lib/serp.js";
 import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl } from "../lib/brief.js";
 import { writeBriefWithAi } from "../lib/brief-ai.js";
 import { suggestInternalLinks } from "../lib/internal-links.js";
+import { COMPETITOR_SITES } from "../lib/competitors.js";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -32,7 +36,22 @@ export async function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-export async function GET() {
+export async function GET(request) {
+  const u = new URL(request.url);
+
+  // /api/health is rewritten here (see vercel.json). Same output as the old api/health.js.
+  if (u.searchParams.has("health") || /\/api\/health\/?$/.test(u.pathname)) {
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        service: "seo-xray-api",
+        competitors: COMPETITOR_SITES,
+        time: new Date().toISOString(),
+      }, null, 2),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   return json({
     ok: true,
     serpProvider: serpProviderName(),
