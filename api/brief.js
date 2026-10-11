@@ -1,80 +1,140 @@
 // api/brief.js
-// SAVE & SHARE briefs so the research team reviews the exact same brief.
-//   POST /api/brief   { brief }   -> { id, savedAt }   (brief = the /api/plan response)
-//   GET  /api/brief?id=<id>       -> { savedAt, brief }
+// CONTENT BRIEF — keyword in -> live Google page 1 -> analyst-ready brief.
 //
-// Storage: Vercel Blob. Vercel dashboard → Storage → Create → Blob, connect it
-// to this project; BLOB_READ_WRITE_TOKEN is injected automatically.
-// Requires: npm install @vercel/blob
+//   GET  /api/brief  -> { serpProvider, ai, ourDomain }   (UI health check — left open: no cost, no data)
+//   POST /api/brief
+//   {
+//     keyword: "plywood market",            // required
+//     gl?: "us", hl?: "en",                 // Google country / language (defaults: SERP_DEFAULT_GL / SERP_DEFAULT_HL)
+//     contentType?: "report" | "blog",      // auto: market/industry/size/share keywords -> report
+//     ourUrl?: "https://...",               // optional existing page -> gap analysis
+//     ourDomain?: "kingsresearch.com",      // optional; else OUR_DOMAIN, ourUrl's domain, GSC_SITE_URL
+//     stage?: "collect" | "write" | "full",
+//     collected?: {...}                     // stage "write" only: the 'collected' object from stage "collect"
+//   }
+// The UI runs "collect" (SERP + X-ray) then "write" (AI) so each half gets its own 60s budget.
+// "full" does both in one call — fine for scripts, but slow pages can push it past 60s.
 //
-// Blobs are written with public access but under an unguessable 64-bit id, and
-// this API is the only reader (the raw blob URL is never sent to the browser).
-// Both routes sit behind the same access-key guard as /api/plan.
+// GUARD: POST now goes through lib/guard.js (origin check + team access key
+// `x-brief-key` + per-IP rate limit). It calls a paid SERP API and OpenAI on
+// every run, so it must not be open to the internet. CORS "*" removed.
 
-import { put, list } from "@vercel/blob";
-import { randomBytes } from "node:crypto";
-import { guard, preflight } from "../lib/guard.js";
+import { searchGoogle, serpProviderName } from "../lib/serp.js";
+import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl } from "../lib/brief.js";
+import { writeBriefWithAi } from "../lib/brief-ai.js";
+import { suggestInternalLinks } from "../lib/internal-links.js";
+import { guard, preflight, corsHeaders } from "../lib/guard.js"; // GUARD
 
-const MAX_BYTES = 500_000;
-const ID_RE = /^[a-f0-9]{16}$/;
-
+// GUARD: headers are passed in from lib/guard.js instead of a fixed CORS "*".
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...headers } });
 
 export async function OPTIONS(request) {
-  return preflight(request, "GET, POST, OPTIONS");
-}
-
-export async function POST(request) {
-  const g = guard(request, { bucket: "brief-save", limit: 60 });
-  if (!g.ok) return g.response;
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return json({ error: "Brief storage is not configured (connect a Vercel Blob store).", code: "NO_STORAGE" }, 501, g.headers);
-  }
-
-  let body;
-  try { body = await request.json(); } catch { return json({ error: "Invalid JSON body" }, 400, g.headers); }
-  const brief = body && body.brief;
-  if (!brief || typeof brief !== "object" || !brief.keyword || !brief.generatedAt) {
-    return json({ error: "Provide { brief } — the full /api/plan response." }, 400, g.headers);
-  }
-
-  const savedAt = new Date().toISOString();
-  const payload = JSON.stringify({ savedAt, brief });
-  if (payload.length > MAX_BYTES) return json({ error: "Brief too large to save." }, 413, g.headers);
-
-  const id = randomBytes(8).toString("hex"); // 16 hex chars = 64 bits
-  try {
-    await put(`briefs/${id}.json`, payload, {
-      access: "public",
-      contentType: "application/json",
-      addRandomSuffix: false,
-    });
-  } catch (e) {
-    return json({ error: "Could not save brief: " + String(e.message || e) }, 502, g.headers);
-  }
-  return json({ id, savedAt }, 200, g.headers);
+  return preflight(request, "GET, POST, OPTIONS"); // GUARD
 }
 
 export async function GET(request) {
-  const g = guard(request, { bucket: "brief-load", limit: 120 });
+  return json({
+    ok: true,
+    serpProvider: serpProviderName(),
+    ai: !!process.env.OPENAI_API_KEY,
+    ourDomain: normaliseDomain(process.env.OUR_DOMAIN || process.env.GSC_SITE_URL || ""),
+  }, 200, corsHeaders(request)); // GUARD
+}
+
+export async function POST(request) {
+  // GUARD: each brief is 2 POSTs (collect + write), so the per-IP limit is
+  // double /api/plan's (default 40 per 10 min; BRIEF_RATE_LIMIT scales both).
+  const g = guard(request, { bucket: "brief", limit: 2 * (Number(process.env.BRIEF_RATE_LIMIT) || 20) });
   if (!g.ok) return g.response;
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return json({ error: "Brief storage is not configured.", code: "NO_STORAGE" }, 501, g.headers);
-  }
+  const H = g.headers;
 
-  const id = new URL(request.url).searchParams.get("id") || "";
-  if (!ID_RE.test(id)) return json({ error: "Invalid brief id." }, 400, g.headers);
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: "Invalid JSON body" }, 400, H); }
 
-  try {
-    const { blobs } = await list({ prefix: `briefs/${id}.json`, limit: 1 });
-    if (!blobs || !blobs.length) {
-      return json({ error: "Brief not found — the link may be wrong or the brief was deleted." }, 404, g.headers);
+  const stage = ["collect", "write", "full"].includes(body.stage) ? body.stage : "full";
+
+  // ---- Stage 2: AI writing on an existing analysis ----
+  if (stage === "write") {
+    const c = body.collected;
+    if (!c || !c.keyword || !c.serp || !c.topics) {
+      return json({ error: "Stage 'write' needs the 'collected' object returned by stage 'collect'." }, 400, H);
     }
-    const r = await fetch(blobs[0].url, { cache: "no-store" });
-    if (!r.ok) return json({ error: `Storage returned ${r.status}` }, 502, g.headers);
-    return json(await r.json(), 200, g.headers);
-  } catch (e) {
-    return json({ error: "Could not load brief: " + String(e.message || e) }, 502, g.headers);
+    if (JSON.stringify(c).length > 800000) return json({ error: "'collected' payload too large." }, 413, H);
+    const [ai, internalLinks] = await Promise.all([safe(() => writeBriefWithAi(c)), internalLinkBlock(c)]);
+    return json({ stage, ai, internalLinks }, 200, H);
   }
+
+  // ---- Stage 1: SERP + X-ray + analysis ----
+  const keyword = String(body.keyword || "").replace(/\s+/g, " ").trim();
+  if (keyword.length < 2 || keyword.length > 120) return json({ error: "Provide a 'keyword' (2–120 characters)." }, 400, H);
+
+  const gl = String(body.gl || process.env.SERP_DEFAULT_GL || "us").toLowerCase().slice(0, 2);
+  const hl = String(body.hl || process.env.SERP_DEFAULT_HL || "en").toLowerCase().slice(0, 5);
+  const contentType =
+    body.contentType === "report" || body.contentType === "blog"
+      ? body.contentType
+      : /\b(market|industry|forecast|size|share)\b/i.test(keyword) ? "report" : "blog";
+  const ourUrl = /^https?:\/\//i.test(body.ourUrl || "") ? body.ourUrl.trim() : null;
+  const ourDomain = normaliseDomain(body.ourDomain || process.env.OUR_DOMAIN || ourUrl || process.env.GSC_SITE_URL || "");
+
+  let serp;
+  try {
+    serp = await searchGoogle(keyword, { gl, hl, num: 10 });
+  } catch (e) {
+    const noProvider = e.code === "NO_SERP_PROVIDER";
+    return json(
+      { error: noProvider ? "No Google results provider configured." : "Google results lookup failed.", hint: String(e.message || e) },
+      noProvider ? 501 : 502,
+      H
+    );
+  }
+  if (!serp.organic.length) {
+    return json({ error: "Google returned no organic results for this keyword.", hint: "Check the spelling or try another country." }, 404, H);
+  }
+
+  const ourInSerp = ourUrl && serp.organic.some((r) => sameUrl(r.link, ourUrl));
+  const [pages, ourPage] = await Promise.all([
+    collectSerpPages(serp, { ourDomain }),
+    ourUrl && !ourInSerp ? fetchOurPage(ourUrl) : Promise.resolve(null),
+  ]);
+
+  const collected = analyseSerp({ keyword, contentType, serp, pages, ourDomain, ourPage, ourUrl });
+  if (stage === "collect") return json({ stage, collected }, 200, H);
+
+  const [ai, internalLinks] = await Promise.all([safe(() => writeBriefWithAi(collected)), internalLinkBlock(collected)]);
+  return json({ stage, collected, ai, internalLinks }, 200, H);
+}
+
+// Real pages from our own sitemaps to link to (same helper the Content Planner uses).
+async function internalLinkBlock(c) {
+  try {
+    const text = [
+      c.keyword,
+      ...c.topics.topics.slice(0, 30).map((t) => t.label),
+      ...(c.serp.peopleAlsoAsk || []).map((p) => p.question),
+      ...(c.serp.relatedSearches || []),
+    ].join(". ");
+    const res = await Promise.race([
+      suggestInternalLinks(c.keyword, text, c.ourPage?.url || null, 12),
+      new Promise((resolve) => setTimeout(() => resolve(null), 25000)),
+    ]);
+    if (!res) return { suggestions: [], note: "Sitemap lookup timed out." };
+    return { suggestions: (res.suggestions || []).slice(0, 12) };
+  } catch (e) {
+    return { suggestions: [], error: String(e.message || e) };
+  }
+}
+
+async function safe(fn) {
+  try { return await fn(); }
+  catch (e) { return { error: String(e.message || e) }; }
+}
+
+function normaliseDomain(v) {
+  const s = String(v || "").trim().replace(/^sc-domain:/i, "");
+  if (!s) return null;
+  try { return new URL(/^https?:\/\//i.test(s) ? s : "https://" + s).hostname.replace(/^www\./, "").toLowerCase(); }
+  catch { return null; }
 }
