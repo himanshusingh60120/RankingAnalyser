@@ -1,3 +1,4 @@
+<!-- planner.html (repo root · served at /planner, and at /brief via vercel.json rewrite) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,7 +127,7 @@ code { color: var(--signal); }
 <header>
   <p class="eyebrow">Kings Research · New-Content Mode</p>
   <h1>Content <span class="x">Brief</span></h1>
-  <p class="lede">Paste your draft before publishing. The brief benchmarks the same 5 competitors on your keyword, then returns word &amp; link targets, draft health checks, the content gaps competitors cover, your H-tag structure, meta title &amp; description, PAA-style FAQs, and ready-to-paste JSON-LD schema.</p>
+  <p class="lede">Paste your draft before publishing. The brief checks the live SERP for your keyword, benchmarks the same 5 competitors, then returns word &amp; link targets, draft health checks, the content gaps competitors cover, your H-tag structure, meta title &amp; description, PAA-style FAQs, and ready-to-paste JSON-LD schema.</p>
   <p style="margin-top:14px"><a class="back" href="/">← back to Ranking X-Ray (existing pages)</a></p>
 </header>
 
@@ -244,6 +245,24 @@ function render(d){
   html += tile('External links to add', lt.recommendedExternalLinks ?? '—', 'editorial ratio', true);
   html += '</div>';
   if(lt.note) html += '<div class="banner note" style="margin-top:12px">'+escapeHtml(lt.note)+'</div>';
+
+  // ---- Who actually ranks (live SERP) ----
+  const sp = d.serp || {};
+  if (sp.available && (sp.top10||[]).length){
+    html += '<h3 class="section">Live SERP — who you have to beat for "'+escapeHtml(d.keyword)+'"</h3>';
+    html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Pos</th><th>Site</th><th>Title</th></tr>';
+    for(const r of sp.top10){
+      const you = /\(you\)/.test(r.site);
+      html += '<tr><td style="font-family:var(--mono);font-weight:700;color:'+(r.position<=3?'var(--good)':'var(--warn)')+'">#'+r.position+'</td>'+
+        '<td class="site" style="color:'+(you?'var(--signal)':'var(--muted)')+'">'+escapeHtml(r.site)+'</td>'+
+        '<td style="font-size:12px;color:var(--muted)"><a href="'+escapeHtml(r.url)+'" target="_blank" style="color:var(--muted)">'+escapeHtml(r.title)+'</a></td></tr>';
+    }
+    html += '</table></div>';
+    html += '<div class="banner note">Benchmark hardest against the highest-ranked competitor above — match its depth and structure first, then exceed it. '+
+      ((sp.top10||[]).some(r=>/\(you\)/.test(r.site)) ? 'You are already in the top 10 — this brief is about moving up.' : 'kingsresearch.com is not in the top 10 for this query yet.')+'</div>';
+  } else if (sp.reason){
+    html += '<div class="banner note">Live SERP check unavailable ('+escapeHtml(sp.reason)+') — set GOOGLE_CSE_KEY/CX with a whole-web engine to see which competitors actually rank.</div>';
+  }
 
   // ---- Draft health (deterministic) ----
   html += '<h3 class="section">Draft health</h3>';
@@ -462,11 +481,16 @@ function copySchema(btn){
 
 function copyBriefMarkdown(btn){
   const d = window.__plan; if(!d) return;
-  const lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{};
+  const lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{}, sp = d.serp||{};
   const L = [];
   L.push('# Content brief — '+d.keyword+' ('+d.contentType+')');
   L.push('Generated: '+d.generatedAt);
   L.push('');
+  if(sp.available && (sp.top10||[]).length){
+    L.push('## Live SERP (who to beat)');
+    sp.top10.forEach(r=>L.push('- #'+r.position+' '+r.site+' — '+r.title));
+    L.push('');
+  }
   L.push('## Targets');
   L.push('- Draft words: '+(lt.ourWords||d.ourWords));
   if(lt.recommendedWords) L.push('- Word target: '+lt.recommendedWords+(lt.wordGap>0?' (add ~'+lt.wordGap+')':' (met)'));
