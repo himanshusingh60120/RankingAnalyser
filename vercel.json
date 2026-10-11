@@ -4,6 +4,7 @@
   "functions": {
     "api/analyze.js": { "maxDuration": 60 },
     "api/plan.js": { "maxDuration": 60 },
+    "api/brief.js": { "maxDuration": 60 },
     "api/hreflang-report.js": { "maxDuration": 60 },
     "api/hreflang-assemble.js": { "maxDuration": 60 },
     "api/bulk-compare.js": { "maxDuration": 60 },
