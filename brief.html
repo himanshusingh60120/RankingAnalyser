@@ -129,10 +129,12 @@ td.ctr{text-align:center}
 .ptag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:4px;text-transform:uppercase;vertical-align:middle;white-space:nowrap}
 .ptag.must{background:#fde3df;color:#a33a2e}
 .ptag.should{background:#fbefd9;color:#93621a}
+.ptag.opt{background:#e3eef8;color:#2c5f8a}
 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:1px 6px;border-radius:4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
 .tag.trk{background:#fde3df;color:#a33a2e}
 .tag.you{background:#dff1ea;color:#0f7a5c}
 .tag.src{background:#e3eef8;color:#2c5f8a}
+.tag.cat{background:#efe9f8;color:#5b3f8a}
 .pill{display:inline-block;border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:1px 9px;font-size:12.5px;margin:2px 4px 2px 0}
 .kwbox{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 15px;margin:6px 0 10px}
 .kwl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted)}
@@ -150,17 +152,21 @@ td.ctr{text-align:center}
 .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted);padding-top:5px}
 .lvl{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;background:var(--p-head);color:#fff;border-radius:4px;padding:1px 6px;margin-right:8px;vertical-align:middle}
 .lvl.h3{background:#e9e5dd;color:var(--p-head)}
-.skh1{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--p-head);margin:12px 0 4px}
-ul.skitems{margin:4px 0 16px 0;padding-left:22px;font-size:14px}
-ul.skitems li{margin:3px 0}
+.skh1{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--p-head);margin:12px 0 4px}
+.skdesc{border:1px dashed #cfc8bb;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:14px;background:#fff}
+.skbyline{font-family:var(--mono);font-size:12px;color:var(--p-muted);margin:6px 0 14px}
+.h3guide{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:10px 14px;margin:10px 0 14px;font-size:13.5px}
+.h3guide b{color:var(--p-head)}
 ol.skh2s{list-style:none;padding:0;margin:0}
 .skh2{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:10px}
+.skh2.optional{border-style:dashed;background:#fdfdfb}
 .skhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .skhead b{font-size:15.5px;color:var(--p-head)}
 .box{width:16px;height:16px;border:2px solid #8a96a3;border-radius:4px;flex:none}
 .skbody{margin:4px 0 0 24px;font-size:14px}
 .skw{margin:4px 0}
-ul.skh3{list-style:none;padding:0;margin:4px 0}
+.h3hint{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-accent);margin:8px 0 2px}
+ul.skh3{list-style:none;padding:0;margin:2px 0 6px}
 ul.skh3 li{margin:4px 0}
 ul.skc{margin:4px 0;padding-left:18px}
 ul.skc li{margin:2px 0}
@@ -213,9 +219,9 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
   <header>
     <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
     <h1>Content <span class="x">Brief</span></h1>
-    <p class="lede">Type a keyword and pick a country. Writers get a ready skeleton — every H2 with what to write,
-      the H3s, tables and keywords that belong in it. The SEO tab has the full competitor analysis. Every brief is saved
-      to Google Drive and the tracking sheet.</p>
+    <p class="lede">Type a keyword and pick a country. Writers get a skeleton in the Kings Research report format — every H2 with
+      what to write, suggested H3s and the few keywords that belong there. The SEO tab has the full competitor analysis.
+      Every brief is saved to Google Drive and the tracking sheet.</p>
   </header>
 
   <div id="health"></div>
@@ -312,7 +318,7 @@ const table = (heads, rows) =>
   `<div class="tw"><table class="dt"><thead><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
 const TYPE = { ours: "You", tracked: "Tracked competitor", publisher: "Research publisher", authority: "Gov / authority",
   press: "Press release", news: "News / media", ugc: "Social / UGC", other: "Other" };
-const TIER = { must: "Must have", should: "Good to have" };
+const TIER = { must: "Must have", should: "Good to have", opt: "Optional" };
 const tierTag = (t) => `<span class="ptag ${esc(t)}">${esc(TIER[t] || t)}</span>`;
 const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com"];
 const GENERIC = new Set(["market", "markets", "report", "reports", "size", "share", "growth", "industry", "analysis", "global", "forecast", "trends", "outlook", "and", "the", "for"]);
@@ -326,6 +332,11 @@ const SMALL = new Set(["a", "an", "and", "at", "by", "for", "in", "of", "on", "o
 const UPPER = new Set(["us", "uk", "uae", "eu", "usa", "ai", "ev", "iot", "api", "gcc", "apac", "mea"]);
 const niceTitle = (s) => String(s || "").toLowerCase().split(/\s+/).filter(Boolean)
   .map((w, i) => (UPPER.has(w) ? w.toUpperCase() : i > 0 && SMALL.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
+// Kings Research H3 style: every word capitalised, acronyms kept correct (AI, M&A, U.S.…).
+const ACR = { ai: "AI", "m&a": "M&A", us: "U.S.", "u.s.": "U.S.", uk: "UK", uae: "UAE", otc: "OTC", api: "API", apis: "APIs", iot: "IoT",
+  ev: "EV", evs: "EVs", cagr: "CAGR", gcc: "GCC", apac: "APAC", mea: "MEA", "r&d": "R&D", rd: "R&D", ccrcs: "CCRCs", reits: "REITs", saas: "SaaS" };
+const tcAll = (s) => String(s || "").split(/\s+/).filter(Boolean)
+  .map((w) => ACR[w.toLowerCase()] || (/^[A-Z0-9&.]{2,}$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
 
 let pageType = "report";
 let HEALTH = {};
@@ -375,7 +386,7 @@ async function checkHealth() {
     HEALTH = await (await fetch("/api/brief")).json();
     const notes = [];
     if (!HEALTH.serpProvider) notes.push("<b>No Google results provider set.</b> Add <code>SERPER_API_KEY</code> in Vercel and redeploy.");
-    if (!HEALTH.ai) notes.push("<code>OPENAI_API_KEY</code> isn't set — the brief still works, with template titles.");
+    if (!HEALTH.ai) notes.push("<code>OPENAI_API_KEY</code> isn't set — the brief still works, with template titles and placeholder H3s.");
     if (!HEALTH.storage) notes.push("Saving is off — add <code>STORAGE_WEBAPP_URL</code> and <code>STORAGE_SECRET</code> in Vercel to save briefs to Google Drive.");
     if (!HEALTH.ourDomain) notes.push("Set <code>OUR_DOMAIN</code> so the brief can find your own pages.");
     $("health").innerHTML = notes.map((n) => `<div class="banner warnb">${n}</div>`).join("");
@@ -634,10 +645,69 @@ const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">
 const sec = (title, body) => (body ? `<section><h2 class="sec">${esc(title)}</h2>${body}</section>` : "");
 const pills = (arr) => arr.map((w) => `<span class="pill">${esc(w)}</span>`).join("");
 
-/* ================= data clean-up ================= */
+/* ================= relevance filters ================= */
 const JUNK_COMPANY_RE = /\b(population|diseases?|demand|growth|rising|increasing|adoption|prevalence|awareness|markets?|segments?|regulations?|investments?|expansion|chronic|aging|ageing|trends?|factors?|drivers?|challenges?|opportunit\w*|innovation|technolog\w*)\b/i;
 const BAD_PHRASE_RE = /frequently asked|table of contents|key takeaways|related reports?|request (?:a )?sample|key questions|report scope|research methodology|buy now|contact us|get in touch/i;
+const NEWS_Q_RE = /\b(today|yesterday|tomorrow|this week|right now|trump|biden|harris|modi|election|politic\w*|donat\w*|lobby\w*|bribe\w*|scandal|lawsuit|layoffs?|stocks?|share price|stock price|falling|crash\w*|plunge\w*|tariff war|news)\b/i;
 const Q_STOP = new Set(["what", "which", "who", "how", "why", "when", "where", "is", "are", "the", "of", "in", "for", "and", "does", "do", "will"]);
+const MODS = new Set(["market", "markets", "size", "share", "growth", "trends", "trend", "forecast", "analysis", "outlook", "demand", "revenue",
+  "cagr", "players", "companies", "company", "segmentation", "segment", "segments", "regional", "region", "opportunities", "opportunity",
+  "drivers", "driver", "industry", "report", "statistics", "value", "volume", "insights", "insight", "research", "landscape", "competitive",
+  "applications", "application", "types", "type", "overview", "scope", "global", "key", "future", "latest", "manufacturers", "manufacturer",
+  "leading", "top", "major", "list", "pdf", "stats", "strategic", "estimated", "estimate", "projected", "expected", "worth", "rate",
+  "country", "countries", "regions", "world", "worldwide", "sales", "current", "example", "examples", "definition", "meaning", "sector",
+  "business", "user", "users", "end", "yearly", "annual"].map(stem));
+const STOPW = new Set(["the", "of", "and", "in", "for", "to", "by", "a", "an", "on", "with", "its", "is", "are", "what", "how", "which", "who",
+  "why", "will", "from", "at", "as", "or", "vs", "into", "&", "this", "that", "be", "can", "do", "does", "per", "more", "most", "new", "best", "all"].map(stem));
+const COUNTRY_NAMES = ["united states", "usa", "u s", "canada", "mexico", "brazil", "argentina", "chile", "colombia", "peru",
+  "united kingdom", "uk", "britain", "england", "germany", "france", "italy", "spain", "netherlands", "belgium", "switzerland",
+  "sweden", "norway", "denmark", "finland", "poland", "russia", "turkey", "ukraine", "ireland", "portugal", "austria", "greece",
+  "czech", "hungary", "romania", "india", "china", "japan", "south korea", "korea", "indonesia", "vietnam", "thailand",
+  "malaysia", "singapore", "philippines", "australia", "new zealand", "pakistan", "bangladesh", "sri lanka", "nepal",
+  "saudi arabia", "saudi", "uae", "emirates", "dubai", "qatar", "kuwait", "oman", "bahrain", "israel", "egypt", "nigeria",
+  "kenya", "south africa", "morocco", "ethiopia", "ghana", "iran", "iraq", "taiwan", "hong kong"];
+const REGION_NAMES = ["north america", "south and central america", "central america", "south america", "latin america",
+  "asia pacific", "middle east", "europe", "european", "asia", "apac", "africa", "mea", "emea", "gcc", "asean", "nordic"];
+const normP = (s) => String(s || "").toLowerCase().replace(/([a-z0-9])-([a-z0-9])/g, "$1 $2").replace(/[^a-z0-9& ]/g, " ").replace(/\s+/g, " ").trim();
+function stripPlaces(text, list) {
+  let t = " " + normP(text) + " ";
+  for (const p of [...list].sort((a, b) => b.length - a.length)) t = t.split(" " + p + " ").join(" ");
+  return t.replace(/\s+/g, " ").trim();
+}
+// Same rule as the server: no other countries, and (for market keywords) no other markets.
+function onTopic(keyword, phrase) {
+  const p = normP(phrase);
+  if (!p) return false;
+  const kwN = " " + normP(keyword) + " ";
+  const noRegions = " " + stripPlaces(p, REGION_NAMES) + " ";
+  if (COUNTRY_NAMES.some((c) => noRegions.includes(" " + c + " ") && !kwN.includes(" " + c + " "))) return false;
+  if (!/\bmarkets?\b/i.test(keyword)) return true;
+  const kwS = new Set(normP(keyword).split(" ").map(stem));
+  const left = stripPlaces(stripPlaces(p, REGION_NAMES), COUNTRY_NAMES).split(" ").filter(Boolean).map(stem)
+    .filter((w) => !/^\d+$/.test(w) && !kwS.has(w) && !MODS.has(w) && !STOPW.has(w));
+  return left.length === 0;
+}
+function sameMarketQ(keyword, q) {
+  const m = String(q || "").match(/((?:[A-Z][\w&'.-]*\s+){1,6})Markets?\b/);
+  if (!m) return true;
+  const kw = new Set(String(keyword || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).map(stem));
+  const words = m[1].toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w)).map(stem);
+  return words.every((w) => kw.has(w));
+}
+function goodQuestion(keyword, q) {
+  if (!q || NEWS_Q_RE.test(q)) return false;
+  const noRegions = " " + stripPlaces(q, REGION_NAMES) + " ";
+  const kwN = " " + normP(keyword) + " ";
+  if (COUNTRY_NAMES.some((c) => noRegions.includes(" " + c + " ") && !kwN.includes(" " + c + " "))) return false;
+  return sameMarketQ(keyword, q);
+}
+const normQ = (q) => String(q || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+const hasAllKw = (keyword, phrase) => {
+  const need = kwTokens(keyword).map(stem);
+  const have = new Set(normQ(phrase).split(" ").map(stem));
+  return need.length > 0 && need.every((t) => have.has(t));
+};
 const REGION_PLACES = new Set(["Europe", "Asia Pacific", "Middle East", "Latin America", "GCC", "Africa"]);
 const PLACES = [
   ["India"], ["China"], ["Japan"], ["Germany"], ["France"], ["Brazil"], ["Canada"], ["Australia"], ["Mexico"],
@@ -655,22 +725,8 @@ function placeIn(keyword) {
   }
   return null;
 }
-function sameMarketQ(keyword, q) {
-  const m = String(q || "").match(/((?:[A-Z][\w&'.-]*\s+){1,6})Markets?\b/);
-  if (!m) return true;
-  const kw = new Set(String(keyword || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).map(stem));
-  const words = m[1].toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
-    .filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w)).map(stem);
-  return words.every((w) => kw.has(w));
-}
-const normQ = (q) => String(q || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-const hasAllKw = (keyword, phrase) => {
-  const need = kwTokens(keyword).map(stem);
-  const have = new Set(normQ(phrase).split(" ").map(stem));
-  return need.length > 0 && need.every((t) => have.has(t));
-};
 
-/* ================= WRITER'S SKELETON ================= */
+/* ================= WRITER'S SKELETON — Kings Research house format ================= */
 const TOPIC_TESTS = [
   ["FAQs", /\bfaqs?\b|frequently asked/],
   ["Report scope & methodology", /\bscope\b|methodolog|research approach|assumption|data source|report coverage|report attribute|report highlights/],
@@ -695,27 +751,17 @@ const TOPIC_TESTS = [
   ["Market overview & definition", /overview|introduction|definition|\bwhat is\b|summary|snapshot|at a glance|highlights|key (?:insights|findings|takeaways)/],
   ["Analyst view & conclusion", /analyst|conclusion|recommendation|verdict|insight|perspective/],
 ];
-const SEG_LABELS = ["Segmentation overview", "Segmentation by type / product", "Segmentation by application",
-  "Segmentation by end use / industry", "Other segmentation (component, technology, channel…)"];
-const GROUPS = [
-  { key: "overview", labels: ["Market overview & definition"], core: true, blogCore: true },
-  { key: "size", labels: ["Market size & forecast"], core: true },
-  { key: "dynamics", labels: ["Market dynamics & growth drivers", "Restraints & challenges", "Opportunities"], core: true },
-  { key: "trends", labels: ["Market trends & innovation"] },
-  { key: "macro", labels: ["Macro impact (tariffs, geopolitics, AI…)"] },
-  { key: "segments", labels: SEG_LABELS, core: true },
-  { key: "regional", labels: ["Regional & country analysis"], core: true },
-  { key: "pricing", labels: ["Pricing analysis"] },
-  { key: "regulatory", labels: ["Regulatory landscape"] },
-  { key: "valuechain", labels: ["Value chain & industry analysis"] },
-  { key: "investment", labels: ["Investment & funding"] },
-  { key: "competitive", labels: ["Competitive landscape & key players"], core: true },
-  { key: "developments", labels: ["Recent developments"] },
-  { key: "view", labels: ["Analyst view & conclusion"], core: true, blogCore: true },
-  { key: "scope", labels: ["Report scope & methodology"], core: true },
-  { key: "faqs", labels: ["FAQs"], core: true, blogCore: true },
-];
-const groupOfLabel = (label) => GROUPS.find((g) => g.labels.includes(label));
+// Which house H2 a topic / keyword belongs to.
+const HOUSE_OF = {
+  "Market overview & definition": "overview", "Market size & forecast": "overview",
+  "Market dynamics & growth drivers": "dynamics", "Restraints & challenges": "dynamics", "Opportunities": "dynamics",
+  "Market trends & innovation": "trends", "Macro impact (tariffs, geopolitics, AI…)": "macro",
+  "Segmentation overview": "segmental", "Segmentation by type / product": "segmental", "Segmentation by application": "segmental",
+  "Segmentation by end use / industry": "segmental", "Other segmentation (component, technology, channel…)": "segmental",
+  "Regional & country analysis": "regional", "Competitive landscape & key players": "competitive", "Recent developments": "competitive",
+  "Pricing analysis": "pricing", "Regulatory landscape": "regulatory", "Value chain & industry analysis": "valuechain",
+  "Investment & funding": "competitive", "Report scope & methodology": "methodology", "FAQs": "faqs", "Analyst view & conclusion": "overview",
+};
 
 function stripKw(text, kwTok) {
   let t = " " + String(text || "").toLowerCase().replace(/[^a-z0-9.&?\s-]/g, " ") + " ";
@@ -727,208 +773,217 @@ function labelOf(text, kwTok) {
   for (const [label, re] of TOPIC_TESTS) if (re.test(s)) return label;
   return null;
 }
-
-function h2For(key, K, place) {
-  switch (key) {
-    case "overview": return `${K}: Overview`;
-    case "size": return `${K} Size & Forecast`;
-    case "dynamics": return `${K} Dynamics: Drivers, Restraints & Opportunities`;
-    case "trends": return `${K} Trends`;
-    case "macro": return "Impact of Tariffs, Policy & AI";
-    case "segments": return `${K} Segmentation`;
-    case "regional": return place && !REGION_PLACES.has(place) ? `${K}: Regional Analysis` : `${K} by Region`;
-    case "pricing": return `${K} Pricing Analysis`;
-    case "regulatory": return `${K}: Regulations & Policy`;
-    case "valuechain": return `${K} Value Chain`;
-    case "investment": return `${K}: Investment & Funding`;
-    case "competitive": return `${K} Competitive Landscape`;
-    case "developments": return "Recent Developments";
-    case "view": return "Analyst View";
-    case "scope": return "Report Scope & Methodology";
-    case "faqs": return "Frequently Asked Questions";
-    default: return K;
-  }
+function dimTitle(label) {
+  const m = { "Type / product": "Type", "End user": "End User", "Distribution channel": "Distribution Channel", "Organization size": "Organization Size" };
+  return tcAll(m[label] || label);
 }
 
 function buildSkeleton(c, ai) {
   const isReport = c.contentType !== "blog";
-  const K = niceTitle(c.keyword);
+  const kw = String(c.keyword || "").trim();
+  const place = placeIn(kw);
+  const isGlobal = !place;
+  const kwNoGlobal = kw.replace(/^global\s+/i, "");
+  const Kshort = niceTitle(kwNoGlobal);
+  const Kfull = isGlobal ? `Global ${Kshort}` : niceTitle(kw);
+  const kwG = (isGlobal ? `global ${kwNoGlobal}` : kw).toLowerCase();
+  const KQ = tcAll(Kfull);                                   // used inside question-style H3s
   const N = c.topics.pagesCompared || 0;
-  const kwTok = kwTokens(c.keyword);
-  const place = placeIn(c.keyword);
+  const kwTok = kwTokens(kw);
   const F = c.figures || {};
   const topicMap = {};
   c.topics.topics.forEach((t) => { topicMap[t.label] = t; });
   const companies = (c.companies || []).filter((x) => !JUNK_COMPANY_RE.test(x.name));
-
+  const dims = (c.segments || []).filter((x) => x.label !== "Region").slice(0, 4);
+  const dimNames = dims.length ? dims.map((d) => dimTitle(d.label)) : ["Type", "Application", "End User"];
+  const ideas = (ai && ai.h3Ideas) || {};
+  const idea = (v, ph) => (v ? tcAll(v) : `[${ph}]`);
+  const evidence = (labels) => {
+    const best = labels.map((l) => topicMap[l]).filter(Boolean).sort((a, b) => b.count - a.count)[0];
+    return best && N ? `${best.count} of ${N} competitors cover this` : "";
+  };
   const sections = [];
-  for (const g of GROUPS) {
-    const best = g.labels.map((l) => topicMap[l]).filter(Boolean).sort((a, b) => b.count - a.count)[0];
-    const inData = best && best.tier !== "differentiator";
-    const core = isReport ? g.core : g.blogCore;
-    if (!core && !inData) continue;
-    sections.push({
-      g, key: g.key, h2: h2For(g.key, K, place),
-      tier: core || (best && best.tier === "must") ? "must" : "should",
-      why: best && N ? `${best.count} of ${N} competitors cover this` : core ? (isReport ? "expected on every report page" : "core section") : "",
-      write: "", aiWrite: false, h3: [], cover: [], tables: [], words: [], also: [], extras: [],
-    });
-  }
-  const get = (k) => sections.find((s) => s.key === k);
+  const mk = (key, h2, extra = {}) => {
+    const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false, ...extra };
+    sections.push(s);
+    return s;
+  };
   let tableNo = 0;
-  const addTable = (s, text) => { if (s) s.tables.push(`Table ${++tableNo}: ${text}`); };
-  const competitorsHave = (label) => (topicMap[label] && N ? ` — ${topicMap[label].count} of ${N} competitors` : "");
+  const addTable = (s, text) => { s.tables.push(`Table ${++tableNo}: ${text}`); };
 
-  let s;
-  if ((s = get("overview"))) {
-    s.write = "Explain the market in plain words — what it is, what's included, and who buys it and why.";
-    s.cover = ["Definition and scope: what's in, what's out", "Who the buyers are and what they use it for"];
-  }
-  if ((s = get("size"))) {
-    s.write = "Our numbers, year by year, with one line on how we estimated them.";
-    s.cover = ["Base-year size, forecast value, CAGR and period — our own figures",
-      F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}%; if ours is outside that, explain why in one line` : null,
-      "One line on method and sources"].filter(Boolean);
-    addTable(s, "Market size by year, base year → forecast year");
-  }
-  if ((s = get("dynamics"))) {
-    s.write = "What drives the market and what holds it back.";
-    s.h3 = [`Growth drivers: 3–5, each backed by a number or source${competitorsHave("Market dynamics & growth drivers")}`,
-      `Restraints & challenges: 2–4, with evidence${competitorsHave("Restraints & challenges")}`,
-      `Opportunities: 2–3, with examples${competitorsHave("Opportunities")}`];
-  }
-  if ((s = get("trends"))) { s.write = "3–4 current trends."; s.cover = ["Trend → real example → why it matters for buyers"]; }
-  if ((s = get("macro"))) { s.write = "How tariffs, policy or AI change the outlook."; s.cover = ["The specific effect on demand, prices or supply"]; }
-  if ((s = get("segments"))) {
-    s.write = "Split the market the way buyers expect — one H3 per split, each with a share table.";
-    const dims = (c.segments || []).filter((x) => x.label !== "Region").slice(0, 4);
-    const names = dims.length ? dims.map((x) => x.label.toLowerCase()) : ["type / product", "application", "end user"];
-    s.h3 = names.map((n, i) => `By ${n}${dims[i] && N ? ` — ${dims[i].count} of ${N} competitors use this split` : ""}`);
-    names.slice(0, 3).forEach((n) => addTable(s, `Share and growth by ${n}`));
-  }
-  if ((s = get("regional"))) {
-    if (place && REGION_PLACES.has(place)) {
-      s.write = `Split ${place} by country and show each country's size and growth.`;
-      s.h3 = (c.countries || []).slice(0, 6).map((x) => x.label);
-      addTable(s, `Market share by country within ${place}`);
-    } else if (place) {
-      s.write = `Split ${place} by state or region, and show how ${place} compares with the global market.`;
-      s.h3 = ["Leading states / regions and why they lead", `${place} vs the global market`];
-      addTable(s, `Share by state / region within ${place}`);
-    } else {
-      s.write = "Size and growth by region — name the largest and the fastest-growing.";
-      s.h3 = (c.regions && c.regions.length ? c.regions.map((r) => r.label) : ["North America", "Europe", "Asia Pacific", "Latin America", "Middle East & Africa"]);
-      s.cover = [
-        c.countries && c.countries.length ? `Call out key countries: ${c.countries.slice(0, 5).map((x) => x.label).join(", ")}` : null,
-        c.regionClaims && c.regionClaims.largest[0] ? `Competitors call ${c.regionClaims.largest[0].label} the largest region — confirm or correct with our data` : null,
-      ].filter(Boolean);
-      addTable(s, "Market share by region");
-    }
-  }
-  if ((s = get("pricing"))) { s.write = "Price ranges and how they're changing."; s.cover = ["Price bands by product or segment", "What's pushing prices up or down"]; }
-  if ((s = get("regulatory"))) { s.write = "The rules, approvals or reimbursement that shape the market."; s.cover = ["Key regulations and what they mean for buyers"]; }
-  if ((s = get("valuechain"))) { s.write = "Who does what, from supplier to end user."; s.cover = ["Key stages and the players at each stage"]; }
-  if ((s = get("investment"))) { s.write = "Notable funding and investment."; s.cover = ["Recent rounds with dates, amounts and investors"]; }
-  if ((s = get("competitive"))) {
-    s.write = "Who leads the market and what they're doing.";
-    s.cover = ["Market share or positioning of the leaders (if known)", "2–3 lines per company: what they offer + their latest move"];
-    s.h3 = companies.slice(0, 8).map((x) => x.name);
-    addTable(s, "Key companies at a glance — headquarters, focus, latest move");
-  }
-  if ((s = get("developments"))) { s.write = "What changed in the last 12 months."; s.cover = ["5–8 items: date · company · what happened"]; }
-  if ((s = get("view"))) {
-    s.write = "Our take: what buyers should watch next, plus something no competitor offers.";
-    s.cover = ["What to watch in the next 12–24 months"];
-  }
-  if ((s = get("scope"))) {
-    s.write = "A short methodology box so buyers trust our numbers.";
-    s.cover = ["Base year, forecast period and units", "Segments and regions covered", "Sources: primary interviews, secondary research, estimation model"];
+  // 1. Overview
+  const ov = mk("overview", `${Kshort} Overview`, { why: evidence(["Market overview & definition", "Market size & forecast"]) || "our standard first section" });
+  ov.write = "Open with our numbers in the first sentence, then two short paragraphs: what's driving demand, and what's changing (technology, regulation, buyer behaviour).";
+  ov.cover = [
+    `First sentence (house style): "According to Kings Research analysis, the ${kwG} size was recorded at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a CAGR of [Z]% over the forecast period from 20XX to 20XX."`,
+    F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}% — if ours is outside that range, explain why in one line` : null,
+  ].filter(Boolean);
+  addTable(ov, "Market size by year, base year → forecast year (an HTML table next to the chart — Google can't read numbers inside images)");
+
+  // 2. Key Market Highlights
+  const hi = mk("highlights", "Key Market Highlights", { why: "our standard section" });
+  hi.write = "6–7 bullets with our headline numbers — no extra text.";
+  hi.cover = [
+    `The ${kwG} size in 20XX and the forecast value for 20XX`,
+    "CAGR over the forecast period",
+    `Largest region: share % and value in 20XX${c.regionClaims && c.regionClaims.largest[0] ? ` (competitors say ${c.regionClaims.largest[0].label})` : ""}`,
+    `Largest ${dimNames[0].toLowerCase()} segment: share % and value`,
+    dimNames[1] ? `Fastest-growing ${dimNames[1].toLowerCase()} segment: CAGR and 20XX value` : null,
+    dimNames[2] ? `Leading ${dimNames[2].toLowerCase()} segment: share and value` : null,
+    "Fastest-growing region: CAGR",
+  ].filter(Boolean);
+
+  // 3. Market Dynamics — suggested question H3s
+  const dy = mk("dynamics", "Market Dynamics", { why: evidence(["Market dynamics & growth drivers", "Restraints & challenges", "Opportunities"]) || "our standard section" });
+  dy.write = "One H3 each for the main driver, restraint and opportunity.";
+  dy.h3 = [
+    { text: `How Is ${idea(ideas.driver, "Main Growth Driver")} Driving Market Growth?`, tip: "driver" },
+    { text: `How Does ${idea(ideas.restraint, "Main Restraint")} Restrain The Development Of The ${KQ}?`, tip: "restraint" },
+    { text: `How Is ${idea(ideas.opportunity, "Main Opportunity")} Creating Growth Opportunities For The ${KQ}?`, tip: "opportunity" },
+  ];
+  dy.cover = ["Back each H3 with a cited source (government, association or company filing) and one dated example: \"For instance, in [Month YYYY], [Company] …\""];
+
+  // 4. Market Segmentation
+  const sg = mk("segmentation", "Market Segmentation", { why: evidence(["Segmentation overview"]) || "our standard section" });
+  sg.write = "One table: every split with its sub-segments, then regions with key countries.";
+  sg.cover = ["Build it as a real HTML table — not a bulleted list or an image",
+    `Rows: ${dimNames.map((d) => `By ${d}`).join(" · ")} · By Region (with key countries)`];
+  addTable(sg, `Segmentation — ${dimNames.map((d) => `By ${d}`).join(", ")}, By Region`);
+
+  // 5. Segmental Analysis — one suggested H3 per split
+  const sa = mk("segmental", "Segmental Analysis", { why: dims.length && N ? `competitors split by ${dims.map((d) => `${dimTitle(d.label).toLowerCase()} (${d.count}/${N})`).join(", ")}` : "our standard section" });
+  sa.write = "One H3 per split in the subtitle. Answer it in the first sentence with share % and value, then 2–3 sentences on why.";
+  const segQ = [
+    (d) => `Which ${d} Captured The Largest Share In The ${KQ}?`,
+    (d) => `Which ${d} Is Anticipated To Register The Fastest Growth Rate Over The Forecast Period?`,
+    (d) => `Which ${d} Held The Largest Market Share In 20XX?`,
+    (d) => `Which ${d} Segment Is Gaining The Most Traction?`,
+  ];
+  sa.h3 = dimNames.map((d, i) => ({ text: segQ[i % segQ.length](d) }));
+  sa.cover = ["Every \"By …\" in the subtitle needs its own H3 here — don't skip one"];
+  dimNames.slice(0, 2).forEach((d) => addTable(sa, `Share and growth by ${d.toLowerCase()}`));
+
+  // 6. Regional Analysis
+  const ra = mk("regional", "Regional Analysis", { why: evidence(["Regional & country analysis"]) || "our standard section" });
+  if (place && !REGION_PLACES.has(place)) {
+    ra.write = `Split ${place} by state or region and compare it with the global market.`;
+    ra.h3 = [{ text: `Which States Or Regions Lead The ${KQ}?` }, { text: `How Does The ${tcAll(place)} Market Compare With The Global Market?` }];
+    addTable(ra, `Share by state / region within ${place}`);
+  } else if (place) {
+    ra.write = `Split ${place} by country.`;
+    ra.h3 = [{ text: `Which Country Leads The ${KQ}?` }, ...(c.countries || []).slice(0, 5).map((x) => ({ text: x.label }))];
+    addTable(ra, `Share by country within ${place}`);
+  } else {
+    ra.write = "Start with the scenario H3, then one H3 per region with a share or CAGR figure.";
+    ra.h3 = [
+      { text: `What Is The Market Scenario Across Key Regions In The ${KQ}?` },
+      { text: "North America" }, { text: "Asia Pacific" }, { text: "Europe" },
+      { text: "Middle East & Africa" }, { text: "South & Central America" },
+    ];
+    ra.cover = [
+      "Give each big region its own H3 with a number — don't merge regions without figures",
+      c.regionClaims && c.regionClaims.largest[0] ? `Competitors call ${c.regionClaims.largest[0].label} the largest region — confirm or correct with our data` : null,
+      c.countries && c.countries.length ? `Key countries to mention: ${c.countries.slice(0, 5).map((x) => x.label).join(", ")}` : null,
+    ].filter(Boolean);
+    addTable(ra, "Market share by region");
   }
 
-  const paa = (c.serp.peopleAlsoAsk || []).map((p) => p.question);
-  const compQ = (c.questions || []).filter((q) => q.source !== "People Also Ask").map((q) => q.question).filter((q) => sameMarketQ(c.keyword, q));
-  const seenQ = new Set();
-  let faqs = [...paa, ...((ai && ai.faqs) || []), ...compQ].filter((q) => { const k = normQ(q); if (!k || seenQ.has(k)) return false; seenQ.add(k); return true; });
-  if (!faqs.length) {
-    faqs = [`What is the size of the ${K}?`, `What is the CAGR of the ${K}?`, `Who are the key players in the ${K}?`,
-      `Which segment leads the ${K}?`, place && !REGION_PLACES.has(place) ? `Which states lead the ${K}?` : `Which region leads the ${K}?`];
-  }
-  faqs = faqs.slice(0, Math.max(6, c.targets.faqs || 5));
-  if ((s = get("faqs"))) { s.write = "Use each question as an H3 and answer in 2–3 sentences with our numbers."; s.h3 = faqs; }
-
-  const extraSecs = [];
-  ((ai && ai.outline) || []).forEach((o) => {
-    const g = groupOfLabel(labelOf(o.h2, kwTok));
-    const target = g && get(g.key);
-    if (target && target.key !== "faqs") {
-      if (!target.aiWrite && o.write) { target.write = o.write; target.aiWrite = true; }
-    } else if (!target && o.h2 && !/faq/i.test(o.h2)) {
-      extraSecs.push({ key: "ai-" + extraSecs.length, h2: o.h2, tier: "should", why: "suggested from the competitor data",
-        write: o.write || "", h3: [], cover: [], tables: [], words: [], also: [], extras: [] });
-    }
+  // 7. Optional H2s — sections competitors have that our format doesn't
+  const optional = [
+    ["trends", "Market trends & innovation", "Market Trends", () => [{ text: `Which Trends Are Shaping The ${KQ}?` }]],
+    ["macro", "Macro impact (tariffs, geopolitics, AI…)", "Impact Of Tariffs, Policy & AI", () => [{ text: `How Are [Tariffs / AI / Policy Changes] Impacting The ${KQ}?` }]],
+    ["pricing", "Pricing analysis", "Pricing Analysis", () => [{ text: `How Are Prices Changing Across [Key Segment]?` }]],
+    ["regulatory", "Regulatory landscape", "Regulatory Landscape", () => [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }]],
+    ["valuechain", "Value chain & industry analysis", "Value Chain Analysis", () => [{ text: `How Is Value Created Across The ${KQ} Value Chain?` }]],
+  ];
+  optional.forEach(([key, label, h2, h3s]) => {
+    const t = topicMap[label];
+    if (!t || t.tier === "differentiator") return;
+    const s = mk(key, h2, { tier: "opt", optional: true, why: `${t.count} of ${N} competitors have it — optional in our format` });
+    s.write = "Add only if our research has something specific to say.";
+    s.h3 = h3s();
   });
-  const view = get("view");
+
+  // 8. Competitive Landscape
+  const cl = mk("competitive", "Competitive Landscape", { why: evidence(["Competitive landscape & key players", "Recent developments"]) || "our standard section" });
+  cl.write = "How competition works in this market, then the key players.";
+  cl.h3 = [
+    { text: `How Is ${idea(ideas.competition, "Main Competitive Strategy, e.g. Mergers & Acquisitions")} Reshaping Competition In The ${KQ}?` },
+    { text: `Who Are The Key Players In The ${KQ}?` },
+  ];
+  cl.cover = [
+    "Under the first H3: 3 dated developments as bullets — month, year, company, what happened",
+    companies.length ? `Key players list (15–20 companies), e.g. ${companies.slice(0, 8).map((x) => x.name).join(", ")}` : "Key players list (15–20 companies)",
+  ];
+
+  // 9. Research Methodology
+  const rm = mk("methodology", "Research Methodology", { why: evidence(["Report scope & methodology"]) || "our standard section" });
+  rm.h3 = [{ text: "How We Gather This Information" }, { text: "Why Kings Research?" }];
+  rm.cover = ["Keep the standard text, but add 1–2 lines naming the main sources used for THIS market (government statistics, associations, company filings) — so it isn't identical on every report"];
+
+  // 10. FAQs — house-standard questions first, then real searcher questions about this market
+  const fq = mk("faqs", "Frequently Asked Questions", { why: "our standard section" });
+  fq.write = "Use each question as written and answer in 2–3 sentences with our numbers.";
+  const base = [
+    `What is the market size of the ${kwG}?`,
+    `What are the main factors driving the growth of the ${kwG}?`,
+    `What are the key challenges restraining the growth of the ${kwG}?`,
+    `What are emerging opportunities in the ${kwG}?`,
+    place && !REGION_PLACES.has(place) ? `Which states lead the ${kwG}?` : `What are the key regions in the ${kwG}?`,
+    `Who are the key players in the ${kwG}?`,
+  ];
+  const seenQ = new Set(base.map(normQ));
+  const extraQ = [...(c.serp.peopleAlsoAsk || []).map((p) => p.question), ...((ai && ai.faqs) || [])]
+    .filter((q) => goodQuestion(kw, q))
+    .filter((q) => { const k = normQ(q); if (!k || seenQ.has(k)) return false; seenQ.add(k); return true; })
+    .slice(0, 2);
+  fq.h3 = [...base, ...extraQ].map((t) => ({ text: t, plain: true }));
+
+  // "Our edge" ideas from the AI → the section they fit (else Market Dynamics)
   ((ai && ai.extraActions) || []).forEach((a) => {
-    const g = groupOfLabel(labelOf(a.where, kwTok)) || groupOfLabel(labelOf(a.what, kwTok));
-    const target = (g && get(g.key)) || view;
-    if (target) target.extras.push(a.what);
+    const lab = labelOf(a.where, kwTok) || labelOf(a.what, kwTok);
+    const target = sections.find((s) => s.key === HOUSE_OF[lab]) || dy;
+    target.extras.push(a.what);
   });
-  if (view && !view.extras.length) view.extras = ["Findings or quotes from our primary interviews", "A best-case / worst-case forecast"];
 
-  const introWords = [];
+  // Keywords: on-topic only, max 2 per H2, each used once
+  const getSec = (k) => sections.find((s) => s.key === k);
+  const kwPool = [
+    ...(c.keywords.secondary || []).map((k) => ({ phrase: k.phrase, variant: k.variant })),
+    ...((c.dupes && c.dupes.queries) || []).map((q) => ({ phrase: q.query, variant: hasAllKw(kw, q.query) })),
+  ].filter((k) => k.phrase && !BAD_PHRASE_RE.test(k.phrase) && onTopic(kw, k.phrase) && !/^(what|how|why|which|who|is|are|does|can|will)\b/i.test(k.phrase));
+  const seenK = new Set([normQ(kw)]);
+  const titleWords = [];
   const leftover = [];
-  const kwList = [
-    ...(c.keywords.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase)).slice(0, 30),
-    ...((c.dupes && c.dupes.queries) || []).slice(0, 12).map((q) => ({ phrase: q.query, variant: hasAllKw(c.keyword, q.query) })),
-  ];
-  const seenK = new Set([normQ(c.keyword)]);
-  kwList.forEach((k) => {
+  kwPool.forEach((k) => {
     const key = normQ(k.phrase);
-    if (!key || seenK.has(key)) return;
+    if (seenK.has(key)) return;
     seenK.add(key);
-    if (/^(what|how|why|which|who|is|are|does|can|will)\b/.test(key)) {
-      const f = get("faqs");
-      if (f && f.h3.length < 10 && !f.h3.some((q) => normQ(q) === key)) f.h3.push(k.phrase.charAt(0).toUpperCase() + k.phrase.slice(1) + "?");
-      return;
-    }
-    const g = groupOfLabel(labelOf(k.phrase, kwTok));
-    const target = g && g.key !== "faqs" ? get(g.key) : null;
-    if (target && target.words.length < 6) target.words.push(k.phrase);
-    else if (k.variant && introWords.length < 5) introWords.push(k.phrase);
-    else leftover.push(k.phrase);
+    const target = getSec(HOUSE_OF[labelOf(k.phrase, kwTok)]);
+    if (target && !["faqs", "methodology", "segmentation"].includes(target.key) && target.words.length < 2) target.words.push(k.phrase);
+    else if (k.variant && titleWords.length < 2) titleWords.push(k.phrase);
+    else if (leftover.length < 5) leftover.push(k.phrase);
   });
-  (c.keywords.google || []).filter((x) => x.source === "Google related search").slice(0, 8).forEach((x) => {
-    const g = groupOfLabel(labelOf(x.phrase, kwTok));
-    const target = (g && g.key !== "faqs" && get(g.key)) || get("overview");
-    if (target) target.also.push(x.phrase);
-    else leftover.push(x.phrase);
+  (c.keywords.google || []).filter((x) => x.source === "Google related search" && onTopic(kw, x.phrase)).forEach((x) => {
+    const target = getSec(HOUSE_OF[labelOf(x.phrase, kwTok)]) || ov;
+    if (target.also.length < 2 && !target.words.includes(x.phrase)) target.also.push(x.phrase);
   });
 
-  const viewIdx = sections.findIndex((x) => x.key === "view");
-  if (extraSecs.length) sections.splice(viewIdx >= 0 ? viewIdx : sections.length, 0, ...extraSecs);
-
-  const goodTitles = ai ? (ai.titles || []).filter((t) => t.len >= 48 && t.len <= 62) : [];
-  const goodMetas = ai ? (ai.metas || []).filter((m) => m.len >= 130 && m.len <= 165) : [];
-  const intro = [
-    "Byline: analyst name (linked to their profile) · “Reviewed by” · last-updated date",
-    isReport
-      ? "Opening summary, 3–4 sentences: our base-year size, forecast value, CAGR and period, the largest region and the main reason for growth"
-      : "Answer the search question in the first two sentences",
-    `Use the main keyword “${c.keyword}” in the first sentence`,
-  ];
-  if (introWords.length) intro.push(`Work these into the title, H1 or opening: ${introWords.join(", ")}`);
-  const faqSec = get("faqs");
+  // Title / meta / URL / descriptor — house style
+  const len = (t) => String(t).replace(/\[X\]|\[Y\]/g, "285.11").replace(/\[Z\]/g, "5.67").length;
+  let houseTitle = `${Kfull} Size, Share & Growth | Report 20XX`;
+  if (houseTitle.length > 60) houseTitle = `${Kshort} Size, Share & Growth | Report 20XX`;
+  const titles = [{ text: houseTitle, len: houseTitle.length, house: true }];
+  ((ai && ai.titles) || []).filter((t) => t.len >= 48 && t.len <= 62).slice(0, 1).forEach((t) => titles.push(t));
+  if (titles.length < 2) { const t2 = `${Kshort} Size, Share & Forecast, 20XX–20XX`; titles.push({ text: t2, len: t2.length }); }
+  const metaText = `The ${kwG} was valued at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a [Z]% CAGR.`;
+  const descriptor = `${Kshort} Size, Share, Growth & Industry Analysis, ${dimNames.map((d) => `By ${d} (…)`).join(", ")}, and Regional Analysis, 20XX - 20XX`;
 
   return {
-    titles: goodTitles.length ? goodTitles : c.titleTemplates || [],
-    meta: goodMetas[0] || c.metaTemplate,
-    slug: "/" + slug(c.keyword),
-    h1: (ai && ai.h1) || K,
-    intro,
-    sections,
-    tableCount: tableNo,
-    faqCount: faqSec ? faqSec.h3.length : faqs.length,
-    leftover: [...new Set(leftover)].slice(0, 12),
+    titles, meta: { text: metaText, len: len(metaText) }, url: `/report/${slug(kwG)}-[id]`,
+    h1: Kfull, descriptor, sections, titleWords, leftover,
+    tableCount: tableNo, faqCount: fq.h3.length,
+    coreCount: sections.filter((s) => !s.optional).length, optCount: sections.filter((s) => s.optional).length,
     linkTarget: Math.min(8, Math.max(4, c.targets.internalLinks || 4)),
     links: relevantLinks(c),
   };
@@ -936,38 +991,53 @@ function buildSkeleton(c, ai) {
 
 function opt(o, lo, hi) {
   if (!o) return "";
-  return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span></div>`;
+  return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span>${o.house ? `<span class="ev"> · our house format</span>` : ""}</div>`;
 }
 
 function skSectionHtml(s) {
-  return `<li class="skh2"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
+  return `<li class="skh2${s.optional ? " optional" : ""}"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
     <div class="skbody">
       ${s.write ? `<div class="skw">${esc(s.write)}</div>` : ""}
-      ${s.h3.length ? `<ul class="skh3">${s.h3.map((h) => `<li><span class="lvl h3">H3</span>${esc(h)}</li>`).join("")}</ul>` : ""}
+      ${s.h3.length ? `<div class="h3hint">${s.key === "faqs" ? "FAQ questions" : "Suggested H3s — reword to match what your research shows"}</div>
+        <ul class="skh3">${s.h3.map((h) => `<li><span class="lvl h3">${s.key === "faqs" ? "Q" : "H3"}</span>${esc(h.text)}</li>`).join("")}</ul>` : ""}
       ${s.cover.length ? `<ul class="skc">${s.cover.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${s.tables.map((t) => `<div class="skx"><span class="lab">Table</span>${esc(t)}</div>`).join("")}
       ${s.extras.length ? `<div class="skx edge"><span class="lab">Our edge</span>${esc(s.extras.join(" · "))}</div>` : ""}
-      ${s.words.length ? `<div class="skx"><span class="lab">Use words</span>${pills(s.words)}</div>` : ""}
+      ${s.words.length ? `<div class="skx"><span class="lab">Keywords (once each)</span>${pills(s.words)}</div>` : ""}
       ${s.also.length ? `<div class="skx"><span class="lab">Also cover</span>${pills(s.also)}</div>` : ""}
     </div></li>`;
 }
 
+const H3_GUIDE = `<div class="h3guide"><b>How to write a good H3</b>
+  <ul class="plain">
+    <li>Ask the question a buyer would search — “Which…?”, “How is…?”.</li>
+    <li>Name the specific driver, segment or region — never just “Drivers” or “Segment Analysis”.</li>
+    <li>Answer it in the first sentence underneath, with a number (share %, value or CAGR).</li>
+    <li>One idea per H3, under ~15 words. Write AI, M&amp;A, U.S. and R&amp;D correctly.</li>
+  </ul></div>`;
+
 function skeletonHtml(sk) {
   return `<div class="skmeta">
       <div class="skrow"><span class="lab">Title tag</span><div>${sk.titles.slice(0, 2).map((t) => opt(t, 50, 60)).join("")}</div></div>
-      <div class="skrow"><span class="lab">Meta</span><div>${opt(sk.meta, 140, 155)}</div></div>
-      <div class="skrow"><span class="lab">URL</span><div class="mono" style="padding-top:4px">${esc(sk.slug)}</div></div>
+      <div class="skrow"><span class="lab">Meta</span><div>${opt(sk.meta, 140, 160)}</div></div>
+      <div class="skrow"><span class="lab">URL</span><div class="mono" style="padding-top:4px">${esc(sk.url)}</div></div>
     </div>
     <div class="skh1"><span class="lvl">H1</span>${esc(sk.h1)}</div>
-    <ul class="skitems">${sk.intro.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+    <div class="skdesc"><span class="lvl">H2</span>${esc(sk.descriptor)}
+      <div class="muted small">List the sub-segments in each bracket. Every “By …” here needs an H3 under Segmental Analysis.</div></div>
+    <div class="skbyline">Pages · Base Year: 20XX · Release: [Month YYYY] · Author: [Name — linked] · Reviewed By: [Name — linked] · Last Updated: [Month YYYY]</div>
+    ${sk.titleWords.length ? `<div class="skx"><span class="lab">Title / meta / overview</span>${pills(sk.titleWords)}</div>` : ""}
+    ${H3_GUIDE}
     <ol class="skh2s">${sk.sections.map(skSectionHtml).join("")}</ol>
-    ${sk.leftover.length ? `<div class="skx"><span class="lab">Also use</span>${pills(sk.leftover)}</div>` : ""}
+    ${sk.leftover.length ? `<div class="skx"><span class="lab">Optional phrases — only if they fit</span>${pills(sk.leftover)}</div>` : ""}
     <div class="callout">Add ${sk.linkTarget} links to related Kings Research reports <b>inside sentences</b> in the sections above (not as a list).
-      ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a></li>`).join("")}</ul>` : ""}</div>`;
+      ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a></li>`).join("")}</ul>` : ""}</div>
+    <div class="muted small">Then: Author and Reviewed By bios at the end of the page, as on our other reports.</div>`;
 }
 
 const DONTS = [
   "Copy any competitor's numbers, text or tables — use our own estimates.",
+  "Repeat keywords — use each one once where it reads naturally. Stuffing is spam under Google's rules.",
   "Pad to hit the word count — cover each section properly instead.",
   "Reuse template paragraphs from other reports — write for this market.",
   "Make up numbers — leave a [placeholder] and ask the data team.",
@@ -999,10 +1069,10 @@ function analystHtml(c) {
   const hi = Math.max(lo + 500, t.coverageWords[0]);
   return docHead(c, "Writer's skeleton") +
     `<div class="job"><div class="jl">Your job</div><p>${esc((ai && ai.howToWin) || defaultJob(c))}</p></div>` +
-    `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.sections.length, "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div>` +
+    `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div>` +
     dupesNote(c) +
     `<h2 class="sec">Writer's skeleton</h2>` +
-    `<p class="muted">Follow it top to bottom and tick each H2 off. You can reword headings — keep the topic and the keywords.</p>` +
+    `<p class="muted">Our report format, top to bottom. Tick each H2 off. H3s are suggestions — keep the question style, change the wording to fit your findings.</p>` +
     (S.aiPending ? pending() : "") +
     skeletonHtml(sk) +
     `<h2 class="sec">Don't</h2><ul class="donts">${DONTS.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` +
@@ -1025,8 +1095,9 @@ function top10Sec(c) {
   const rows = c.serp.organic.map((r) => {
     const cls = r.type === "ours" ? "ours" : r.type === "tracked" ? "trk" : "";
     const tag = r.type === "tracked" ? '<span class="tag trk">tracked</span>' : r.type === "ours" ? '<span class="tag you">you</span>' : "";
+    const viaNote = r.via === "pasted" ? "pasted" : r.via === "ai-reader" ? "approx · via ChatGPT" : "";
     const wordsCell = r.words != null
-      ? fmt(r.words) + (r.via === "pasted" ? `<div class="muted small">pasted</div>` : "")
+      ? fmt(r.words) + (viaNote ? `<div class="muted small">${viaNote}</div>` : "")
       : `<span class="muted">${esc(r.note || "—")}</span>${r.note === "blocked" || r.note === "not read" ? pasteBtn(r.link) : ""}`;
     return `<tr class="${cls}"><td class="mono">${esc(r.position)}</td>
       <td><b>${esc(r.name)}</b>${tag}<div class="muted small">${esc(TYPE[r.type] || r.type)}</div></td>
@@ -1080,6 +1151,7 @@ function dupesSec(c) {
 function nameCell(x) {
   const n = x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name);
   const via = x.via === "pasted" ? `<div class="muted small">from the page you pasted</div>`
+    : x.via === "ai-reader" ? `<div class="muted small">read via ChatGPT web search — check figures</div>`
     : x.via === "archive" ? `<div class="muted small">read from archive copy ${esc(x.archivedAt || "")}</div>`
     : x.via ? `<div class="muted small">read via fallback</div>` : "";
   return n + (x.tracked ? '<span class="tag trk">tracked</span>' : "") + via;
@@ -1090,8 +1162,9 @@ const useTxt = (k) => (k ? ["Title", "H1", "Meta"].map((l, i) => `${[k.title, k.
 function scoreSec(c) {
   const rows = c.competitors.map((x) => {
     if (x.fetched) {
-      return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${fmt(x.stats.words)}</td>
-        <td class="mono">${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
+      const ap = x.stats.approx ? "~" : "";
+      return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${ap}${fmt(x.stats.words)}</td>
+        <td class="mono">${ap}${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
         <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}</td>
         <td class="mono">${x.stats.cagr != null ? esc(x.stats.cagr) + "%" : "—"}</td>
         <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}</td></tr>`;
@@ -1104,13 +1177,15 @@ function scoreSec(c) {
   if (F && F.cagrMin != null) {
     h += `<div class="callout warn">Competitor CAGRs range from <b>${esc(F.cagrMin)}%</b> to <b>${esc(F.cagrMax)}%</b>${F.periods[0] ? `; most use <b>${esc(F.periods[0].label)}</b>` : ""}. Publish our own estimate and explain in one line why it differs.</div>`;
   }
+  if (c.competitors.some((x) => x.stats && x.stats.approx)) h += `<p class="muted small">~ = approximate (page read via ChatGPT web search).</p>`;
   return h;
 }
 
 function kwTheySec(c) {
-  const rows = c.competitors.filter((x) => x.fetched).map((x) => `<tr><td>${nameCell(x)}</td><td>${esc(x.mainKeyword || "—")}</td>
+  const rows = c.competitors.filter((x) => x.fetched || x.kwUse).map((x) => `<tr><td>${nameCell(x)}${x.kind === "category" ? `<div><span class="tag cat" style="margin-left:0">category page</span><span class="muted small"> keywords only</span></div>` : ""}</td>
+    <td>${esc(x.mainKeyword || "—")}</td>
     <td class="mono">${useTxt(x.kwUse)}</td>
-    <td>${x.secondary.length ? pills(x.secondary.filter((s) => !BAD_PHRASE_RE.test(s))) : '<span class="muted">—</span>'}</td></tr>`);
+    <td>${(x.secondary || []).length ? pills(x.secondary.filter((s) => !BAD_PHRASE_RE.test(s))) : '<span class="muted">—</span>'}</td></tr>`);
   return rows.length ? table(["Competitor", "Main keyword (from their title)", "Uses the keyword in", "Secondary keywords they use"], rows) : "";
 }
 
@@ -1137,7 +1212,9 @@ function srcCell(k) {
 
 function kwSec(c) {
   const K = c.keywords;
-  const sk = (K.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase));
+  const all = (K.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase));
+  const sk = all.filter((k) => onTopic(c.keyword, k.phrase));
+  const hiddenHere = all.length - sk.length + (K.hidden || 0);
   let h = `<div class="kwbox"><div class="kwl">Primary keyword</div><div class="kwp">${esc(K.primary.phrase)}</div>
     <div class="muted">Use in: ${esc(K.primary.where)}. Competitors put it in their title ${K.primary.inTitlePct}%, H1 ${K.primary.inH1Pct}% and meta ${K.primary.inMetaPct}% of the time.</div></div>`;
   if (sk.length) {
@@ -1145,15 +1222,17 @@ function kwSec(c) {
       table(["Keyword", "Source", "Where to use it"], sk.map((k) =>
         `<tr><td><b>${esc(k.phrase)}</b></td><td class="mono">${srcCell(k)}</td><td>${esc(k.where)}</td></tr>`));
   }
-  const gq = (c.dupes && c.dupes.queries) || [];
+  if (hiddenHere > 0) h += `<p class="muted small">${hiddenHere} off-topic phrase(s) hidden — other countries or other markets.</p>`;
+  const gqAll = (c.dupes && c.dupes.queries) || [];
+  const gq = gqAll.filter((q) => onTopic(c.keyword, q.query));
   if (gq.length) {
     h += `<h3>Searches your site already shows up for (${gq.length})</h3><p class="muted">From Search Console, last 90 days — real searches. Use the best ones as headings or FAQ questions.</p>` +
       table(["Search", "Impressions", "Avg position"], gq.map((q) => `<tr><td>${esc(q.query)}</td><td class="mono">${fmt(q.impressions)}</td><td class="mono">${esc(q.position)}</td></tr>`));
   }
-  const rel = K.google.filter((g) => g.source === "Google related search");
+  const rel = K.google.filter((g) => g.source === "Google related search" && onTopic(c.keyword, g.phrase));
   if (rel.length) h += `<h3>Google related searches</h3><div>${pills(rel.map((g) => g.phrase))}</div>`;
   const paa = K.google.filter((g) => g.source === "People Also Ask");
-  if (paa.length) h += `<h3>People Also Ask — use as FAQ questions</h3><ul class="plain">${paa.map((g) => `<li>${esc(g.phrase)}</li>`).join("")}</ul>`;
+  if (paa.length) h += `<h3>People Also Ask</h3><ul class="plain">${paa.map((g) => `<li>${esc(g.phrase)}${goodQuestion(c.keyword, g.phrase) ? "" : ' <span class="muted small">(not used — off-topic or news)</span>'}</li>`).join("")}</ul>`;
   return h;
 }
 
@@ -1169,7 +1248,7 @@ function draftHtml(c) {
   return `<div class="doc-kicker">Check my draft</div><h1 class="doc-title">${esc(niceTitle(c.keyword))}</h1>
     <p class="muted">Paste the full draft from Google Docs or Word — headings and tables are kept. Add the planned title tag and meta description, then press Check.</p>
     <label class="pl" for="dTitle">Title tag</label>
-    <input id="dTitle" class="pin" type="text" value="${esc(d.title)}" placeholder="${esc(niceTitle(c.keyword))} Size, Share & Forecast [20XX–20XX]">
+    <input id="dTitle" class="pin" type="text" value="${esc(d.title)}" placeholder="${esc(niceTitle(c.keyword))} Size, Share & Growth | Report 20XX">
     <div class="cnt" id="dTitleCnt"></div>
     <label class="pl" for="dMeta">Meta description</label>
     <textarea id="dMeta" class="pin" rows="2">${esc(d.meta)}</textarea>
@@ -1241,7 +1320,7 @@ const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:
 h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
 table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
 .ptag,.tag,.lvl{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
-.muted,.doc-meta,.doc-kicker,.ev,.lab{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
 .skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
 
 function docHtml() {
