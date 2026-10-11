@@ -18,8 +18,6 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
 body{background-image:linear-gradient(transparent 0 96%,rgba(77,208,167,.035) 96% 100%),radial-gradient(900px 500px at 80% -10%,rgba(77,208,167,.06),transparent 70%);background-size:100% 26px,100% 100%;line-height:1.5}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px}
-
-/* ---- app shell ---- */
 .ribbon{display:flex;align-items:center;gap:8px;padding:14px 0 0;flex-wrap:wrap}
 .ribbon .brand{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--signal);margin-right:auto;text-decoration:none}
 .ribbon a.tab{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:9px 16px;border-radius:9px;transition:all .15s}
@@ -70,8 +68,6 @@ footer.app{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);fon
 .step.done{color:var(--muted)}
 .step.done .sn{background:var(--signal);color:#04130d;border-color:var(--signal)}
 .step.err{color:var(--crit);border-color:rgba(224,106,90,.45)}
-
-/* ---- saved briefs panel ---- */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
 .panel .ph2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:14px;gap:10px;flex-wrap:wrap}
 .panel a{color:var(--signal)}
@@ -80,8 +76,6 @@ table.st{width:100%;border-collapse:collapse;font-size:12.5px}
 table.st th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.st td{padding:7px 8px;border-bottom:1px solid #18222d;vertical-align:top}
 .up{color:var(--signal)}.down{color:var(--crit)}.nowrap{white-space:nowrap}.dimtxt{color:var(--dim)}
-
-/* ---- save bar, tabs, toolbar ---- */
 .savebar{font-family:var(--mono);font-size:12px;color:var(--muted);margin:6px 0 10px;min-height:18px}
 .savebar a{color:var(--signal)}
 .savebar .bad{color:var(--crit)}
@@ -92,8 +86,6 @@ table.st td{padding:7px 8px;border-bottom:1px solid #18222d;vertical-align:top}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;padding-bottom:6px}
 .tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:7px 11px;border-radius:8px;cursor:pointer}
 .tbtn:hover{border-color:var(--signal)}
-
-/* ---- the brief "paper" ---- */
 .paper{background:var(--paper);color:var(--p-ink);border-radius:0 14px 14px 14px;padding:40px 50px 46px;margin:0 0 40px;box-shadow:0 24px 60px rgba(0,0,0,.4);font-size:15px;line-height:1.6}
 @media(max-width:720px){.paper{padding:22px 16px}}
 .paper a{color:var(--p-accent)}
@@ -132,6 +124,7 @@ td.ctr{text-align:center}
 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:1px 6px;border-radius:4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
 .tag.trk{background:#fde3df;color:#a33a2e}
 .tag.you{background:#dff1ea;color:#0f7a5c}
+.tag.src{background:#e3eef8;color:#2c5f8a}
 .pill{display:inline-block;border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:1px 9px;font-size:12.5px;margin:2px 4px 2px 0}
 .kwbox{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 15px;margin:6px 0 10px}
 .kwl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted)}
@@ -141,8 +134,6 @@ td.ctr{text-align:center}
 .cc.ok{background:#dff1ea;color:#0f7a5c}
 .cc.bad{background:#fde3df;color:#a33a2e}
 .ev{font-family:var(--mono);font-size:10.5px;color:var(--p-muted)}
-
-/* ---- analyst brief + writer's skeleton ---- */
 .job{border:2px solid var(--p-accent);border-radius:12px;padding:14px 18px;margin:16px 0 12px;background:#f3faf7}
 .job .jl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--p-accent);margin-bottom:4px}
 .job p{margin:0;font-size:15.5px}
@@ -171,8 +162,6 @@ ul.skc li{margin:2px 0}
 ul.donts{list-style:none;padding:0;margin:6px 0}
 ul.donts li{padding:5px 0 5px 24px;position:relative}
 ul.donts li::before{content:"✗";position:absolute;left:4px;color:#b23b2e;font-weight:700}
-
-/* ---- draft checker ---- */
 .pl{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted);margin:14px 0 5px}
 .pin{width:100%;border:1px solid var(--p-line);border-radius:8px;padding:10px 12px;font:inherit;font-size:14px;background:#fff;color:var(--p-ink)}
 .cnt{font-family:var(--mono);font-size:11px;color:var(--p-muted);margin-top:3px}
@@ -192,7 +181,6 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
 .r-warn .ri{background:#fbefd9;color:#93621a}
 .r-fail .ri{background:#fde3df;color:#a33a2e}
 .rf{font-size:13px;color:var(--p-muted);margin-top:2px}
-
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--signal);color:#04130d;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;opacity:0;transition:all .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
@@ -303,6 +291,7 @@ const TIER = { must: "Must have", should: "Good to have" };
 const tierTag = (t) => `<span class="ptag ${esc(t)}">${esc(TIER[t] || t)}</span>`;
 const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com"];
 const GENERIC = new Set(["market", "markets", "report", "reports", "size", "share", "growth", "industry", "analysis", "global", "forecast", "trends", "outlook", "and", "the", "for"]);
+const stem = (w) => (w.length > 4 && w.endsWith("ies") ? w.slice(0, -3) + "y" : w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w);
 const kwTokens = (k) => String(k || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/[\s-]+/).filter((t) => t.length > 2 && !GENERIC.has(t));
 const countryName = (gl) => { const o = [...$("gl").options].find((x) => x.value === gl); return o ? o.textContent : String(gl || "").toUpperCase(); };
 const sameDomain = (d, base) => !!d && !!base && (d === base || d.endsWith("." + base));
@@ -576,46 +565,48 @@ function placeIn(keyword) {
   }
   return null;
 }
-// Competitor FAQ about a different market ("Specialty Pharmaceuticals Market") → drop it.
 function sameMarketQ(keyword, q) {
   const m = String(q || "").match(/((?:[A-Z][\w&'.-]*\s+){1,6})Markets?\b/);
   if (!m) return true;
-  const kw = new Set(String(keyword || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/));
+  const kw = new Set(String(keyword || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).map(stem));
   const words = m[1].toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
-    .filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w));
-  return words.every((w) => kw.has(w) || kw.has(w.replace(/s$/, "")) || kw.has(w + "s"));
+    .filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w)).map(stem);
+  return words.every((w) => kw.has(w));
 }
 const normQ = (q) => String(q || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+const hasAllKw = (keyword, phrase) => {
+  const need = kwTokens(keyword).map(stem);
+  const have = new Set(normQ(phrase).split(" ").map(stem));
+  return need.length > 0 && need.every((t) => have.has(t));
+};
 
 /* ================= WRITER'S SKELETON ================= */
-// Same section tests the server uses (first match wins — specific before generic).
 const TOPIC_TESTS = [
   ["FAQs", /\bfaqs?\b|frequently asked/],
   ["Report scope & methodology", /\bscope\b|methodolog|research approach|assumption|data source|report coverage|report attribute|report highlights/],
   ["Macro impact (tariffs, geopolitics, AI…)", /impact|tariff|covid|geopolit|inflation|recession|trade war/],
-  ["Competitive landscape & key players", /competit|key (?:market )?players|\bcompan(?:y|ies)\b|vendor|manufacturer|market share|leading players|market leaders/],
+  ["Competitive landscape & key players", /competit|key (?:market )?players|\bcompan(?:y|ies)\b|vendor|manufacturer|market share|\bshare\b|leading players|market leaders/],
   ["Recent developments", /recent development|\bnews\b|merger|acquisition|partnership|\blaunch|expansion|strategic|collaboration/],
   ["Regional & country analysis", /region|geograph|north america|europe|asia|latin america|middle east|africa|\bcountr|\bstates?\b|\bu\.s\.|\bunited states|china|india|japan|germany/],
   ["Segmentation by application", /application|use case/],
   ["Segmentation by end use / industry", /end[\s-]?use|end[\s-]?user|vertical|by industry|\bindustries\b|\bsector/],
   ["Segmentation by type / product", /\btypes?\b|\bproducts?\b|\bcategor|\bgrade/],
   ["Other segmentation (component, technology, channel…)", /component|technolog|deployment|distribution|channel|material|\bforms?\b|\bsources?\b|offering|solution|platform|\bservices?\b/],
-  ["Segmentation overview", /segment/],
+  ["Segmentation overview", /segment|\bby\b/],
   ["Market dynamics & growth drivers", /dynamic|driver|driving|growth factor|propel|\bfuel/],
   ["Restraints & challenges", /restrain|challenge|barrier|hinder|limitation|pitfall/],
   ["Opportunities", /opportunit/],
-  ["Market trends & innovation", /trend|innovation|emerging|advancement/],
+  ["Market trends & innovation", /trend|innovation|emerging|advancement|future/],
   ["Pricing analysis", /\bpric|cost analysis/],
   ["Value chain & industry analysis", /value chain|supply chain|ecosystem|porter|pest[le]{2}|\bswot/],
   ["Regulatory landscape", /regulat|\bpolic(?:y|ies)\b|\bstandards?\b|compliance|reimbursement/],
   ["Investment & funding", /invest|funding|venture/],
-  ["Market size & forecast", /\bsize\b|forecast|valuation|revenue|volume|projection|\bcagr\b|growth rate/],
+  ["Market size & forecast", /\bsize\b|forecast|valuation|revenue|volume|projection|\bcagr\b|growth rate|\bworth\b|\bvalue\b|\bgrowth\b/],
   ["Market overview & definition", /overview|introduction|definition|\bwhat is\b|summary|snapshot|at a glance|highlights|key (?:insights|findings|takeaways)/],
   ["Analyst view & conclusion", /analyst|conclusion|recommendation|verdict|insight|perspective/],
 ];
 const SEG_LABELS = ["Segmentation overview", "Segmentation by type / product", "Segmentation by application",
   "Segmentation by end use / industry", "Other segmentation (component, technology, channel…)"];
-// H2 groups in page order. core = always included on report pages; blogCore = always on blogs.
 const GROUPS = [
   { key: "overview", labels: ["Market overview & definition"], core: true, blogCore: true },
   { key: "size", labels: ["Market size & forecast"], core: true },
@@ -638,7 +629,7 @@ const groupOfLabel = (label) => GROUPS.find((g) => g.labels.includes(label));
 
 function stripKw(text, kwTok) {
   let t = " " + String(text || "").toLowerCase().replace(/[^a-z0-9.&?\s-]/g, " ") + " ";
-  for (const k of kwTok) t = t.replace(new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`, "g"), " ");
+  for (const k of kwTok) t = t.replace(new RegExp(`\\b${stem(k).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\w*\\b`, "g"), " ");
   return t.replace(/\s+/g, " ").trim();
 }
 function labelOf(text, kwTok) {
@@ -680,7 +671,6 @@ function buildSkeleton(c, ai) {
   c.topics.topics.forEach((t) => { topicMap[t.label] = t; });
   const companies = (c.companies || []).filter((x) => !JUNK_COMPANY_RE.test(x.name));
 
-  // 1. Pick the H2s: core sections + anything most competitors cover.
   const sections = [];
   for (const g of GROUPS) {
     const best = g.labels.map((l) => topicMap[l]).filter(Boolean).sort((a, b) => b.count - a.count)[0];
@@ -699,7 +689,6 @@ function buildSkeleton(c, ai) {
   const addTable = (s, text) => { if (s) s.tables.push(`Table ${++tableNo}: ${text}`); };
   const competitorsHave = (label) => (topicMap[label] && N ? ` — ${topicMap[label].count} of ${N} competitors` : "");
 
-  // 2. Fill each H2.
   let s;
   if ((s = get("overview"))) {
     s.write = "Explain the market in plain words — what it is, what's included, and who buys it and why.";
@@ -766,7 +755,7 @@ function buildSkeleton(c, ai) {
     s.cover = ["Base year, forecast period and units", "Segments and regions covered", "Sources: primary interviews, secondary research, estimation model"];
   }
 
-  // 3. FAQs: People Also Ask first, then AI, then competitor questions about the SAME market.
+  // FAQs: People Also Ask first, then AI, then competitor questions about the SAME market.
   const paa = (c.serp.peopleAlsoAsk || []).map((p) => p.question);
   const compQ = (c.questions || []).filter((q) => q.source !== "People Also Ask").map((q) => q.question).filter((q) => sameMarketQ(c.keyword, q));
   const seenQ = new Set();
@@ -778,7 +767,7 @@ function buildSkeleton(c, ai) {
   faqs = faqs.slice(0, Math.max(6, c.targets.faqs || 5));
   if ((s = get("faqs"))) { s.write = "Use each question as an H3 and answer in 2–3 sentences with our numbers."; s.h3 = faqs; }
 
-  // 4. AI: specific "what to write" lines and "our edge" ideas, placed in the H2 they belong to.
+  // AI: specific "what to write" lines and "our edge" ideas, placed in the H2 they belong to.
   const extraSecs = [];
   ((ai && ai.outline) || []).forEach((o) => {
     const g = groupOfLabel(labelOf(o.h2, kwTok));
@@ -798,14 +787,23 @@ function buildSkeleton(c, ai) {
   });
   if (view && !view.extras.length) view.extras = ["Findings or quotes from our primary interviews", "A best-case / worst-case forecast"];
 
-  // 5. Secondary keywords + related searches → the H2 they fit.
+  // Keywords (competitors + autocomplete + your Search Console searches) → the H2 they fit.
   const introWords = [];
   const leftover = [];
-  (c.keywords.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase)).slice(0, 12).forEach((k) => {
+  const kwList = [
+    ...(c.keywords.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase)).slice(0, 30),
+    ...((c.dupes && c.dupes.queries) || []).slice(0, 12).map((q) => ({ phrase: q.query, variant: hasAllKw(c.keyword, q.query) })),
+  ];
+  const seenK = new Set([normQ(c.keyword)]);
+  kwList.forEach((k) => {
+    const key = normQ(k.phrase);
+    if (!key || seenK.has(key)) return;
+    seenK.add(key);
+    if (/^(what|how|why|which|who|is|are|does|can|will)\b/.test(key)) { const f = get("faqs"); if (f && f.h3.length < 10 && !f.h3.some((q) => normQ(q) === key)) f.h3.push(k.phrase.charAt(0).toUpperCase() + k.phrase.slice(1) + "?"); return; }
     const g = groupOfLabel(labelOf(k.phrase, kwTok));
     const target = g && g.key !== "faqs" ? get(g.key) : null;
-    if (target) target.words.push(k.phrase);
-    else if (k.variant) introWords.push(k.phrase);
+    if (target && target.words.length < 6) target.words.push(k.phrase);
+    else if (k.variant && introWords.length < 5) introWords.push(k.phrase);
     else leftover.push(k.phrase);
   });
   (c.keywords.google || []).filter((x) => x.source === "Google related search").slice(0, 8).forEach((x) => {
@@ -815,7 +813,6 @@ function buildSkeleton(c, ai) {
     else leftover.push(x.phrase);
   });
 
-  // 6. Put AI-only H2s just before the Analyst View, then title / meta / H1 / intro.
   const viewIdx = sections.findIndex((x) => x.key === "view");
   if (extraSecs.length) sections.splice(viewIdx >= 0 ? viewIdx : sections.length, 0, ...extraSecs);
 
@@ -828,7 +825,8 @@ function buildSkeleton(c, ai) {
       : "Answer the search question in the first two sentences",
     `Use the main keyword “${c.keyword}” in the first sentence`,
   ];
-  if (introWords.length) intro.push(`Work these into the title, H1 or opening: ${introWords.slice(0, 4).join(", ")}`);
+  if (introWords.length) intro.push(`Work these into the title, H1 or opening: ${introWords.join(", ")}`);
+  const faqSec = get("faqs");
 
   return {
     titles: goodTitles.length ? goodTitles : c.titleTemplates || [],
@@ -838,8 +836,8 @@ function buildSkeleton(c, ai) {
     intro,
     sections,
     tableCount: tableNo,
-    faqCount: faqs.length,
-    leftover: [...new Set(leftover)].slice(0, 8),
+    faqCount: faqSec ? faqSec.h3.length : faqs.length,
+    leftover: [...new Set(leftover)].slice(0, 12),
     linkTarget: Math.min(8, Math.max(4, c.targets.internalLinks || 4)),
     links: relevantLinks(c),
   };
@@ -896,7 +894,8 @@ function dupesNote(c) {
   if (!d || !d.checked) return "";
   if (d.verdict === "clear") return `<div class="callout">✓ ${esc(d.message)}</div>`;
   if (d.verdict === "ok") return "";
-  const list = d.pages.slice(0, 4).map((p) => `<li><b>${esc(p.role)}:</b> <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a> — ${esc(p.action)}</li>`).join("");
+  const list = d.pages.slice(0, d.verdict === "related" ? 3 : 4).map((p) =>
+    `<li><b>${esc(p.role)}:</b> <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a> — ${esc(p.action)}</li>`).join("");
   return `<div class="callout warn"><b>Before you write:</b> ${esc(d.message)}<ul class="plain">${list}</ul></div>`;
 }
 
@@ -960,17 +959,24 @@ function top10Sec(c) {
   return h;
 }
 
+function dupeRank(p) {
+  if (p.googleRank) return `#${p.googleRank}<div class="muted small">Google today</div>`;
+  if (p.kwRank) return `~${Math.round(p.kwRank)}<div class="muted small">avg · Search Console</div>`;
+  return `<span class="muted">Not ranking</span>`;
+}
+
 function dupesSec(c) {
   const d = c.dupes;
   if (!d) return `<p class="muted">Not available for this brief.</p>`;
   if (!d.checked) return `<p class="muted">${esc(d.reason || "Skipped.")}</p>`;
   let h = `<div class="callout ${d.verdict === "clear" || d.verdict === "ok" ? "" : "warn"}">${esc(d.message)}</div>`;
   if (d.pages.length) {
-    h += table(["Role", "Page", "Type", "Google rank", "Search Console (90 days)", "What to do"], d.pages.map((p) =>
+    h += table(["Role", "Page", "Type", "Rank for this keyword", "Search Console (90 days)", "What to do"], d.pages.map((p) =>
       `<tr><td><b>${esc(p.role)}</b></td><td><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a></td>
-        <td>${esc(p.type)}</td><td class="mono">${p.googleRank ? "#" + p.googleRank : "—"}</td>
+        <td>${esc(p.type)}</td><td class="mono">${dupeRank(p)}</td>
         <td class="mono">${p.gsc ? `${fmt(p.gsc.impressions)} impr · pos ${p.gsc.position ?? "—"}${p.gsc.topQuery ? `<div class="muted small">“${esc(p.gsc.topQuery)}”</div>` : ""}` : "—"}</td>
         <td>${esc(p.action)}</td></tr>`));
+    h += `<p class="muted small">Rank for this keyword: "#" = position in today's Google top 10; "~" = average position over 90 days for searches containing the keyword (Search Console). "Search Console" column = all related searches.</p>`;
   }
   const s = d.sources || {};
   h += `<p class="muted small">Checked with Google${s.searchConsole === true ? " and Search Console" : ""}.${typeof s.searchConsole === "string" && s.searchConsole !== "not configured" ? " Search Console: " + esc(s.searchConsole) : ""}</p>`;
@@ -979,7 +985,8 @@ function dupesSec(c) {
 
 function nameCell(x) {
   const n = x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name);
-  return n + (x.tracked ? '<span class="tag trk">tracked</span>' : "");
+  const via = x.via === "archive" ? `<div class="muted small">read from archive copy ${esc(x.archivedAt || "")}</div>` : x.via ? `<div class="muted small">read via fallback</div>` : "";
+  return n + (x.tracked ? '<span class="tag trk">tracked</span>' : "") + via;
 }
 const rankTxt = (x) => (x.position ? `#${x.position}` : x.onPage1 ? "—" : "Not in top 20");
 const useTxt = (k) => (k ? ["Title", "H1", "Meta"].map((l, i) => `${[k.title, k.h1, k.meta][i] ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'} ${l}`).join(" &nbsp;") : "—");
@@ -1021,22 +1028,37 @@ function gridSec(c) {
   return table(head, body);
 }
 
+function srcCell(k) {
+  if (!k.source || k.source === "Competitors") {
+    return `${k.count}/${k.of} competitor sites<div class="muted small">${esc((k.names || []).slice(0, 4).join(", "))}</div>`;
+  }
+  return `<span class="tag src">${esc(k.source)}</span>`;
+}
+
 function kwSec(c) {
   const K = c.keywords;
   const sk = (K.secondary || []).filter((k) => !BAD_PHRASE_RE.test(k.phrase));
   let h = `<div class="kwbox"><div class="kwl">Primary keyword</div><div class="kwp">${esc(K.primary.phrase)}</div>
     <div class="muted">Use in: ${esc(K.primary.where)}. Competitors put it in their title ${K.primary.inTitlePct}%, H1 ${K.primary.inH1Pct}% and meta ${K.primary.inMetaPct}% of the time.</div></div>`;
   if (sk.length) {
-    h += table(["Secondary keyword", "Used by", "Where to use it"], sk.map((k) =>
-      `<tr><td><b>${esc(k.phrase)}</b></td><td class="mono">${k.count}/${k.of}<div class="muted small">${esc((k.names || []).slice(0, 4).join(", "))}</div></td><td>${esc(k.where)}</td></tr>`));
+    h += `<h3>Secondary keywords (${sk.length})</h3>` +
+      table(["Keyword", "Source", "Where to use it"], sk.map((k) =>
+        `<tr><td><b>${esc(k.phrase)}</b></td><td class="mono">${srcCell(k)}</td><td>${esc(k.where)}</td></tr>`));
   }
+  const gq = (c.dupes && c.dupes.queries) || [];
+  if (gq.length) {
+    h += `<h3>Searches your site already shows up for (${gq.length})</h3><p class="muted">From Search Console, last 90 days — real searches. Use the best ones as headings or FAQ questions.</p>` +
+      table(["Search", "Impressions", "Avg position"], gq.map((q) => `<tr><td>${esc(q.query)}</td><td class="mono">${fmt(q.impressions)}</td><td class="mono">${esc(q.position)}</td></tr>`));
+  }
+  const rel = K.google.filter((g) => g.source === "Google related search");
+  if (rel.length) h += `<h3>Google related searches</h3><div>${pills(rel.map((g) => g.phrase))}</div>`;
   const paa = K.google.filter((g) => g.source === "People Also Ask");
   if (paa.length) h += `<h3>People Also Ask — use as FAQ questions</h3><ul class="plain">${paa.map((g) => `<li>${esc(g.phrase)}</li>`).join("")}</ul>`;
   return h;
 }
 
 function relevantLinks(c) {
-  const toks = kwTokens(c.keyword);
+  const toks = kwTokens(c.keyword).map(stem);
   return ((S.internalLinks && S.internalLinks.suggestions) || [])
     .filter((s) => s.url && toks.some((t) => s.url.toLowerCase().includes(t))).slice(0, 6);
 }
