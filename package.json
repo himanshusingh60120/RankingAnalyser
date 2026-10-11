@@ -10,7 +10,6 @@
     "test:local": "node scripts/test-local.mjs"
   },
   "dependencies": {
-    "@vercel/blob": "^1.0.0",
     "cheerio": "^1.2.0",
     "exceljs": "^4.4.0"
   },
