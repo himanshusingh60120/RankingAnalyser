@@ -1,177 +1,161 @@
-<!-- planner.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Content Planner · Ranking X-Ray</title>
-  <style>
-    :root {
-      --bg: #0b0f14; --panel: #121922; --panel-2: #0e141b; --line: #1f2a36;
-      --ink: #e7edf3; --muted: #8298ad; --dim: #5b7186;
-      --signal: #4dd0a7; --signal-dim: #1f3a33;
-      --warn: #e0a44a; --crit: #e06a5a; --good: #4dd0a7; --info: #5aa9e0;
-      --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
-    body {
-      background-image:
-        linear-gradient(transparent 0 96%, rgba(90,169,224,0.035) 96% 100%),
-        radial-gradient(900px 500px at 80% -10%, rgba(90,169,224,0.06), transparent 70%);
-      background-size: 100% 26px, 100% 100%;
-      line-height: 1.5;
-    }
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 90px; }
-
-    /* ---- Top ribbon nav (shared across X-Ray, Bulk, Planner, Brief) ---- */
-    .ribbon { display:flex; align-items:center; gap:8px; padding:14px 0 0; flex-wrap:wrap; }
-    .ribbon .brand { font-family: var(--mono); font-size: 12px; letter-spacing:.2em; text-transform:uppercase;
-      color: var(--signal); margin-right:auto; text-decoration:none; }
-    .ribbon a.tab { font-family: var(--mono); font-size:12px; color: var(--muted); text-decoration:none;
-      border:1px solid var(--line); padding:9px 16px; border-radius:9px; transition:all .15s; }
-    .ribbon a.tab:hover { color: var(--ink); border-color: var(--signal); }
-    .ribbon a.tab.active { background: var(--signal); color:#04130d; font-weight:600; border-color:var(--signal); }
-
-    header { padding: 40px 0 26px; border-bottom: 1px solid var(--line); }
-    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
-      text-transform: uppercase; color: var(--info); margin: 0 0 12px; }
-    h1 { font-size: clamp(28px, 4vw, 42px); margin: 0; letter-spacing: -0.02em; font-weight: 650; }
-    h1 .x { color: var(--info); }
-    .lede { color: var(--muted); margin: 12px 0 0; max-width: 64ch; font-size: 15px; }
-
-    .console { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-      padding: 22px; margin: 28px 0; }
-    label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
-      text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
-    input[type=text], textarea {
-      width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
-      padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
-    }
-    input[type=text]:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(90,169,224,.15); }
-    textarea { min-height: 280px; resize: vertical; line-height: 1.55; font-size: 13px; }
-    .field { margin-bottom: 16px; }
-    .wc { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 6px; }
-
-    .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line);
-      border-radius: 10px; padding: 3px; gap: 3px; }
-    .seg-btn { background: transparent; border: 0; color: var(--muted); font-family: var(--mono);
-      font-size: 12px; letter-spacing: .06em; padding: 9px 18px; border-radius: 8px;
-      cursor: pointer; transition: all .15s; }
-    .seg-btn:hover { color: var(--ink); }
-    .seg-btn.active { background: var(--info); color: #04101a; font-weight: 600; }
-
-    .row-actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
-    button.run {
-      background: var(--info); color: #04101a; border: 0; border-radius: 10px;
-      padding: 13px 28px; font-size: 14.5px; font-weight: 650; cursor: pointer;
-      font-family: var(--sans); letter-spacing: .01em;
-    }
-    button.run:hover { filter: brightness(1.08); }
-    button.run:disabled { opacity: .5; cursor: wait; }
-    .status { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-      background: var(--info); margin-right: 8px; animation: pulse 1.1s infinite; }
-    @keyframes pulse { 50% { opacity: .25; } }
-
-    .results { display: none; }
-    .results.show { display: block; }
-    .section { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
-      color: var(--info); margin: 38px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
-    .banner { border-radius: 10px; padding: 13px 16px; font-size: 13.5px; margin-bottom: 12px; }
-    .banner.note { background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.35); color: var(--ink); }
-    .banner.err { background: rgba(224,106,90,.08); border: 1px solid rgba(224,106,90,.4); }
-
-    /* Stat tiles */
-    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-    .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-    .tile .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
-    .tile .v { font-size: 26px; font-weight: 700; margin-top: 6px; color: var(--ink); }
-    .tile .v.accent { color: var(--signal); }
-    .tile .s { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 4px; }
-
-    /* Outline */
-    .outline { font-family: var(--mono); font-size: 13px; }
-    .ol-row { display: flex; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line); align-items: baseline; }
-    .ol-row:last-child { border-bottom: 0; }
-    .ol-lvl { flex: 0 0 36px; font-weight: 700; }
-    .ol-lvl.h1 { color: var(--signal); }
-    .ol-lvl.h2 { color: var(--info); }
-    .ol-lvl.h3 { color: var(--muted); padding-left: 14px; }
-    .ol-text { color: var(--ink); }
-    .ol-text .addtag { color: var(--warn); font-weight: 700; }
-    .ol-map { color: var(--dim); font-size: 11px; margin-top: 2px; }
-
-    /* Meta cards */
-    .meta-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
-      padding: 13px 14px; margin-bottom: 9px; position: relative; }
-    .meta-card .txt { font-size: 14px; padding-right: 70px; }
-    .meta-card .len { font-family: var(--mono); font-size: 10.5px; color: var(--dim); margin-top: 5px; }
-    .meta-card .len.ok { color: var(--good); }
-    .meta-card .len.off { color: var(--warn); }
-    .meta-card .primary-tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
-      text-transform: uppercase; color: var(--signal); }
-    .copybtn { position: absolute; top: 11px; right: 11px; background: var(--info); color: #04101a;
-      border: 0; border-radius: 7px; font-family: var(--mono); font-size: 10.5px;
-      padding: 5px 10px; cursor: pointer; }
-    .copybtn:hover { filter: brightness(1.1); }
-
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--dim); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
-    td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    tr:last-child td { border-bottom: 0; }
-    td.site { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-    .why { color: var(--muted); font-size: 12px; }
-    footer { margin-top: 70px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
-    code { color: var(--signal); }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content Brief · Ranking X-Ray</title>
+<style>
+:root {
+  --bg: #0b0f14; --panel: #121922; --panel-2: #0e141b; --line: #1f2a36;
+  --ink: #e7edf3; --muted: #8298ad; --dim: #5b7186;
+  --signal: #4dd0a7; --signal-dim: #1f3a33;
+  --warn: #e0a44a; --crit: #e06a5a; --good: #4dd0a7; --info: #5aa9e0;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+body {
+  background-image:
+    linear-gradient(transparent 0 96%, rgba(90,169,224,0.035) 96% 100%),
+    radial-gradient(900px 500px at 80% -10%, rgba(90,169,224,0.06), transparent 70%);
+  background-size: 100% 26px, 100% 100%;
+  line-height: 1.5;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 90px; }
+header { padding: 40px 0 26px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
+  text-transform: uppercase; color: var(--info); margin: 0 0 12px; }
+h1 { font-size: clamp(28px, 4vw, 42px); margin: 0; letter-spacing: -0.02em; font-weight: 650; }
+h1 .x { color: var(--info); }
+.lede { color: var(--muted); margin: 12px 0 0; max-width: 64ch; font-size: 15px; }
+.back { font-family: var(--mono); font-size: 11.5px; color: var(--dim); text-decoration: none; }
+.back:hover { color: var(--signal); }
+.console { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 22px; margin: 28px 0; }
+label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--dim); margin: 0 0 7px; }
+input[type=text], textarea {
+  width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+  padding: 12px 13px; border-radius: 9px; font-family: var(--mono); font-size: 13.5px; outline: none;
+}
+input[type=text]:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(90,169,224,.15); }
+textarea { min-height: 280px; resize: vertical; line-height: 1.55; font-size: 13px; }
+.field { margin-bottom: 16px; }
+.wc { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 6px; }
+.seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 3px; gap: 3px; }
+.seg-btn { background: transparent; border: 0; color: var(--muted); font-family: var(--mono);
+  font-size: 12px; letter-spacing: .06em; padding: 9px 18px; border-radius: 8px;
+  cursor: pointer; transition: all .15s; }
+.seg-btn:hover { color: var(--ink); }
+.seg-btn.active { background: var(--info); color: #04101a; font-weight: 600; }
+.row-actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+button.run {
+  background: var(--info); color: #04101a; border: 0; border-radius: 10px;
+  padding: 13px 28px; font-size: 14.5px; font-weight: 650; cursor: pointer;
+  font-family: var(--sans); letter-spacing: .01em;
+}
+button.run:hover { filter: brightness(1.08); }
+button.run:disabled { opacity: .5; cursor: wait; }
+.status { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--info); margin-right: 8px; animation: pulse 1.1s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+.results { display: none; }
+.results.show { display: block; }
+.section { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--info); margin: 38px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+.banner { border-radius: 10px; padding: 13px 16px; font-size: 13.5px; margin-bottom: 12px; }
+.banner.note { background: rgba(90,169,224,.08); border: 1px solid rgba(90,169,224,.35); color: var(--ink); }
+.banner.err { background: rgba(224,106,90,.08); border: 1px solid rgba(224,106,90,.4); }
+/* Stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.tile .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.tile .v { font-size: 26px; font-weight: 700; margin-top: 6px; color: var(--ink); }
+.tile .v.accent { color: var(--signal); }
+.tile .s { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 4px; }
+/* Outline */
+.outline { font-family: var(--mono); font-size: 13px; }
+.ol-row { display: flex; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line); align-items: baseline; }
+.ol-row:last-child { border-bottom: 0; }
+.ol-lvl { flex: 0 0 36px; font-weight: 700; }
+.ol-lvl.h1 { color: var(--signal); }
+.ol-lvl.h2 { color: var(--info); }
+.ol-lvl.h3 { color: var(--muted); padding-left: 14px; }
+.ol-text { color: var(--ink); }
+.ol-text .addtag { color: var(--warn); font-weight: 700; }
+.ol-map { color: var(--dim); font-size: 11px; margin-top: 2px; }
+/* Meta cards */
+.meta-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+  padding: 13px 14px; margin-bottom: 9px; position: relative; }
+.meta-card .txt { font-size: 14px; padding-right: 70px; }
+.meta-card .len { font-family: var(--mono); font-size: 10.5px; color: var(--dim); margin-top: 5px; }
+.meta-card .len.ok { color: var(--good); }
+.meta-card .len.off { color: var(--warn); }
+.meta-card .primary-tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--signal); }
+.copybtn { position: absolute; top: 11px; right: 11px; background: var(--info); color: #04101a;
+  border: 0; border-radius: 7px; font-family: var(--mono); font-size: 10.5px;
+  padding: 5px 10px; cursor: pointer; }
+.copybtn:hover { filter: brightness(1.1); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dim); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.site { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.why { color: var(--muted); font-size: 12px; }
+/* Brief additions: chips, schema block */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 11.5px; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
+.chip.miss { border-color: rgba(224,164,74,.5); color: var(--warn); }
+pre.code { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+  padding: 14px; font-family: var(--mono); font-size: 11.5px; color: var(--ink);
+  overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 420px; }
+footer { margin-top: 70px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+code { color: var(--signal); }
+</style>
 </head>
 <body>
 <div class="wrap">
 
-  <nav class="ribbon">
-    <a class="brand" href="/">Ranking X-Ray</a>
-    <a class="tab" href="/">X-Ray</a>
-    <a class="tab" href="/bulk">Bulk Search Console</a>
-    <a class="tab active" href="/planner">Content Planner</a>
-    <a class="tab" href="/brief">Content Brief</a>
-  </nav>
+<header>
+  <p class="eyebrow">Kings Research · New-Content Mode</p>
+  <h1>Content <span class="x">Brief</span></h1>
+  <p class="lede">Paste your draft before publishing. The brief benchmarks the same 5 competitors on your keyword, then returns word &amp; link targets, draft health checks, the content gaps competitors cover, your H-tag structure, meta title &amp; description, PAA-style FAQs, and ready-to-paste JSON-LD schema.</p>
+  <p style="margin-top:14px"><a class="back" href="/">← back to Ranking X-Ray (existing pages)</a></p>
+</header>
 
-  <header>
-    <p class="eyebrow">Kings Research · New-Content Mode</p>
-    <h1>Content <span class="x">Planner</span></h1>
-    <p class="lede">Paste your draft before publishing. The planner benchmarks the same 5 competitors on your keyword, then returns the H-tag structure, meta title &amp; description, and the internal/external link counts your content length warrants.</p>
-  </header>
-
-  <div class="console">
-    <div class="field">
-      <label>Content type</label>
-      <div class="seg">
-        <button type="button" class="seg-btn active" data-type="blog" onclick="setType('blog')">Blog post</button>
-        <button type="button" class="seg-btn" data-type="report" onclick="setType('report')">Report page</button>
-      </div>
-    </div>
-    <div class="field">
-      <label for="keyword">Primary keyword</label>
-      <input type="text" id="keyword" placeholder="software asset management" />
-    </div>
-    <div class="field">
-      <label for="content">Your draft content (plain text — paste the full article body)</label>
-      <textarea id="content" placeholder="Paste the full text of the article you're about to publish…"></textarea>
-      <div class="wc" id="wc">0 words</div>
-    </div>
-    <div class="row-actions">
-      <button class="run" id="runBtn" onclick="plan()">Plan Content</button>
-      <span class="status" id="status"></span>
+<div class="console">
+  <div class="field">
+    <label>Content type</label>
+    <div class="seg">
+      <button type="button" class="seg-btn active" data-type="blog" onclick="setType('blog')">Blog post</button>
+      <button type="button" class="seg-btn" data-type="report" onclick="setType('report')">Report page</button>
     </div>
   </div>
+  <div class="field">
+    <label for="keyword">Primary keyword</label>
+    <input type="text" id="keyword" placeholder="software asset management" />
+  </div>
+  <div class="field">
+    <label for="content">Your draft content (plain text — paste the full article body)</label>
+    <textarea id="content" placeholder="Paste the full text of the article you're about to publish…"></textarea>
+    <div class="wc" id="wc">0 words</div>
+  </div>
+  <div class="row-actions">
+    <button class="run" id="runBtn" onclick="plan()">Build Brief</button>
+    <span class="status" id="status"></span>
+  </div>
+</div>
 
-  <div class="results" id="results"></div>
+<div class="results" id="results"></div>
 
-  <footer>Content Planner · API at <code>/api/plan</code></footer>
+<footer>Content Brief · API at <code>/api/plan</code></footer>
 </div>
 
 <script>
@@ -185,9 +169,7 @@ function setType(t){
   userPickedType = true;
   document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
 }
-
 // Auto-detect page type from the keyword until the user picks one manually.
-// "... Market / Industry / Forecast / Outlook" reads as a report; else blog.
 function autoDetectType(){
   if (userPickedType) return;
   const kw = ($("keyword").value || '').toLowerCase();
@@ -216,8 +198,8 @@ async function plan(){
   $("results").className = "results";
   $("results").innerHTML = "";
   let secs = 0;
-  $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; planning… 0s';
-  const timer = setInterval(()=>{ secs++; $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; planning… '+secs+'s'; }, 1000);
+  $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; building brief… 0s';
+  const timer = setInterval(()=>{ secs++; $("status").innerHTML = '<span class="dot"></span>Benchmarking competitors &amp; building brief… '+secs+'s'; }, 1000);
 
   try {
     const res = await fetch("/api/plan", {
@@ -244,19 +226,38 @@ function renderError(msg){
 }
 
 function render(d){
+  window.__plan = d; // for Markdown export
   let html = '';
   const lt = d.linkTargets || {};
   const ai = d.ai || {};
+  const dh = d.draftHealth || {};
+  const tg = d.topicGaps || {};
 
-  // ---- Link targets (the ratio math) ----
-  html += '<h3 class="section">Link targets — derived from competitor ratios</h3>';
+  // ---- Targets ----
+  html += '<h3 class="section">Targets — derived from competitor benchmarks</h3>';
   html += '<div class="tiles">';
   html += tile('Your draft', (lt.ourWords||d.ourWords||0).toLocaleString(), 'words');
   if(lt.avgCompetitorWords) html += tile('Competitor avg', lt.avgCompetitorWords.toLocaleString(), 'words');
+  if(lt.recommendedWords) html += tile('Word target', lt.recommendedWords.toLocaleString(),
+      lt.wordGap>0 ? ('add ~'+lt.wordGap.toLocaleString()+' words') : 'target met ✓', true);
   html += tile('Internal links to add', lt.recommendedInternalLinks ?? '—', lt.competitorInternalPer1000Words!=null ? ('they avg '+lt.competitorInternalPer1000Words+'/1000w') : 'editorial ratio', true);
-  html += tile('External links to add', lt.recommendedExternalLinks ?? '—', lt.competitorExternalPer1000Words!=null ? ('they avg '+lt.competitorExternalPer1000Words+'/1000w') : 'editorial ratio', true);
+  html += tile('External links to add', lt.recommendedExternalLinks ?? '—', 'editorial ratio', true);
   html += '</div>';
   if(lt.note) html += '<div class="banner note" style="margin-top:12px">'+escapeHtml(lt.note)+'</div>';
+
+  // ---- Draft health (deterministic) ----
+  html += '<h3 class="section">Draft health</h3>';
+  html += '<div class="tiles">';
+  html += tile('Keyword uses', dh.keywordCount ?? '—', (dh.keywordDensityPct!=null?dh.keywordDensityPct+'% density':''));
+  html += tile('Keyword in first 100w', dh.keywordInFirst100Words ? 'Yes ✓' : 'No ✗', dh.keywordInFirst100Words?'good':'fix this');
+  html += tile('Avg sentence', dh.avgSentenceWords ?? '—', 'words (aim ≤ 25)');
+  html += tile('Paragraphs', dh.paragraphs ?? '—', (dh.longParagraphs||0)+' over 150w');
+  html += '</div>';
+  if((dh.flags||[]).length){
+    html += '<div class="banner err" style="margin-top:12px">'+ dh.flags.map(escapeHtml).join('<br>') +'</div>';
+  } else {
+    html += '<div class="banner note" style="margin-top:12px">No on-draft issues detected ✓</div>';
+  }
 
   // ---- Competitor benchmark table ----
   const comps = (d.competitors||[]);
@@ -272,23 +273,42 @@ function render(d){
     }
     html += '</table></div>';
   } else {
-    const blogHint = d.contentType==='blog' ? ' If you are optimizing a market report, switch “Content type” to “Report page” — competitors publish these as reports, not blog posts, so report mode finds them without an API key.' : '';
-    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios.'+blogHint+' (Blog discovery needs SERPER_API_KEY or SERPAPI_KEY env vars.)</div>';
+    const blogHint = d.contentType==='blog' ? ' If you are optimizing a market report, switch "Content type" to "Report page" — competitors publish these as reports, not blog posts, so report mode finds them without an API key.' : '';
+    html += '<div class="banner note">No keyword-matched competitor '+(d.contentType==='blog'?'articles':'pages')+' found on the 5 fixed sites — recommendations below use standard editorial ratios.'+blogHint+' (Blog discovery also needs GOOGLE_CSE_KEY/CX env vars.)</div>';
   }
   const excluded = comps.filter(c=>c.found && c.keywordMatch===false);
   if(excluded.length){
     html += '<div class="banner note">Excluded as wrong-topic: '+excluded.map(c=>escapeHtml(c.site)).join(', ')+'</div>';
   }
 
-  // ---- Internal links from Kings Research sitemaps (REAL live URLs) ----
+  // ---- Topic gaps ----
+  const gapRecs = ai.gapRecommendations || [];
+  if((tg.missing||[]).length || (tg.partial||[]).length){
+    html += '<h3 class="section">Content gaps — competitors cover this, your draft doesn\'t</h3>';
+    if((tg.missing||[]).length){
+      const recBy = {}; for(const g of gapRecs){ if(g&&g.topic) recBy[g.topic.toLowerCase()]=g.addWhat; }
+      html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Competitor section</th><th>Seen on</th><th>What to add</th></tr>';
+      for(const g of tg.missing){
+        html += '<tr><td style="font-size:12.5px">'+escapeHtml(g.topic)+'</td>'+
+          '<td style="font-family:var(--mono);font-size:11px;color:var(--muted)">'+g.sites.length+' of 5<br>'+g.sites.map(escapeHtml).join('<br>')+'</td>'+
+          '<td class="why">'+escapeHtml(recBy[(g.topic||'').toLowerCase()] || '—')+'</td></tr>';
+      }
+      html += '</table></div>';
+    }
+    if((tg.partial||[]).length){
+      html += '<div class="banner note">Only partially covered: '+tg.partial.map(g=>escapeHtml(g.topic)).join(' · ')+'</div>';
+    }
+    if(tg.note) html += '<div class="banner note">'+escapeHtml(tg.note)+'</div>';
+  }
+
+  // ---- Internal links (sitemaps, GSC-enriched) ----
   const il = d.internalLinks || {};
   const ilSugs = il.suggestions || [];
   html += '<h3 class="section">Internal links — '+(lt.recommendedInternalLinks||ilSugs.length)+' to add (from your sitemaps)</h3>';
   if(ilSugs.length){
     const showGsc = il.gscEnriched;
-    // Stash the suggestions so the copy button can build anchor tags.
     window.__ilSugs = ilSugs;
-    html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copyAllAnchors()">📋 Copy all as HTML anchor tags</button></div>';
+    html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copyAllAnchors(this)">📋 Copy all as HTML anchor tags</button></div>';
     html += '<div class="panel" style="padding:0;overflow-x:auto"><table><tr><th>Anchor text (from your draft)</th><th>Target page (live URL)</th>'+
       (showGsc?'<th>Avg pos</th><th>Impr</th>':'')+'<th>Type</th></tr>';
     for(const s of ilSugs){
@@ -306,7 +326,7 @@ function render(d){
         '</tr>';
     }
     html += '</table></div>';
-    html += '<div class="banner note">Each anchor is a phrase that already appears in your pasted draft, linked to the matching live kingsresearch.com page — so you can place the link directly in your text. '+
+    html += '<div class="banner note">Each anchor is a phrase that already appears in your pasted draft, linked to the matching live kingsresearch.com page. '+
       (showGsc
         ? 'Avg position &amp; impressions are from Search Console (last 90 days) — prioritise linking to pages with impressions, they pass more authority.'
         : 'Connect GSC (env vars) to also see each page\'s avg position &amp; impressions here.')+'</div>';
@@ -321,24 +341,28 @@ function render(d){
   } else if(ai.skipped){
     html += '<div class="banner note">AI planning skipped: '+escapeHtml(ai.reason||'')+'</div>';
   } else {
-    // ---- Figures used to build the meta (data-driven) ----
     if (ai.figuresNote) {
       const usedData = (ai.detectedFigures||{}).hasFigures;
-      html += '<div class="banner note" style="margin-bottom:8px">'+
-        (usedData?'📊 ':'⚠️ ')+escapeHtml(ai.figuresNote)+'</div>';
+      html += '<div class="banner note" style="margin-bottom:8px">'+(usedData?'📊 ':'⚠️ ')+escapeHtml(ai.figuresNote)+'</div>';
+    }
+    if((ai.metaChecks||[]).length){
+      html += '<div class="banner err">'+ai.metaChecks.map(escapeHtml).join('<br>')+'</div>';
     }
 
-    // ---- Meta title ----
     html += '<h3 class="section">Meta title</h3>';
     html += metaCard(ai.metaTitle, 50, 60, true, 'title-0');
     (ai.metaTitleAlternates||[]).forEach((t,i)=>{ html += metaCard(t, 50, 60, false, 'title-'+(i+1)); });
 
-    // ---- Meta description ----
     html += '<h3 class="section">Meta description</h3>';
     html += metaCard(ai.metaDescription, 140, 155, true, 'desc-0');
     (ai.metaDescriptionAlternates||[]).forEach((t,i)=>{ html += metaCard(t, 140, 155, false, 'desc-'+(i+1)); });
 
-    // ---- Heading outline ----
+    if((ai.secondaryKeywords||[]).length){
+      html += '<h3 class="section">Secondary keywords to carry</h3><div class="panel"><div class="chips">'+
+        ai.secondaryKeywords.map(k=>'<span class="chip'+(k.inDraft===false?' miss':'')+'">'+escapeHtml(k.phrase||String(k))+(k.inDraft===false?' · not in draft':'')+'</span>').join('')+
+        '</div></div>';
+    }
+
     if((ai.headingOutline||[]).length){
       html += '<h3 class="section">H-tag structure for your draft</h3>';
       html += '<div class="panel outline">';
@@ -347,14 +371,24 @@ function render(d){
         const text = (h.text||'').replace(/^\[ADD\]\s*/i,'');
         html += '<div class="ol-row"><div class="ol-lvl '+escapeHtml(lvl)+'">'+escapeHtml((h.level||'H2').toUpperCase())+'</div>'+
           '<div><div class="ol-text">'+escapeHtml(text)+'</div>'+
-          (h.mapsTo?'<div class="ol-map">↳ starts at: “'+escapeHtml(h.mapsTo)+'…”</div>':'')+
+          (h.mapsTo?'<div class="ol-map">↳ starts at: "'+escapeHtml(h.mapsTo)+'…"</div>':'')+
           '</div></div>';
       }
       html += '</div>';
       html += '<div class="banner note">Headings are derived only from sections already present in your draft — each one maps to where that content begins.</div>';
     }
 
-    // ---- External link plan (AI; internal links handled separately) ----
+    // ---- FAQs for PAA / AI Overviews ----
+    if((ai.faq||[]).length){
+      html += '<h3 class="section">FAQ block — People-Also-Ask / AI-Overview targets</h3>';
+      ai.faq.forEach((f,i)=>{
+        html += '<div class="meta-card"><div class="txt" id="faq-'+i+'"><b>'+escapeHtml(f.question||'')+'</b><br>'+escapeHtml(f.answer||'')+'</div>'+
+          (f.mapsTo?'<div class="len">↳ from: "'+escapeHtml(f.mapsTo)+'…"</div>':'')+
+          '<button class="copybtn" onclick="copyText(\'faq-'+i+'\', this)">Copy</button></div>';
+      });
+      html += '<div class="banner note">Add these as an on-page FAQ section (the matching FAQPage schema is below). First sentence of each answer is written to be extractable verbatim.</div>';
+    }
+
     const lp = ai.linkPlan||{};
     if((lp.externalSuggestions||[]).length){
       html += '<h3 class="section">External links — '+(lp.externalSuggestions.length)+' citations</h3>';
@@ -367,10 +401,22 @@ function render(d){
 
     if((ai.notes||[]).length){
       html += '<h3 class="section">Editorial notes</h3><div class="panel">'+
-        ai.notes.map(n=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtml(n)+'</div>').join('').replace(/border-bottom:[^"]+"\s*>(?![\s\S]*border-bottom)/,'">')+
+        ai.notes.map(n=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtml(n)+'</div>').join('')+
         '</div>';
     }
   }
+
+  // ---- Schema (always available) ----
+  if(d.schema){
+    const schemaStr = '<scr'+'ipt type="application/ld+json">\n'+JSON.stringify(d.schema, null, 2)+'\n</scr'+'ipt>';
+    html += '<h3 class="section">Structured data — paste into the page &lt;head&gt;</h3>';
+    html += '<div style="margin-bottom:10px"><button class="copybtn" style="position:static" onclick="copySchema(this)">📋 Copy JSON-LD</button></div>';
+    html += '<pre class="code" id="schemaBlock">'+escapeHtml(schemaStr)+'</pre>';
+    window.__schemaStr = schemaStr;
+  }
+
+  // ---- Export whole brief ----
+  html += '<div style="margin-top:28px"><button class="run" onclick="copyBriefMarkdown(this)">📄 Copy full brief as Markdown</button></div>';
 
   $("results").className = "results show";
   $("results").innerHTML = html;
@@ -399,13 +445,56 @@ function copyText(id, btn){
   });
 }
 
-function copyAllAnchors(){
+function copyAllAnchors(btn){
   const sugs = window.__ilSugs || [];
   const lines = sugs.map(s => '<a href="'+s.url+'">'+s.anchor+'</a>');
-  const text = lines.join('\n');
-  navigator.clipboard.writeText(text).then(()=>{
-    const b = event.target; const o = b.textContent;
-    b.textContent='Copied '+lines.length+' anchor tags ✓'; setTimeout(()=>b.textContent=o, 1800);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const o = btn.textContent;
+    btn.textContent='Copied '+lines.length+' anchor tags ✓'; setTimeout(()=>btn.textContent=o, 1800);
+  });
+}
+
+function copySchema(btn){
+  navigator.clipboard.writeText(window.__schemaStr || '').then(()=>{
+    const o = btn.textContent; btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent=o, 1500);
+  });
+}
+
+function copyBriefMarkdown(btn){
+  const d = window.__plan; if(!d) return;
+  const lt = d.linkTargets||{}, ai = d.ai||{}, dh = d.draftHealth||{}, tg = d.topicGaps||{};
+  const L = [];
+  L.push('# Content brief — '+d.keyword+' ('+d.contentType+')');
+  L.push('Generated: '+d.generatedAt);
+  L.push('');
+  L.push('## Targets');
+  L.push('- Draft words: '+(lt.ourWords||d.ourWords));
+  if(lt.recommendedWords) L.push('- Word target: '+lt.recommendedWords+(lt.wordGap>0?' (add ~'+lt.wordGap+')':' (met)'));
+  L.push('- Internal links to add: '+lt.recommendedInternalLinks);
+  L.push('- External citations to add: '+lt.recommendedExternalLinks);
+  if((dh.flags||[]).length){ L.push(''); L.push('## Draft health flags'); dh.flags.forEach(f=>L.push('- '+f)); }
+  if(ai.metaTitle){ L.push(''); L.push('## Meta title'); L.push(ai.metaTitle);
+    (ai.metaTitleAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
+  if(ai.metaDescription){ L.push(''); L.push('## Meta description'); L.push(ai.metaDescription);
+    (ai.metaDescriptionAlternates||[]).forEach(t=>L.push('- alt: '+t)); }
+  if((ai.headingOutline||[]).length){ L.push(''); L.push('## Heading structure');
+    ai.headingOutline.forEach(h=>L.push('- '+(h.level||'H2')+': '+h.text)); }
+  if((tg.missing||[]).length){ L.push(''); L.push('## Content gaps (competitors cover, draft doesn\'t)');
+    tg.missing.forEach(g=>L.push('- '+g.topic+' (seen on '+g.sites.length+' of 5)')); }
+  if((ai.gapRecommendations||[]).length){ L.push(''); L.push('## What to add');
+    ai.gapRecommendations.forEach(g=>L.push('- **'+g.topic+'**: '+g.addWhat)); }
+  if((ai.faq||[]).length){ L.push(''); L.push('## FAQ block');
+    ai.faq.forEach(f=>{ L.push('**Q: '+f.question+'**'); L.push('A: '+f.answer); L.push(''); }); }
+  const ilS = (d.internalLinks||{}).suggestions||[];
+  if(ilS.length){ L.push('## Internal links');
+    ilS.forEach(s=>L.push('- ['+s.anchor+']('+s.url+')'+(s.position!=null?' (pos '+s.position+', '+(s.impressions||0)+' impr)':''))); }
+  const ext = ((ai.linkPlan||{}).externalSuggestions)||[];
+  if(ext.length){ L.push(''); L.push('## External citations');
+    ext.forEach(s=>L.push('- "'+s.anchorText+'" → '+s.sourceType+' — '+s.why)); }
+  if((ai.notes||[]).length){ L.push(''); L.push('## Editorial notes'); ai.notes.forEach(n=>L.push('- '+n)); }
+  if(window.__schemaStr){ L.push(''); L.push('## JSON-LD schema'); L.push('```html'); L.push(window.__schemaStr); L.push('```'); }
+  navigator.clipboard.writeText(L.join('\n')).then(()=>{
+    const o = btn.textContent; btn.textContent='Brief copied ✓'; setTimeout(()=>btn.textContent=o, 1800);
   });
 }
 </script>
