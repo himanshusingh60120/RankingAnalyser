@@ -44,6 +44,13 @@ header h1 .x{color:var(--signal)}
 .adv summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.08em}
 .adv[open] summary{color:var(--signal)}
 .adv .grid{margin-top:14px}
+.mbox{background:var(--panel-2);border:1px dashed var(--line);border-radius:9px;padding:14px;min-height:70px;color:var(--muted);font-family:var(--mono);font-size:12.5px;outline:none;max-height:120px;overflow:hidden}
+.mbox:focus{border-color:var(--signal)}
+.mbox:empty::before{content:attr(data-ph);color:var(--dim)}
+.mbox.got{color:var(--signal);border-style:solid}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink);margin:6px 6px 0 0}
+.chip button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px}
+.hint2{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
 .row-actions{display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}
 button.run{background:var(--signal);color:#04130d;border:0;padding:13px 26px;border-radius:9px;font-weight:650;font-size:14px;cursor:pointer;font-family:var(--sans)}
 button.run:hover{filter:brightness(1.08)}
@@ -80,6 +87,7 @@ table.st td{padding:7px 8px;border-bottom:1px solid #18222d;vertical-align:top}
 .savebar a{color:var(--signal)}
 .savebar .bad{color:var(--crit)}
 .linkbtn{background:none;border:0;color:var(--signal);font-family:var(--mono);font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+.pbtn2{background:#0f7a5c;color:#fff;border:0;border-radius:6px;font-family:var(--mono);font-size:11px;padding:3px 9px;cursor:pointer;margin-left:6px;white-space:nowrap}
 .tabs{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
 .tabbtn{background:var(--panel);border:1px solid var(--line);border-bottom:0;color:var(--muted);font-family:var(--mono);font-size:12.5px;padding:10px 16px;border-radius:10px 10px 0 0;cursor:pointer}
 .tabbtn.on{background:var(--paper);color:#11161c;border-color:var(--paper);font-weight:600}
@@ -185,7 +193,7 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
   html,body{background:#fff !important}
-  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast{display:none !important}
+  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast,.pbtn2{display:none !important}
   .wrap{max-width:none;padding:0}
   .paper{box-shadow:none;border-radius:0;padding:0;margin:0;background:#fff}
   .skh2,.kpi,.callout,tr{break-inside:avoid}
@@ -255,6 +263,23 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
         </div>
       </div>
     </details>
+    <details class="adv" id="manualBox">
+      <summary>Add competitor pages yourself — for pages the tool missed or couldn't read</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="mUrl">Competitor page URL</label>
+          <input type="text" id="mUrl" placeholder="https://www.precedenceresearch.com/pharmaceutical-market" />
+        </div>
+        <div class="full">
+          <label>Page content — only needed if the site blocks us</label>
+          <div id="mPaste" class="mbox" contenteditable="true" data-ph="Open the page in your browser → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
+        </div>
+        <div class="full">
+          <button type="button" class="ghost" id="mAdd">Add page</button>
+          <div id="mList"></div>
+        </div>
+      </div>
+    </details>
     <div class="row-actions">
       <button class="run" id="runBtn">Generate brief</button>
       <button class="ghost" id="savedBtn">Saved briefs</button>
@@ -305,6 +330,9 @@ const niceTitle = (s) => String(s || "").toLowerCase().split(/\s+/).filter(Boole
 let pageType = "report";
 let HEALTH = {};
 let S = null;
+let EXPORTING = false;
+let MANUAL = [];
+let pendingPaste = null;
 
 function newState(collected, extra = {}) {
   return {
@@ -332,7 +360,9 @@ $("saved").addEventListener("click", onAction);
     const saved = localStorage.getItem("brief.gl");
     if (saved && [...$("gl").options].some((o) => o.value === saved)) $("gl").value = saved;
     $("gl").addEventListener("change", () => localStorage.setItem("brief.gl", $("gl").value));
+    MANUAL = JSON.parse(sessionStorage.getItem("brief.manual") || "[]");
   } catch { /* storage unavailable */ }
+  renderManual();
   const qp = new URLSearchParams(location.search);
   if (qp.get("kw")) $("kw").value = qp.get("kw");
   if (qp.get("url")) $("ourUrl").value = qp.get("url");
@@ -351,6 +381,65 @@ async function checkHealth() {
     $("health").innerHTML = notes.map((n) => `<div class="banner warnb">${n}</div>`).join("");
   } catch { /* best effort */ }
 }
+
+/* ================= competitor pages added by hand ================= */
+const textToHtml = (t) => String(t).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join("");
+
+$("mPaste").addEventListener("paste", (e) => {
+  e.preventDefault();
+  const html = e.clipboardData.getData("text/html");
+  const text = e.clipboardData.getData("text/plain");
+  const val = html && html.length > 300 ? html : /<\s*(html|body|div|h1|h2|p)\b/i.test(text) ? text : text ? textToHtml(text) : "";
+  if (!val || val.length < 1000) {
+    pendingPaste = null;
+    $("mPaste").classList.remove("got");
+    $("mPaste").textContent = "That looks too short — on the competitor page press Ctrl+A first, then Ctrl+C.";
+    return;
+  }
+  pendingPaste = val;
+  $("mPaste").classList.add("got");
+  $("mPaste").textContent = `✓ Page content captured (${val.length.toLocaleString()} characters)`;
+});
+$("mPaste").addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
+
+$("mAdd").addEventListener("click", () => {
+  const url = $("mUrl").value.trim();
+  if (!/^https?:\/\//i.test(url)) { toast("Enter the page URL first (starting with https://)"); $("mUrl").focus(); return; }
+  MANUAL = MANUAL.filter((m) => m.url !== url);
+  MANUAL.push({ url, html: pendingPaste });
+  if (MANUAL.length > 8) MANUAL.shift();
+  pendingPaste = null;
+  $("mUrl").value = "";
+  $("mPaste").textContent = "";
+  $("mPaste").classList.remove("got");
+  renderManual();
+  saveManual();
+  toast("Page added — press Generate brief to use it");
+});
+
+$("mList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]");
+  if (!b) return;
+  MANUAL.splice(Number(b.dataset.rm), 1);
+  renderManual();
+  saveManual();
+});
+
+function renderManual() {
+  $("mList").innerHTML = MANUAL.map((m, i) =>
+    `<span class="chip">${esc(shortUrl(m.url).slice(0, 60))} · ${m.html ? "pasted" : "URL"}<button data-rm="${i}" title="Remove">✕</button></span>`).join("") +
+    (MANUAL.length ? `<div class="hint2">${MANUAL.length} page(s) will be used the next time you press Generate brief.</div>` : "");
+}
+function saveManual() { try { sessionStorage.setItem("brief.manual", JSON.stringify(MANUAL)); } catch { /* too large — kept in memory */ } }
+
+function openManual(url) {
+  const box = $("manualBox");
+  box.open = true;
+  $("mUrl").value = url || "";
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => (url ? $("mPaste") : $("mUrl")).focus(), 350);
+}
+const pasteBtn = (url, label = "Paste page") => (EXPORTING ? "" : `<button class="pbtn2" data-act="paste" data-url="${esc(url || "")}">${esc(label)}</button>`);
 
 /* ================= run ================= */
 async function post(body) {
@@ -395,6 +484,7 @@ async function generate() {
     const r1 = await post({
       stage: "collect", keyword, gl: $("gl").value, hl: $("hl").value,
       contentType: pageType, ourUrl: $("ourUrl").value.trim() || undefined,
+      manual: MANUAL.length ? MANUAL : undefined,
     });
     collectedYet = true;
     step(1, "done"); step(2, "done"); step(3, "active");
@@ -755,7 +845,6 @@ function buildSkeleton(c, ai) {
     s.cover = ["Base year, forecast period and units", "Segments and regions covered", "Sources: primary interviews, secondary research, estimation model"];
   }
 
-  // FAQs: People Also Ask first, then AI, then competitor questions about the SAME market.
   const paa = (c.serp.peopleAlsoAsk || []).map((p) => p.question);
   const compQ = (c.questions || []).filter((q) => q.source !== "People Also Ask").map((q) => q.question).filter((q) => sameMarketQ(c.keyword, q));
   const seenQ = new Set();
@@ -767,7 +856,6 @@ function buildSkeleton(c, ai) {
   faqs = faqs.slice(0, Math.max(6, c.targets.faqs || 5));
   if ((s = get("faqs"))) { s.write = "Use each question as an H3 and answer in 2–3 sentences with our numbers."; s.h3 = faqs; }
 
-  // AI: specific "what to write" lines and "our edge" ideas, placed in the H2 they belong to.
   const extraSecs = [];
   ((ai && ai.outline) || []).forEach((o) => {
     const g = groupOfLabel(labelOf(o.h2, kwTok));
@@ -787,7 +875,6 @@ function buildSkeleton(c, ai) {
   });
   if (view && !view.extras.length) view.extras = ["Findings or quotes from our primary interviews", "A best-case / worst-case forecast"];
 
-  // Keywords (competitors + autocomplete + your Search Console searches) → the H2 they fit.
   const introWords = [];
   const leftover = [];
   const kwList = [
@@ -799,7 +886,11 @@ function buildSkeleton(c, ai) {
     const key = normQ(k.phrase);
     if (!key || seenK.has(key)) return;
     seenK.add(key);
-    if (/^(what|how|why|which|who|is|are|does|can|will)\b/.test(key)) { const f = get("faqs"); if (f && f.h3.length < 10 && !f.h3.some((q) => normQ(q) === key)) f.h3.push(k.phrase.charAt(0).toUpperCase() + k.phrase.slice(1) + "?"); return; }
+    if (/^(what|how|why|which|who|is|are|does|can|will)\b/.test(key)) {
+      const f = get("faqs");
+      if (f && f.h3.length < 10 && !f.h3.some((q) => normQ(q) === key)) f.h3.push(k.phrase.charAt(0).toUpperCase() + k.phrase.slice(1) + "?");
+      return;
+    }
     const g = groupOfLabel(labelOf(k.phrase, kwTok));
     const target = g && g.key !== "faqs" ? get(g.key) : null;
     if (target && target.words.length < 6) target.words.push(k.phrase);
@@ -934,10 +1025,13 @@ function top10Sec(c) {
   const rows = c.serp.organic.map((r) => {
     const cls = r.type === "ours" ? "ours" : r.type === "tracked" ? "trk" : "";
     const tag = r.type === "tracked" ? '<span class="tag trk">tracked</span>' : r.type === "ours" ? '<span class="tag you">you</span>' : "";
+    const wordsCell = r.words != null
+      ? fmt(r.words) + (r.via === "pasted" ? `<div class="muted small">pasted</div>` : "")
+      : `<span class="muted">${esc(r.note || "—")}</span>${r.note === "blocked" || r.note === "not read" ? pasteBtn(r.link) : ""}`;
     return `<tr class="${cls}"><td class="mono">${esc(r.position)}</td>
       <td><b>${esc(r.name)}</b>${tag}<div class="muted small">${esc(TYPE[r.type] || r.type)}</div></td>
       <td><a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.title || r.link)}</a></td>
-      <td class="mono">${r.words != null ? fmt(r.words) : `<span class="muted">${esc(r.note || "—")}</span>`}</td></tr>`;
+      <td class="mono">${wordsCell}</td></tr>`;
   });
   let h = table(["#", "Site", "Ranking page", "Words"], rows);
   const outside = c.competitors.filter((x) => x.tracked && !x.onPage1);
@@ -976,7 +1070,7 @@ function dupesSec(c) {
         <td>${esc(p.type)}</td><td class="mono">${dupeRank(p)}</td>
         <td class="mono">${p.gsc ? `${fmt(p.gsc.impressions)} impr · pos ${p.gsc.position ?? "—"}${p.gsc.topQuery ? `<div class="muted small">“${esc(p.gsc.topQuery)}”</div>` : ""}` : "—"}</td>
         <td>${esc(p.action)}</td></tr>`));
-    h += `<p class="muted small">Rank for this keyword: "#" = position in today's Google top 10; "~" = average position over 90 days for searches containing the keyword (Search Console). "Search Console" column = all related searches.</p>`;
+    h += `<p class="muted small">Rank for this keyword: "#" = position in today's Google top 10; "~" = average position over 90 days for searches containing the keyword (Search Console).</p>`;
   }
   const s = d.sources || {};
   h += `<p class="muted small">Checked with Google${s.searchConsole === true ? " and Search Console" : ""}.${typeof s.searchConsole === "string" && s.searchConsole !== "not configured" ? " Search Console: " + esc(s.searchConsole) : ""}</p>`;
@@ -985,20 +1079,26 @@ function dupesSec(c) {
 
 function nameCell(x) {
   const n = x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name);
-  const via = x.via === "archive" ? `<div class="muted small">read from archive copy ${esc(x.archivedAt || "")}</div>` : x.via ? `<div class="muted small">read via fallback</div>` : "";
+  const via = x.via === "pasted" ? `<div class="muted small">from the page you pasted</div>`
+    : x.via === "archive" ? `<div class="muted small">read from archive copy ${esc(x.archivedAt || "")}</div>`
+    : x.via ? `<div class="muted small">read via fallback</div>` : "";
   return n + (x.tracked ? '<span class="tag trk">tracked</span>' : "") + via;
 }
 const rankTxt = (x) => (x.position ? `#${x.position}` : x.onPage1 ? "—" : "Not in top 20");
 const useTxt = (k) => (k ? ["Title", "H1", "Meta"].map((l, i) => `${[k.title, k.h1, k.meta][i] ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'} ${l}`).join(" &nbsp;") : "—");
 
 function scoreSec(c) {
-  const rows = c.competitors.map((x) => x.fetched
-    ? `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${fmt(x.stats.words)}</td>
+  const rows = c.competitors.map((x) => {
+    if (x.fetched) {
+      return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${fmt(x.stats.words)}</td>
         <td class="mono">${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
         <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}</td>
         <td class="mono">${x.stats.cagr != null ? esc(x.stats.cagr) + "%" : "—"}</td>
-        <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}</td></tr>`
-    : `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")}</td></tr>`);
+        <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}</td></tr>`;
+    }
+    const fix = x.blocked ? pasteBtn(x.link, "Paste page") : pasteBtn(x.link || "", x.link ? "Use a different page" : "Add the right page");
+    return `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")} ${fix}</td></tr>`;
+  });
   let h = table(["Competitor", "Google rank", "Words", "Tables", "FAQs", "Market size (as stated)", "CAGR", "Period", "Updated"], rows);
   const F = c.figures;
   if (F && F.cagrMin != null) {
@@ -1122,7 +1222,9 @@ function onAction(e) {
   const tabBtn = e.target.closest("[data-tab]");
   if (tabBtn && S) { S.tab = tabBtn.dataset.tab; render(); return; }
   const b = e.target.closest("[data-act]");
-  if (!b || !S) return;
+  if (!b) return;
+  if (b.dataset.act === "paste") { openManual(b.dataset.url); return; }
+  if (!S) return;
   const name = `content-brief-${slug(S.collected.keyword)}`;
   switch (b.dataset.act) {
     case "copy": copyBrief(); break;
@@ -1144,8 +1246,13 @@ table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d
 
 function docHtml() {
   const c = S.collected;
-  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + c.keyword)}</title><style>${DOC_CSS}</style></head>` +
-    `<body>${analystHtml(c)}<br><hr><br>${seoHtml(c)}</body></html>`;
+  EXPORTING = true;
+  try {
+    return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + c.keyword)}</title><style>${DOC_CSS}</style></head>` +
+      `<body>${analystHtml(c)}<br><hr><br>${seoHtml(c)}</body></html>`;
+  } finally {
+    EXPORTING = false;
+  }
 }
 
 async function copyBrief() {
