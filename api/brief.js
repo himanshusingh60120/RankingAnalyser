@@ -6,7 +6,8 @@
 // GET  /api/brief  -> status: { serpProvider, ai, ourDomain, storage, aiOverview, scraper }
 // GET  /api/health -> { ok, service, competitors, time }
 // POST /api/brief  { stage: ... }
-//   collect { keyword, gl?, hl?, contentType?, ourUrl?, ourDomain? } -> { collected }  (rankings, pages, duplicate check)
+//   collect { keyword, gl?, hl?, contentType?, ourUrl?, ourDomain?, manual? } -> { collected }
+//           manual = [{ url, html? }] — competitor pages added by the analyst (html = pasted page)
 //   write   { collected }                       -> { ai, internalLinks }
 //   full    collect + write in one call (scripts only — may pass 60s)
 //   save    { brief: { collected, ai, internalLinks }, html, country } -> Google Doc + JSON in Drive, row in the Sheet
@@ -38,15 +39,12 @@ export async function OPTIONS() {
 
 export async function GET(request) {
   const u = new URL(request.url);
-
-  // /api/health is rewritten here (see vercel.json). Same output as the old api/health.js.
   if (u.searchParams.has("health") || /\/api\/health\/?$/.test(u.pathname)) {
     return new Response(
       JSON.stringify({ ok: true, service: "seo-xray-api", competitors: COMPETITOR_SITES, time: new Date().toISOString() }, null, 2),
       { headers: { "Content-Type": "application/json" } }
     );
   }
-
   return json({
     ok: true,
     serpProvider: serpProviderName(),
@@ -106,10 +104,10 @@ async function stageCollect(body, stage) {
       : /\b(market|industry|forecast|size|share)\b/i.test(keyword) ? "report" : "blog";
   const ourUrl = /^https?:\/\//i.test(body.ourUrl || "") ? body.ourUrl.trim() : null;
   const ourDomain = normaliseDomain(body.ourDomain || process.env.OUR_DOMAIN || ourUrl || process.env.GSC_SITE_URL || "");
+  const manual = cleanManual(body.manual);
 
   let serp;
   try {
-    // SerpApi (if configured) for the main search so the brief can show AI Overview sources.
     serp = await searchGoogle(keyword, { gl, hl, num: 10, prefer: "serpapi" });
   } catch (e) {
     const noProvider = e.code === "NO_SERP_PROVIDER";
@@ -124,13 +122,13 @@ async function stageCollect(body, stage) {
 
   const ourInSerp = ourUrl && serp.organic.some((r) => sameUrl(r.link, ourUrl));
   const [pages, ourPage, dupes] = await Promise.all([
-    collectSerpPages(serp, { ourDomain }),
+    collectSerpPages(serp, { ourDomain, manual }),
     ourUrl && !ourInSerp ? fetchOurPage(ourUrl) : Promise.resolve(null),
     withDeadline(
       findDuplicates({ keyword, gl, hl, ourDomain, ourUrl, serpOrganic: serp.organic })
-        .catch((e) => ({ checked: false, reason: String(e.message || e), pages: [] })),
+        .catch((e) => ({ checked: false, reason: String(e.message || e), pages: [], queries: [] })),
       20000,
-      { checked: false, reason: "Duplicate check timed out.", pages: [] }
+      { checked: false, reason: "Existing-page check timed out.", pages: [], queries: [] }
     ),
   ]);
 
@@ -200,14 +198,9 @@ async function stageRanks(body) {
     });
     const top = (p1.organic || [])[0];
     return json({
-      ok: true,
-      keyword,
-      gl,
-      checkedAt: new Date().toISOString(),
-      ourPosition: our ? our.position : null,
-      ourUrl: our ? our.link : null,
-      tracked,
-      top1: top ? `${displayName(top.domain)} — ${top.link}` : "",
+      ok: true, keyword, gl, checkedAt: new Date().toISOString(),
+      ourPosition: our ? our.position : null, ourUrl: our ? our.link : null,
+      tracked, top1: top ? `${displayName(top.domain)} — ${top.link}` : "",
     });
   } catch (e) {
     return json({ error: String(e.message || e) }, 502);
@@ -216,7 +209,25 @@ async function stageRanks(body) {
 
 /* ---------------- helpers ---------------- */
 
-// Real pages from our own sitemaps to link to (same helper the Content Planner uses).
+// Competitor pages the analyst added: [{ url, html? }]. Max 8 pages, ~1.5 MB each, ~3.5 MB total.
+function cleanManual(list) {
+  if (!Array.isArray(list)) return [];
+  let total = 0;
+  const out = [];
+  for (const m of list.slice(0, 8)) {
+    const url = String((m && m.url) || "").trim();
+    if (!/^https?:\/\//i.test(url)) continue;
+    let html = m && typeof m.html === "string" && m.html.length > 300 ? m.html : null;
+    if (html && html.length > 1500000) html = html.slice(0, 1500000);
+    if (html) {
+      total += html.length;
+      if (total > 3500000) html = null;
+    }
+    out.push({ url, html });
+  }
+  return out;
+}
+
 async function internalLinkBlock(c) {
   try {
     const text = [
