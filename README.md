@@ -150,3 +150,22 @@ npm run test:local      # live fetch (may 403 from your IP — that's the block,
 node scripts/test-fixtures.mjs   # full pipeline against saved real HTML
 vercel dev              # run the API locally
 ```
+<!-- README.md — PATCH: add this section under "Endpoints" -->
+### `POST /api/brief` — Content Brief (keyword → Google page 1 → analyst brief)
+
+UI at `/brief`. Pulls live Google page 1 for a keyword, X-rays every result, builds a
+topic-coverage matrix (must / should / edge), compares market figures, segmentation,
+regions and key players across competitors, then writes an analyst-ready brief aligned
+to the Google policy baseline in `lib/google-policy.js`.
+
+```
+{ "keyword": "plywood market", "gl": "us", "contentType": "report",
+  "ourUrl": "https://www.kingsresearch.com/report/plywood-market-3073", "stage": "full" }
+```
+
+The UI calls `stage: "collect"` and then `stage: "write"`, so each half fits the 60s limit.
+Requires `SERPER_API_KEY` (or `SERPAPI_KEY`). `OPENAI_API_KEY` enables the written outline,
+titles and FAQs; without it you still get every data section.
+
+> Competitor auto-find in `/api/analyze` now uses the same provider. Bing Search was retired
+> (Aug 2025) and Google's Custom Search JSON API shuts down on 1 Jan 2027.
