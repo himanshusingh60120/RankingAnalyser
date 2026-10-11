@@ -1,17 +1,18 @@
 // api/plan.js
-// CONTENT PLANNER / BRIEF: for NEW content you're about to publish.
+// CONTENT BRIEF: for NEW content you're about to publish.
 // Input:  { keyword, content, contentType?: "blog"|"report", url? }
-// Output: competitor benchmarks, topic-gap analysis, draft health checks,
-//         word & link targets, AI H-tag outline, meta title/description,
-//         PAA-style FAQs, ready-to-paste JSON-LD schema, internal links
-//         from the site's own sitemaps (GSC-enriched when available).
+// Output: live SERP check (who actually ranks), competitor benchmarks,
+//         topic-gap analysis, draft health checks, word & link targets,
+//         AI H-tag outline, meta title/description, PAA-style FAQs,
+//         ready-to-paste JSON-LD schema, internal links from the site's
+//         own sitemaps (GSC-enriched when available).
 //
 // Uses the same fixed 5 competitors and the same fetch/x-ray pipeline as
 // /api/analyze, so the benchmarks are consistent across the tool.
 
 import { fetchPage } from "../lib/fetcher.js";
 import { xray } from "../lib/xray.js";
-import { findCompetitorUrls, keywordMatches } from "../lib/competitors.js";
+import { findCompetitorUrls, keywordMatches, keywordMatchesRelaxed, serpPositions } from "../lib/competitors.js";
 import { suggestInternalLinks } from "../lib/internal-links.js";
 import { refreshAccessToken, queryManyPageMetrics } from "../lib/gsc.js";
 
@@ -60,8 +61,13 @@ export async function POST(request) {
   const ourWords = content.split(/\s+/).filter(Boolean).length;
   const draftHealth = draftChecks(keyword, content, ourWords);
 
-  // ---- Find + x-ray competitor pages (same fixed 5, same matching rules) ----
-  const compUrls = await findCompetitorUrls(keyword, contentType);
+  // ---- Discovery + live SERP check in parallel (no extra wall-time) ----
+  const [compUrls, serp] = await Promise.all([
+    findCompetitorUrls(keyword, contentType),
+    serpPositions(keyword),
+  ]);
+
+  // ---- X-ray competitor pages (same fixed 5, same matching rules) ----
   const comps = [];
   await Promise.all(
     compUrls.map(async (c) => {
@@ -73,9 +79,11 @@ export async function POST(request) {
       }
       const x = xray(c.url, f.status, f.html);
       // A slug-probed URL is fabricated from the keyword and must not
-      // self-validate (real-search/manual URLs may).
-      const titleMatch = keywordMatches(keyword, "", x.title);
+      // self-validate (real-search/manual URLs may, and may use the
+      // RELAXED matcher since they are real pages found by relevance).
       const urlTrustworthy = c.method !== "slug-probe";
+      const titleMatch = keywordMatches(keyword, "", x.title)
+        || (urlTrustworthy && keywordMatchesRelaxed(keyword, c.url, x.title));
       if (!(titleMatch || (urlTrustworthy && keywordMatches(keyword, c.url, "")))) {
         comps.push({ site: c.site, url: c.url, found: true, fetched: true, keywordMatch: false });
         return;
@@ -199,6 +207,7 @@ export async function POST(request) {
     keyword,
     contentType,
     ourWords,
+    serp,
     draftHealth,
     competitors: comps,
     topicGaps,
