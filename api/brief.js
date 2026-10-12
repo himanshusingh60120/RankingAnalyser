@@ -8,6 +8,7 @@
 // POST /api/brief  { stage: ... }
 //   collect { keyword, gl?, hl?, contentType?, ourUrl?, ourDomain?, manual? } -> { collected }
 //           manual = [{ url, html? }] — competitor pages added by the analyst (html = pasted page)
+//           collected also carries intentMix, keywordCheck and freshness (lib/brief-checks.js)
 //   write   { collected } -> { ai, internalLinks }
 //   full    collect + write in one call (scripts only — may pass 60s)
 //   save    { brief: { collected, ai, internalLinks }, html, country } -> Google Doc + JSON in Drive, row in the Sheet
@@ -24,6 +25,7 @@ import { COMPETITOR_SITES } from "../lib/competitors.js";
 import { callStorage, storageConfigured } from "../lib/storage.js";
 import { findDuplicates, dupesSummary } from "../lib/dupes.js";
 import { checkDraft } from "../lib/draft-check.js";
+import { annotateBrief } from "../lib/brief-checks.js"; // NEW: search intent, keyword check, stale-data flags
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -135,6 +137,12 @@ async function stageCollect(body, stage) {
 
   const collected = analyseSerp({ keyword, contentType, serp, pages, ourDomain, ourPage, ourUrl });
   collected.dupes = dupes;
+
+  // NEW: search intent, keyword-vs-top-10 check and stale-data flags. Flags only — every page stays
+  // in the comparison. Wrapped so a problem here can never break brief generation.
+  try { annotateBrief(collected, { keyword, serp, pages, ourPage, ourDomain, dupes }); }
+  catch (e) { collected.checksError = String(e.message || e); }
+
   if (stage === "collect") return json({ stage, collected });
 
   const [ai, internalLinks] = await Promise.all([safe(() => writeBriefWithAi(collected)), internalLinkBlock(collected)]);
