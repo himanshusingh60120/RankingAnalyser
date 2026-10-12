@@ -135,6 +135,7 @@ td.ctr{text-align:center}
 .tag.you{background:#dff1ea;color:#0f7a5c}
 .tag.src{background:#e3eef8;color:#2c5f8a}
 .tag.cat{background:#efe9f8;color:#5b3f8a}
+.tag.stale{background:#fbefd9;color:#93621a}
 .pill{display:inline-block;border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:1px 9px;font-size:12.5px;margin:2px 4px 2px 0}
 .kwbox{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 15px;margin:6px 0 10px}
 .kwl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-muted)}
@@ -615,10 +616,39 @@ async function loadSaved(id) {
 }
 
 /* ================= render ================= */
+// NEW — banners for the keyword check, search intent and stale data (from lib/brief-checks.js)
+function checkBanners(c) {
+  const out = [];
+  const kc = c.keywordCheck && !c.keywordCheck.error ? c.keywordCheck : null;
+  if (kc && kc.status === "variant" && kc.suggestedKeyword) {
+    out.push(`<div class="banner warnb"><b>Keyword check:</b> ${esc(kc.message)} <button class="linkbtn" data-kw="${esc(kc.suggestedKeyword)}" onclick="rerunWith(this.dataset.kw)">Re-run with “${esc(kc.suggestedKeyword)}”</button></div>`);
+  } else if (kc && kc.status === "weak") {
+    out.push(`<div class="banner warnb"><b>Keyword check:</b> ${esc(kc.message)}</div>`);
+  }
+  const im = c.intentMix && !c.intentMix.error ? c.intentMix : null;
+  if (im && im.intent !== "report") {
+    const adds = [im.wantsDefinition && "a definition at the top", im.wantsStats && "a statistics table in Key Market Highlights", im.wantsTrends && "Market Trends as a must-have"].filter(Boolean);
+    const list = adds.length > 1 ? `${adds.slice(0, -1).join(", ")} and ${adds[adds.length - 1]}` : adds[0];
+    out.push(`<div class="banner warnb"><b>Search intent — ${esc(im.label)}:</b> ${esc(im.detail)}${list ? ` The skeleton adds ${esc(list)}.` : ""}</div>`);
+  }
+  const fr = c.freshness && !c.freshness.error ? c.freshness : null;
+  if (fr && Array.isArray(fr.stale) && fr.stale.length && fr.message) {
+    out.push(`<div class="banner warnb"><b>Stale data — flagged, still compared:</b> ${esc(fr.message)}</div>`);
+  }
+  return out.join("");
+}
+// NEW — one-click re-run with the keyword wording Google actually ranks
+function rerunWith(k) {
+  if (!k) return;
+  $("kw").value = k;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  generate();
+}
+
 function render() {
   if (!S) return;
   const c = S.collected;
-  const warns = (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") +
+  const warns = checkBanners(c) + (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") + // NEW: checkBanners
     (S.ai && S.ai.error ? `<div class="banner warnb">AI step: ${esc(S.ai.error)} — templates are shown instead.</div>` : "");
   const tabs = [["analyst", "Writer's skeleton"], ["seo", "SEO details"], ["draft", "Check my draft"]]
     .map(([k, l]) => `<button class="tabbtn ${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("");
@@ -778,6 +808,26 @@ function dimTitle(label) {
   return tcAll(m[label] || label);
 }
 
+// NEW — H3 grammar: "Is/Are" and "Does/Do" follow the head noun of the idea.
+// "Regulatory Challenges" → Are/Do · "Rising Digital Adoption" → Is/Does
+// "Expansion In Emerging Markets" → Is (head noun "Expansion") · "Mergers & Acquisitions" → Are
+const SINGULAR_S_WORDS = new Set(["logistics", "economics", "analytics", "mathematics", "physics", "ethics", "politics",
+  "news", "series", "species", "means", "diabetes", "measles", "gas", "lens", "bus", "status", "consensus", "census",
+  "focus", "bonus", "access", "business", "process", "progress", "success", "awareness", "wellness", "fitness", "address"]);
+function isPluralIdea(phrase) {
+  const s = String(phrase || "").trim();
+  if (!s || s.startsWith("[")) return false; // placeholders read as singular
+  const head = s.toLowerCase()
+    .split(/\s+(?:in|of|for|on|across|among|amongst|with|to|by|from|through|within|into|at|over|under|amid|around|between|via)\s+/)[0];
+  if (/\s(?:and|&)\s/.test(head)) return true;
+  const last = (head.split(/\s+/).pop() || "").replace(/[^a-z]/g, "");
+  if (!last || SINGULAR_S_WORDS.has(last)) return false;
+  if (/(?:ss|us|is)$/.test(last)) return false;
+  return /s$/.test(last);
+}
+const isAre = (p) => (isPluralIdea(p) ? "Are" : "Is");
+const doesDo = (p) => (isPluralIdea(p) ? "Do" : "Does");
+
 function buildSkeleton(c, ai) {
   const isReport = c.contentType !== "blog";
   const kw = String(c.keyword || "").trim();
@@ -802,6 +852,25 @@ function buildSkeleton(c, ai) {
     const best = labels.map((l) => topicMap[l]).filter(Boolean).sort((a, b) => b.count - a.count)[0];
     return best && N ? `${best.count} of ${N} competitors cover this` : "";
   };
+
+  // NEW — search intent, keyword check and freshness (computed server-side in lib/brief-checks.js)
+  const IM = c.intentMix && !c.intentMix.error ? c.intentMix : null;
+  const KC = c.keywordCheck && !c.keywordCheck.error ? c.keywordCheck : null;
+  const FR = c.freshness && !c.freshness.error ? c.freshness : null;
+  const informational = !!IM && IM.intent === "informational";
+  const mixed = !!IM && IM.intent === "mixed";
+  const explainerSerp = informational || mixed;
+  const ofTopIs = (k, one, many) => {
+    const n = (IM && IM.counts && IM.counts[k]) || 0;
+    return `${n} of the top ${IM ? IM.total : 10} results ${n === 1 ? `is ${one}` : `are ${many}`}`;
+  };
+  const exNames = (k) => (IM && IM.examples && IM.examples[k] && IM.examples[k].length ? ` (${IM.examples[k].join(", ")})` : "");
+  const kwVariant = KC && KC.status === "variant" && KC.suggestedKeyword ? KC : null;
+  const topicNoun = (kwVariant && kwVariant.variantDisplay) ||
+    tcAll(kwNoGlobal.replace(/\bmarkets?\b/gi, " ").replace(/\s+/g, " ").trim() || kwNoGlobal);
+  const staleOthers = FR && Array.isArray(FR.stale) ? FR.stale.filter((i) => i.type !== "ours") : [];
+  const staleOurs = FR && Array.isArray(FR.stale) ? FR.stale.find((i) => i.type === "ours") : null;
+
   const sections = [];
   const mk = (key, h2, extra = {}) => {
     const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false, ...extra };
@@ -813,10 +882,18 @@ function buildSkeleton(c, ai) {
 
   // 1. Overview
   const ov = mk("overview", `${Kshort} Overview`, { why: evidence(["Market overview & definition", "Market size & forecast"]) || "our standard first section" });
-  ov.write = "Open with our numbers in the first sentence, then two short paragraphs: what's driving demand, and what's changing (technology, regulation, buyer behaviour).";
+  const definitionFirst = explainerSerp && IM.wantsDefinition; // NEW
+  ov.write = definitionFirst
+    ? "Start with a plain-English definition (2–3 sentences), then our headline numbers, then what's driving demand and what's changing (technology, regulation, buyer behaviour)."
+    : "Open with our numbers in the first sentence, then two short paragraphs: what's driving demand, and what's changing (technology, regulation, buyer behaviour).";
+  if (definitionFirst) ov.h3 = [{ text: `What Is ${topicNoun}?` }]; // NEW
   ov.cover = [
-    `First sentence (house style): "According to Kings Research analysis, the ${kwG} size was recorded at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a CAGR of [Z]% over the forecast period from 20XX to 20XX."`,
+    kwVariant ? `Keyword: ${kwVariant.message} Use “${kwVariant.suggestedKeyword}” in the title, H1 and first sentence — or re-run the brief with it (button at the top).` : null, // NEW
+    definitionFirst ? `Definition first: answer “What is ${topicNoun}?” in 40–50 words under that H3 — ${ofTopIs("guide", "an explainer", "explainers")}${exNames("guide")}, and searchers ask it in People Also Ask.` : null, // NEW
+    `${definitionFirst ? "Then the house-style sentence" : "First sentence (house style)"}: "According to Kings Research analysis, the ${kwG} size was recorded at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a CAGR of [Z]% over the forecast period from 20XX to 20XX."`,
     F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}% — if ours is outside that range, explain why in one line` : null,
+    staleOthers.length ? `Old data among the pages compared (still included — they rank or are tracked): ${staleOthers.slice(0, 4).map((i) => `${i.name}${i.position ? ` #${i.position}` : ""} — ${i.reasons.join("; ")}`).join(" · ")}. Publish our current base year and a forecast to 20XX so ours is the freshest page.` : null, // NEW
+    staleOurs ? `Your current page is out of date (${staleOurs.reasons.join("; ")}) — update its base year and forecast too.` : null, // NEW
   ].filter(Boolean);
   addTable(ov, "Market size by year, base year → forecast year (an HTML table next to the chart — Google can't read numbers inside images)");
 
@@ -832,14 +909,24 @@ function buildSkeleton(c, ai) {
     dimNames[2] ? `Leading ${dimNames[2].toLowerCase()} segment: share and value` : null,
     "Fastest-growing region: CAGR",
   ].filter(Boolean);
+  // NEW — statistics pages rank for this search: turn the highlights into a sourced statistics table
+  if (explainerSerp && IM.wantsStats) {
+    hi.why = `our standard section · ${ofTopIs("stats", "a statistics page", "statistics pages")}${exNames("stats")}`;
+    hi.write = "Make this a table, not bullets: 8–10 headline statistics, each with the value, the year and its source. Statistics pages rank for this search, so readers expect the numbers at a glance.";
+    hi.cover.push("One adoption or penetration figure from an official source — cite it", "The largest companies by revenue or share — cite the source");
+    addTable(hi, "Key statistics — statistic, value, year, source");
+  }
 
-  // 3. Market Dynamics — suggested question H3s
+  // 3. Market Dynamics — suggested question H3s (NEW: verb agreement)
   const dy = mk("dynamics", "Market Dynamics", { why: evidence(["Market dynamics & growth drivers", "Restraints & challenges", "Opportunities"]) || "our standard section" });
   dy.write = "One H3 each for the main driver, restraint and opportunity.";
+  const dIdea = idea(ideas.driver, "Main Growth Driver");
+  const rIdea = idea(ideas.restraint, "Main Restraint");
+  const oIdea = idea(ideas.opportunity, "Main Opportunity");
   dy.h3 = [
-    { text: `How Is ${idea(ideas.driver, "Main Growth Driver")} Driving Market Growth?`, tip: "driver" },
-    { text: `How Does ${idea(ideas.restraint, "Main Restraint")} Restrain The Development Of The ${KQ}?`, tip: "restraint" },
-    { text: `How Is ${idea(ideas.opportunity, "Main Opportunity")} Creating Growth Opportunities For The ${KQ}?`, tip: "opportunity" },
+    { text: `How ${isAre(dIdea)} ${dIdea} Driving Market Growth?`, tip: "driver" },
+    { text: `How ${doesDo(rIdea)} ${rIdea} Restrain The Development Of The ${KQ}?`, tip: "restraint" },
+    { text: `How ${isAre(oIdea)} ${oIdea} Creating Growth Opportunities For The ${KQ}?`, tip: "opportunity" },
   ];
   dy.cover = ["Back each H3 with a cited source (government, association or company filing) and one dated example: \"For instance, in [Month YYYY], [Company] …\""];
 
@@ -896,7 +983,16 @@ function buildSkeleton(c, ai) {
     ["regulatory", "Regulatory landscape", "Regulatory Landscape", () => [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }]],
     ["valuechain", "Value chain & industry analysis", "Value Chain Analysis", () => [{ text: `How Is Value Created Across The ${KQ} Value Chain?` }]],
   ];
+  // NEW — trend pieces rank for this search: Market Trends becomes a must-have
+  const trendsMust = explainerSerp && IM.wantsTrends;
+  if (trendsMust) {
+    const t = topicMap["Market trends & innovation"];
+    const s = mk("trends", "Market Trends", { tier: "must", why: `${ofTopIs("trends", "a trend piece", "trend pieces")}${exNames("trends")}${t && N ? ` · ${t.count} of ${N} competitors cover it` : ""}` });
+    s.write = "Three or four trends, one H3 each, every one backed by a dated example or a figure.";
+    s.h3 = [{ text: `Which Trends Are Shaping The ${KQ}?` }, { text: "How Is [Trend] Changing [Buying Behaviour / Supply / Pricing]?" }];
+  }
   optional.forEach(([key, label, h2, h3s]) => {
+    if (key === "trends" && trendsMust) return; // NEW — already added as a must-have
     const t = topicMap[label];
     if (!t || t.tier === "differentiator") return;
     const s = mk(key, h2, { tier: "opt", optional: true, why: `${t.count} of ${N} competitors have it — optional in our format` });
@@ -904,11 +1000,12 @@ function buildSkeleton(c, ai) {
     s.h3 = h3s();
   });
 
-  // 8. Competitive Landscape
+  // 8. Competitive Landscape (NEW: verb agreement in the first H3)
   const cl = mk("competitive", "Competitive Landscape", { why: evidence(["Competitive landscape & key players", "Recent developments"]) || "our standard section" });
   cl.write = "How competition works in this market, then the key players.";
+  const cIdea = idea(ideas.competition, "Main Competitive Strategy, e.g. Mergers & Acquisitions");
   cl.h3 = [
-    { text: `How Is ${idea(ideas.competition, "Main Competitive Strategy, e.g. Mergers & Acquisitions")} Reshaping Competition In The ${KQ}?` },
+    { text: `How ${isAre(cIdea)} ${cIdea} Reshaping Competition In The ${KQ}?` },
     { text: `Who Are The Key Players In The ${KQ}?` },
   ];
   cl.cover = [
@@ -936,7 +1033,7 @@ function buildSkeleton(c, ai) {
   const extraQ = [...(c.serp.peopleAlsoAsk || []).map((p) => p.question), ...((ai && ai.faqs) || [])]
     .filter((q) => goodQuestion(kw, q))
     .filter((q) => { const k = normQ(q); if (!k || seenQ.has(k)) return false; seenQ.add(k); return true; })
-    .slice(0, 2);
+    .slice(0, informational ? 4 : mixed ? 3 : 2); // NEW — more real searcher questions when explainers rank
   fq.h3 = [...base, ...extraQ].map((t) => ({ text: t, plain: true }));
 
   // "Our edge" ideas from the AI → the section they fit (else Market Dynamics)
@@ -974,6 +1071,14 @@ function buildSkeleton(c, ai) {
   let houseTitle = `${Kfull} Size, Share & Growth | Report 20XX`;
   if (houseTitle.length > 60) houseTitle = `${Kshort} Size, Share & Growth | Report 20XX`;
   const titles = [{ text: houseTitle, len: houseTitle.length, house: true }];
+  // NEW — keyword check: offer the house title with the wording Google actually ranks
+  if (kwVariant) {
+    const sk = String(kwVariant.suggestedKeyword).trim();
+    const skNoGlobal = sk.replace(/^global\s+/i, "");
+    let alt = isGlobal ? `Global ${skNoGlobal} Size, Share & Growth | Report 20XX` : `${sk} Size, Share & Growth | Report 20XX`;
+    if (alt.length > 60) alt = `${skNoGlobal} Size, Share & Growth | Report 20XX`;
+    titles.push({ text: alt, len: alt.length, note: "uses the wording Google ranks" });
+  }
   ((ai && ai.titles) || []).filter((t) => t.len >= 48 && t.len <= 62).slice(0, 1).forEach((t) => titles.push(t));
   if (titles.length < 2) { const t2 = `${Kshort} Size, Share & Forecast, 20XX–20XX`; titles.push({ text: t2, len: t2.length }); }
   const metaText = `The ${kwG} was valued at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a [Z]% CAGR.`;
@@ -991,7 +1096,7 @@ function buildSkeleton(c, ai) {
 
 function opt(o, lo, hi) {
   if (!o) return "";
-  return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span>${o.house ? `<span class="ev"> · our house format</span>` : ""}</div>`;
+  return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span>${o.house ? `<span class="ev"> · our house format</span>` : ""}${o.note ? `<span class="ev"> · ${esc(o.note)}</span>` : ""}</div>`;
 }
 
 function skSectionHtml(s) {
@@ -1080,6 +1185,17 @@ function analystHtml(c) {
 }
 
 /* ================= SEO DETAILS ================= */
+// NEW — stale-data flag for a row (from lib/brief-checks.js). Flag only: the row stays in every comparison.
+function staleItem(c, x) {
+  const st = c.freshness && !c.freshness.error && Array.isArray(c.freshness.stale) ? c.freshness.stale : [];
+  if (!st.length || !x) return null;
+  return st.find((i) => (i.link && x.link && i.link === x.link) || (i.domain && x.domain && i.domain === x.domain) || (i.name && x.name && i.name === x.name)) || null;
+}
+const staleTag = (c, x) => {
+  const i = staleItem(c, x);
+  return i ? `<span class="tag stale" title="${esc(i.reasons.join("; "))}">stale data</span>` : "";
+};
+
 function seoHtml(c) {
   return docHead(c, "SEO details") +
     sec(`Google top 10 — ${countryName(c.gl)}`, top10Sec(c)) +
@@ -1100,7 +1216,7 @@ function top10Sec(c) {
       ? fmt(r.words) + (viaNote ? `<div class="muted small">${viaNote}</div>` : "")
       : `<span class="muted">${esc(r.note || "—")}</span>${r.note === "blocked" || r.note === "not read" ? pasteBtn(r.link) : ""}`;
     return `<tr class="${cls}"><td class="mono">${esc(r.position)}</td>
-      <td><b>${esc(r.name)}</b>${tag}<div class="muted small">${esc(TYPE[r.type] || r.type)}</div></td>
+      <td><b>${esc(r.name)}</b>${tag}${staleTag(c, r)}<div class="muted small">${esc(TYPE[r.type] || r.type)}</div></td>
       <td><a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.title || r.link)}</a></td>
       <td class="mono">${wordsCell}</td></tr>`;
   });
@@ -1163,11 +1279,12 @@ function scoreSec(c) {
   const rows = c.competitors.map((x) => {
     if (x.fetched) {
       const ap = x.stats.approx ? "~" : "";
+      const si = staleItem(c, x); // NEW — flag only; the row stays in every comparison
       return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${ap}${fmt(x.stats.words)}</td>
         <td class="mono">${ap}${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
         <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}</td>
         <td class="mono">${x.stats.cagr != null ? esc(x.stats.cagr) + "%" : "—"}</td>
-        <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}</td></tr>`;
+        <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}${si ? `<div>${staleTag(c, x)}</div><div class="muted small">${esc(si.reasons.join("; "))}</div>` : ""}</td></tr>`;
     }
     const fix = x.blocked ? pasteBtn(x.link, "Paste page") : pasteBtn(x.link || "", x.link ? "Use a different page" : "Add the right page");
     return `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")} ${fix}</td></tr>`;
@@ -1176,6 +1293,10 @@ function scoreSec(c) {
   const F = c.figures;
   if (F && F.cagrMin != null) {
     h += `<div class="callout warn">Competitor CAGRs range from <b>${esc(F.cagrMin)}%</b> to <b>${esc(F.cagrMax)}%</b>${F.periods[0] ? `; most use <b>${esc(F.periods[0].label)}</b>` : ""}. Publish our own estimate and explain in one line why it differs.</div>`;
+  }
+  // NEW — stale rows are flagged, never dropped
+  if (c.competitors.some((x) => x.fetched && staleItem(c, x))) {
+    h += `<p class="muted small">Rows marked <b>stale data</b> are still included in the CAGR range and every benchmark — Google still ranks them. A current base year and forecast is our edge over them.</p>`;
   }
   if (c.competitors.some((x) => x.stats && x.stats.approx)) h += `<p class="muted small">~ = approximate (page read via ChatGPT web search).</p>`;
   return h;
