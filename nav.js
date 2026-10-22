@@ -26,7 +26,7 @@
   const path = location.pathname.replace(/\/+$/, "") || "/";
   const current = TOOLS.find((t) => t.re.test(path)) || null;
 
-  const CSS = `
+  const NAV_CSS = `
 .an{padding:14px 0 4px}
 .an-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .an-brand{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#4dd0a7;text-decoration:none;margin-right:auto}
@@ -64,12 +64,13 @@
 
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const smooth = () => (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+  const cssId = (s) => (window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, "\\$&"));
 
   function injectCss() {
     if (document.getElementById("an-css")) return;
     const st = document.createElement("style");
     st.id = "an-css";
-    st.textContent = CSS;
+    st.textContent = NAV_CSS;
     document.head.appendChild(st);
   }
 
@@ -152,8 +153,8 @@
         entries.forEach((en) => {
           if (!en.isIntersecting) return;
           bar.querySelectorAll("a.on").forEach((a) => a.classList.remove("on"));
-          const a = bar.querySelector(`a[data-jb="${CSS.escape ? CSS.escape(en.target.id) : en.target.id}"]`);
-          if (a) { a.classList.add("on"); a.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+          const a = bar.querySelector(`a[data-jb="${cssId(en.target.id)}"]`);
+          if (a) a.classList.add("on");
         });
       }, { rootMargin: "-70px 0px -70% 0px" });
       items.forEach((it) => obs.observe(it.el));
