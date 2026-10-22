@@ -316,7 +316,7 @@ ul.gnotes li{color:#3c4652}
         <div class="full">
           <label>…or paste the document</label>
           <div id="gPaste" class="mbox" contenteditable="true" data-ph="Open the gap analysis → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
-          <div class="hint2">You can also add it later, from the Writer's skeleton tab.</div>
+          <div class="hint2">Used for the next brief only. You can also add it later, from the Writer's skeleton tab.</div>
         </div>
       </div>
     </details>
@@ -507,8 +507,27 @@ function captureGapPaste(e, box, setter) {
     ? `✓ Gap analysis captured (${(val.html || val.text).length.toLocaleString()} characters)`
     : "That looks too short — in the document press Ctrl+A first, then Ctrl+C.";
 }
-$("gPaste").addEventListener("paste", (e) => captureGapPaste(e, $("gPaste"), (v) => { GAPIN = v; }));
+$("gPaste").addEventListener("paste", (e) => captureGapPaste(e, $("gPaste"), (v) => { GAPIN = v; GAPPASTE = null; })); // GAP — FIX: one pending gap doc at a time
 $("gPaste").addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
+
+// GAP — FIX: a gap doc belongs to one brief — clear the console box once it has been attached
+function clearGapInput() {
+  GAPIN = null;
+  $("gUrl").value = "";
+  $("gPaste").textContent = "";
+  $("gPaste").classList.remove("got");
+}
+
+// GAP — FIX: warn when the gap analysis looks like it is for a different market than the keyword
+const GAP_TITLE_NOISE = new Set(["competitor", "seo", "content", "gap", "brief", "draft"]);
+function gapMismatch(c) {
+  const G = c && c.gap;
+  if (!G || !G.title) return "";
+  const want = new Set(kwTokens(c.keyword).map(stem));
+  const have = kwTokens(G.title).map(stem).filter((w) => !GAP_TITLE_NOISE.has(w));
+  if (!want.size || !have.length || have.some((w) => want.has(w))) return "";
+  return `Check this: the gap analysis is titled “${G.title}”, which doesn't match “${niceTitle(c.keyword)}”. Remove it if it's for a different market.`;
+}
 
 function gapBody(url, pasted) {
   if (url) return { url };
@@ -592,6 +611,7 @@ async function generate() {
   const btn = $("runBtn");
   btn.disabled = true;
   S = null;
+  GAPPASTE = null; // GAP — FIX: a paste left in the old brief's panel never carries over to a new brief
   closeSaved();
   history.replaceState(null, "", "/brief");
   $("out").innerHTML = "";
@@ -628,8 +648,12 @@ async function generate() {
     ]);
     S.ai = w.ai;
     S.internalLinks = w.internalLinks || null;
-    if (g && g.gap) S.collected.gap = g.gap;
-    else if (g && g.gapError) S.gapError = g.gapError;
+    if (g && g.gap) {
+      S.collected.gap = g.gap;
+      clearGapInput(); // GAP — FIX: used once — it won't be attached to the next keyword's brief
+    } else if (g && g.gapError) {
+      S.gapError = g.gapError; // kept in the console box so you can fix the sharing and try again
+    }
     S.gapPending = false;
     S.aiPending = false;
     render();
@@ -715,6 +739,7 @@ function savedRow(b) {
 
 async function loadSaved(id) {
   closeSaved();
+  GAPPASTE = null; // GAP — FIX: don't carry a paste from the previous brief's panel
   $("status").innerHTML = `<span class="dot"></span>Opening saved brief…`;
   try {
     const r = await post({ stage: "get", id });
@@ -1475,13 +1500,15 @@ function gapPanelHtml(c) {
   const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
   if (S.gapPending) return `<div class="gpanel"><span class="dot"></span>Reading the gap analysis and wording the H3s…</div>`;
   const err = S.gapError ? `<div class="gerr">${esc(S.gapError)}</div>` : "";
+  const mismatch = gapMismatch(c); // GAP — FIX
+  const warn = mismatch ? `<div class="gerr">⚠ ${esc(mismatch)}</div>` : "";
   if (G && !S.gapOpen) {
     const n = [`${G.pointers.length} pointers`, G.newSections.length ? `${G.newSections.length} new H2${G.newSections.length > 1 ? "s" : ""}` : "",
       G.developments.length ? `${G.developments.length} developments` : "", G.faqs.length ? `${G.faqs.length} FAQs` : ""].filter(Boolean).join(" · ");
-    return `<div class="gpanel ok">${err}✓ <b>Gap analysis added</b>${G.title ? ` — ${esc(G.title)}` : ""}: ${esc(n)}.${G.h3Note ? ` <span class="muted">${esc(G.h3Note)}</span>` : ""}
+    return `<div class="gpanel ok">${err}${warn}✓ <b>Gap analysis added</b>${G.title ? ` — ${esc(G.title)}` : ""}: ${esc(n)}.${G.h3Note ? ` <span class="muted">${esc(G.h3Note)}</span>` : ""}
       <button class="linkbtn" data-act="gapOpen">Replace</button> · <button class="linkbtn" data-act="gapRemove">Remove</button></div>`;
   }
-  return `<div class="gpanel">${err}<b>${G ? "Replace the gap analysis" : "Add the Competitor SEO &amp; Content Gap Analysis"}</b> — its pointers, facts, sources, new H2s and FAQs go straight into the skeleton below.${gapForm()}</div>`;
+  return `<div class="gpanel">${err}${warn}<b>${G ? "Replace the gap analysis" : "Add the Competitor SEO &amp; Content Gap Analysis"}</b> — its pointers, facts, sources, new H2s and FAQs go straight into the skeleton below.${gapForm()}</div>`;
 }
 
 function gapNotes(c) {
@@ -1829,12 +1856,17 @@ function docHtml() {
 }
 
 async function copyBrief() {
-  const el = $("briefDoc").cloneNode(true);
+  const live = $("briefDoc");
+  const el = live.cloneNode(true);
   el.querySelectorAll(".gpanel").forEach((n) => n.remove()); // GAP — the attach form isn't part of the brief
+  // GAP — FIX: plain-text copy keeps its line breaks (innerText of the live page, minus the attach form)
+  const panel = live.querySelector(".gpanel");
+  let plain = live.innerText;
+  if (panel && panel.innerText) plain = plain.replace(panel.innerText, "").replace(/^\s*\n/, "");
   try {
     await navigator.clipboard.write([new ClipboardItem({
       "text/html": new Blob([`<meta charset="utf-8">${el.innerHTML}`], { type: "text/html" }),
-      "text/plain": new Blob([el.textContent], { type: "text/plain" }),
+      "text/plain": new Blob([plain], { type: "text/plain" }),
     })]);
     toast("Copied — paste into Google Docs or Word");
   } catch {
