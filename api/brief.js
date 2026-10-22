@@ -15,13 +15,17 @@
 //           collected.gap so it is saved and reopened with the brief
 //   full    collect + write in one call (scripts only — may pass 60s)
 //   save    { brief: { collected, ai, internalLinks }, html, country } -> Google Doc + JSON in Drive, row in the Sheet
+//           SHEET — also sends meta.sheet (misses, page-1 URLs, tracked competitors' ranks + URLs)
 //   list    { limit? } -> saved briefs from the Sheet
 //   get     { id } -> one saved brief, to reopen in the tool
 //   check   { collected, title, meta, html } -> draft checker results
 //   ranks   { secret, keyword, gl, hl? } -> current Google ranks (called weekly by the Sheet's Apps Script)
+//           SHEET — also returns trackedUrls (each competitor's ranking URL) and page1 (top-10 URLs)
+//   summary { secret, collected } -> { sheet }   SHEET — misses + page 1 for briefs saved before this
+//           version (the Sheet's "Fill misses for older briefs" menu)
 
 import { searchGoogle, serpProviderName } from "../lib/serp.js";
-import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl, BRIEF_TRACKED, displayName } from "../lib/brief.js";
+import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl, displayName } from "../lib/brief.js";
 import { writeBriefWithAi, phraseGapH3s } from "../lib/brief-ai.js";
 import { suggestInternalLinks } from "../lib/internal-links.js";
 import { COMPETITOR_SITES } from "../lib/competitors.js";
@@ -30,6 +34,7 @@ import { findDuplicates, dupesSummary } from "../lib/dupes.js";
 import { checkDraft } from "../lib/draft-check.js";
 import { annotateBrief } from "../lib/brief-checks.js"; // search intent, keyword check, stale-data flags, figure check
 import { readGapAnalysis, applyGapPhrasing } from "../lib/gap-analysis.js"; // GAP
+import { sheetSummary, page1List, page1Text, trackedFromResults } from "../lib/sheet-summary.js"; // SHEET
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -94,6 +99,8 @@ export async function POST(request) {
     }
     case "ranks":
       return stageRanks(body);
+    case "summary":
+      return stageSummary(body); // SHEET
     default:
       return json({ error: `Unknown stage '${stage}'.` }, 400);
   }
@@ -196,6 +203,8 @@ async function stageSave(body, request) {
   if (JSON.stringify(brief).length > 3500000) return json({ error: "This brief is too large to save." }, 413);
   let origin = process.env.APP_URL || "";
   if (!origin) { try { origin = new URL(request.url).origin; } catch { origin = ""; } }
+  let sheet = null; // SHEET — misses, page-1 URLs, tracked competitors' ranks + URLs for the tracking sheet
+  try { sheet = sheetSummary(c); } catch { sheet = null; }
   const r = await callStorage("save", {
     brief,
     html: String(body.html || "").slice(0, 900000),
@@ -208,6 +217,7 @@ async function stageSave(body, request) {
       ourUrl: (c.ourPage && c.ourPage.url) || "",
       ourRank: (c.ourRank && c.ourRank.position) || "",
       dupes: dupesSummary(c.dupes),
+      sheet,
     },
   }, 55000);
   return json(r, r.error ? 502 : 200);
@@ -227,19 +237,34 @@ async function stageRanks(body) {
     ]);
     const all = [...(p1.organic || []), ...(p2.organic || [])];
     const our = ourDomain ? all.find((r) => sameDomain(r.domain, ourDomain)) : null;
+    // SHEET — each tracked competitor's position and the URL that ranks (top 20)
+    const tr = trackedFromResults(all);
     const tracked = {};
-    BRIEF_TRACKED.forEach((t) => {
-      const hit = all.find((r) => sameDomain(r.domain, t.domain));
-      tracked[t.name] = hit ? hit.position : null;
-    });
+    const trackedUrls = {};
+    Object.keys(tr).forEach((n) => { tracked[n] = tr[n].position; trackedUrls[n] = tr[n].url; });
     const top = (p1.organic || [])[0];
     return json({
       ok: true, keyword, gl, checkedAt: new Date().toISOString(),
       ourPosition: our ? our.position : null, ourUrl: our ? our.link : null,
-      tracked, top1: top ? `${displayName(top.domain)} — ${top.link}` : "",
+      tracked, trackedUrls,
+      top1: top ? `${displayName(top.domain)} — ${top.link}` : "",
+      page1: page1Text(page1List(p1.organic || [], ourDomain)), // SHEET — the ten page-1 URLs
     });
   } catch (e) {
     return json({ error: String(e.message || e) }, 502);
+  }
+}
+
+// SHEET — misses + page 1 for a brief saved before this version (called by the Sheet's Apps Script).
+async function stageSummary(body) {
+  if (!process.env.STORAGE_SECRET || body.secret !== process.env.STORAGE_SECRET) return json({ error: "Unauthorized" }, 401);
+  const c = body.collected;
+  if (!c || !c.keyword) return json({ error: "Missing 'collected'." }, 400);
+  if (JSON.stringify(c).length > 3500000) return json({ error: "'collected' payload too large." }, 413);
+  try {
+    return json({ ok: true, sheet: sheetSummary(c) });
+  } catch (e) {
+    return json({ error: String(e.message || e) }, 500);
   }
 }
 
