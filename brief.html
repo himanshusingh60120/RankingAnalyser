@@ -315,6 +315,23 @@ ul.gnotes li{color:#3c4652}
 .gpanel .gerr{color:#a33a2e;margin-bottom:6px}
 .gform{margin-top:10px}
 .gpaste{min-height:120px;max-height:260px;margin-top:8px}
+/* EDGE — what competitors miss (lib/competitor-gaps.js) */
+.gtag.g-edge{background:#fff1d6;color:#8a5a00}
+.cmiss{border-left:3px solid #c98a22;background:#fffaf0;border-radius:0 8px 8px 0;padding:8px 12px;margin:8px 0;font-size:13.5px}
+.cmk{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a5a00;margin-bottom:3px}
+.cmiss ul{margin:2px 0 0;padding-left:18px}
+.cmiss li{margin:3px 0}
+.cmiss .who,.eadd .who{color:var(--p-muted)}
+.oursnote{color:#0f5e48}
+.edgebox{border:2px solid #e8c98a;background:#fffaf0;border-radius:12px;padding:14px 18px;margin:12px 0}
+.edgebox.slim{border-width:1px;padding:9px 14px;font-size:13.5px;color:var(--p-muted)}
+.ebk{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a5a00;margin-bottom:6px}
+.edgebox .linkbtn{color:var(--p-accent)}
+ol.elist{margin:4px 0 8px;padding-left:20px}
+ol.elist li{margin:7px 0}
+.ecount{font-family:var(--mono);font-size:11px;color:#8a5a00;background:#fff1d6;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+.eadd{font-size:13.5px;color:var(--p-muted)}
+table.dt tr.edgerow td{background:#fffaf0}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--signal);color:#04130d;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;opacity:0;transition:all .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
@@ -342,7 +359,7 @@ ul.gnotes li{color:#3c4652}
     <div>
       <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
       <h1>Content <span class="x">Brief</span></h1>
-      <p class="lede">Turn a keyword into a writer's skeleton in the Kings Research report format, with the competitor analysis and a draft checker alongside.</p>
+      <p class="lede">Turn a keyword into a writer's skeleton in the Kings Research report format, with the competitor analysis, what competitors miss, and a draft checker alongside.</p>
     </div>
     <button class="ghost" id="savedBtn" type="button">Saved briefs</button>
   </header>
@@ -419,7 +436,7 @@ ul.gnotes li{color:#3c4652}
     </div>
 
     <div class="xpanel" id="pageBox" data-x="page" hidden>
-      <p class="xhelp">Updating a report we already have? Add its URL so the brief checks it against the top 10. Change the search language only for non-English searches.</p>
+      <p class="xhelp">Updating a report we already have? Leave this empty and the brief compares the main page it finds for the keyword — or add a URL to compare a specific page. Change the search language only for non-English searches.</p>
       <div class="grid">
         <div class="full">
           <label for="ourUrl">Your current page URL</label>
@@ -468,12 +485,15 @@ const TYPE = { ours: "You", tracked: "Tracked competitor", publisher: "Research 
   press: "Press release", news: "News / media", ugc: "Social / UGC", other: "Other" };
 const TIER = { must: "Must have", should: "Good to have", opt: "Optional" };
 const tierTag = (t) => `<span class="ptag ${esc(t)}">${esc(TIER[t] || t)}</span>`;
-const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com"];
+const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com", "grandviewresearch.com"];
 const GENERIC = new Set(["market", "markets", "report", "reports", "size", "share", "growth", "industry", "analysis", "global", "forecast", "trends", "outlook", "and", "the", "for"]);
 const stem = (w) => (w.length > 4 && w.endsWith("ies") ? w.slice(0, -3) + "y" : w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w);
 const kwTokens = (k) => String(k || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/[\s-]+/).filter((t) => t.length > 2 && !GENERIC.has(t));
 const countryName = (gl) => { const o = [...$("gl").options].find((x) => x.value === gl); return o ? o.textContent : String(gl || "").toUpperCase(); };
 const sameDomain = (d, base) => !!d && !!base && (d === base || d.endsWith("." + base));
+// LINKS — same page whatever the www / trailing slash
+const normUrlC = (u) => { try { const x = new URL(u); return (x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/+$/, "")).toLowerCase(); } catch { return String(u || "").toLowerCase(); } };
+const sameUrlC = (a, b) => !!a && !!b && normUrlC(a) === normUrlC(b);
 const pending = () => `<div class="muted">Adding AI suggestions…</div>`;
 const aiOk = () => (S && S.ai && !S.ai.error && !S.ai.skipped ? S.ai : null);
 const SMOOTH = () => (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"); // NAV
@@ -491,6 +511,10 @@ const uniqS = (a) => [...new Set((a || []).filter(Boolean))];
 const shortTopic = (p) => String(p || "").replace(/\s*\([^)]*\)/g, "").split(/\s[—–]\s|;\s|:\s/)[0].replace(/["“”‘’']/g, "").trim();
 const coKey = (n) => String(n || "").toLowerCase().replace(/\b(inc|ltd|plc|ag|co|corp|corporation|company|group|holdings?|limited|services|llc|sa|nv)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
 const sameCo = (a, b) => { const x = coKey(a), y = coKey(b); return !!x && !!y && (x.includes(y) || y.includes(x)); };
+// EDGE — what competitors miss (computed server-side in lib/competitor-gaps.js)
+const cgOf = (c) => (c && c.competitorGaps && Array.isArray(c.competitorGaps.items) ? c.competitorGaps : null);
+const namesShort = (names, max = 5) => `${names.slice(0, max).join(", ")}${names.length > max ? "…" : ""}`;
+const oursTxt = (v) => (v === true ? " Your current page has it — keep it." : v === false ? " Your current page doesn't have it either." : "");
 
 let pageType = "report";
 let HEALTH = {};
@@ -597,7 +621,7 @@ function emptyState() {
       <li><span class="hn">2</span><b>Add extras if you have them</b>The research team's gap analysis, competitor pages the tool can't read, or the report we already have.</li>
       <li><span class="hn">3</span><b>Generate</b>It takes 30–60 seconds, and the brief saves to Google Drive when it's done.</li>
     </ol>
-    <p class="after">Each brief has three tabs: <b>Writer's skeleton</b> for the writer, <b>SEO details</b> for the competitor analysis, and <b>Check my draft</b> to score the finished draft. Open older briefs from <b>Saved briefs</b> at the top.</p>
+    <p class="after">Each brief has three tabs: <b>Writer's skeleton</b> for the writer, <b>SEO details</b> for the competitor analysis and what competitors miss, and <b>Check my draft</b> to score the finished draft. Open older briefs from <b>Saved briefs</b> at the top.</p>
   </section>`;
 }
 
@@ -1070,6 +1094,9 @@ const JUNK_COMPANY_RE = /\b(population|diseases?|demand|growth|rising|increasing
 const BAD_PHRASE_RE = /frequently asked|table of contents|key takeaways|related reports?|request (?:a )?sample|key questions|report scope|research methodology|buy now|contact us|get in touch/i;
 const NEWS_Q_RE = /\b(today|yesterday|tomorrow|this week|right now|trump|biden|harris|modi|election|politic\w*|donat\w*|lobby\w*|bribe\w*|scandal|lawsuit|layoffs?|stocks?|share price|stock price|falling|crash\w*|plunge\w*|tariff war|news)\b/i;
 const Q_STOP = new Set(["what", "which", "who", "how", "why", "when", "where", "is", "are", "the", "of", "in", "for", "and", "does", "do", "will"]);
+// FAQ duplicate check: drop only words that don't change the question — "size", "growth" and "share" stay,
+// so "What is the current size of the X market?" matches "What is the market size of the X market?"
+const Q_DROP = new Set(["market", "markets", "global", "industry", "report", "reports", "key", "current", "main", "overall"].map(stem));
 const MODS = new Set(["market", "markets", "size", "share", "growth", "trends", "trend", "forecast", "analysis", "outlook", "demand", "revenue",
   "cagr", "players", "companies", "company", "segmentation", "segment", "segments", "regional", "region", "opportunities", "opportunity",
   "drivers", "driver", "industry", "report", "statistics", "value", "volume", "insights", "insight", "research", "landscape", "competitive",
@@ -1265,7 +1292,7 @@ function buildSkeleton(c, ai) {
   const sections = [];
   const mk = (key, h2, extra = {}) => {
     const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false,
-      notes: [], ptrs: [], gapEdge: [], fixed: false, fromGap: false, ...extra }; // GAP — notes, pointers, edge, slot tags
+      notes: [], ptrs: [], gapEdge: [], fixed: false, fromGap: false, cgaps: [], fromEdge: false, ...extra }; // GAP / EDGE
     sections.push(s);
     return s;
   };
@@ -1492,7 +1519,8 @@ function buildSkeleton(c, ai) {
   rm.cover = ["Keep the standard text, but add 1–2 lines naming the main sources used for THIS market (government statistics, associations, company filings) — so it isn't identical on every report"];
   if (G && (G.sources || []).length) rm.cover.push(`Main sources for this market (gap analysis): ${uniqS(G.sources.map((s) => s.label)).slice(0, 8).join(", ")}`); // GAP
 
-  // 10. FAQs — house questions, then the gap analysis's questions, then real searcher questions (max 12)
+  // 10. FAQs — house questions, then the gap analysis's questions, then questions no competitor answers,
+  //     then other real searcher questions (max 12)
   const fq = mk("faqs", "Frequently Asked Questions", { why: "our standard section" });
   fq.write = "Use each question as written and answer in 2–3 sentences with our numbers.";
   const base = [
@@ -1505,7 +1533,7 @@ function buildSkeleton(c, ai) {
   ];
   const seenQ = new Set(base.map(normQ));
   const kwStems = kwTok.map(stem);
-  const qKey = (q) => new Set(normQ(q).split(" ").map(stem).filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w) && w !== "key" && !kwStems.includes(w)));
+  const qKey = (q) => new Set(normQ(q).split(" ").map(stem).filter((w) => w.length > 2 && !Q_STOP.has(w) && !Q_DROP.has(w) && !kwStems.includes(w)));
   const qKeys = base.map(qKey);
   const keepQ = (q) => {
     const k = normQ(q);
@@ -1518,13 +1546,18 @@ function buildSkeleton(c, ai) {
     return true;
   };
   const gapQ = (G ? G.faqs || [] : []).filter((q) => goodQuestion(kw, q)).filter(keepQ).slice(0, 6); // GAP
-  const extraQ = [...(c.serp.peopleAlsoAsk || []).map((p) => p.question), ...((ai && ai.faqs) || [])]
+  const paaQs = (c.serp.peopleAlsoAsk || []).map((p) => p.question);
+  const noAnswer = new Set(((cgOf(c) && cgOf(c).unanswered) || []).map(normQ)); // EDGE — People Also Ask no competitor answers
+  const edgeQ = paaQs.filter((q) => noAnswer.has(normQ(q)) && goodQuestion(kw, q)).filter(keepQ)
+    .slice(0, Math.max(0, Math.min(4, 12 - base.length - gapQ.length)));
+  const extraQ = [...paaQs, ...((ai && ai.faqs) || [])]
     .filter((q) => goodQuestion(kw, q))
     .filter(keepQ)
-    .slice(0, Math.max(0, Math.min(informational ? 4 : mixed ? 3 : 2, 12 - base.length - gapQ.length)));
+    .slice(0, Math.max(0, Math.min(informational ? 4 : mixed ? 3 : 2, 12 - base.length - gapQ.length - edgeQ.length)));
   fq.h3 = [
     ...base.map((t) => ({ text: t, plain: true })),
     ...gapQ.map((t) => ({ text: t, plain: true, src: "gap" })),
+    ...edgeQ.map((t) => ({ text: t, plain: true, src: "edge" })),
     ...extraQ.map((t) => ({ text: t, plain: true })),
   ];
 
@@ -1548,7 +1581,7 @@ function buildSkeleton(c, ai) {
         h3: GR && GR.jurisdictions.length
           ? GR.jurisdictions.map((j) => ({ text: j.h3 || `How Do ${j.name} Rules Shape The ${KQ}?`, src: "gap", note: j.facts ? `Facts to verify: ${j.facts}` : "" }))
           : [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }],
-        h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], notes: [], ptrs: regPs, gapEdge: whys(regPs),
+        h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], notes: [], ptrs: regPs, gapEdge: whys(regPs), cgaps: [], fromEdge: false,
       },
     });
   }
@@ -1562,7 +1595,7 @@ function buildSkeleton(c, ai) {
         write: ns.desc ? `Cover: ${ns.desc}.` : "",
         h3: (ns.h3s || []).map((t) => ({ text: t, src: "gap" })),
         h3Note: "", cover: (ns.h3s || []).length ? [] : ["Write 2–3 question H3s for this section — see “How to write a good H3” above."],
-        tables: [], words: [], also: [], extras: [], notes: [], ptrs: ps, gapEdge: whys(ps),
+        tables: [], words: [], also: [], extras: [], notes: [], ptrs: ps, gapEdge: whys(ps), cgaps: [], fromEdge: false,
       },
     });
   });
@@ -1574,6 +1607,39 @@ function buildSkeleton(c, ai) {
     sections.splice(i + 1, 0, ins.s);
     lastAfter[ins.after] = ins.s.key;
   });
+
+  // EDGE — what most competitors miss (lib/competitor-gaps.js): a note in the section it belongs to,
+  // and a new H2 when that section isn't in our skeleton yet
+  const CG = cgOf(c);
+  if (CG) {
+    const EDGE_H2 = { trends: "Market Trends", macro: "Impact Of Tariffs, Policy & AI", pricing: "Pricing Analysis",
+      valuechain: "Value Chain Analysis", regulatory: "Regulatory Landscape" };
+    const EDGE_H3 = {
+      trends: [`Which Trends Are Shaping The ${KQ}?`],
+      macro: [`How Are [Tariffs / AI / Policy Changes] Impacting The ${KQ}?`],
+      pricing: ["How Are Prices Changing Across [Key Segment]?"],
+      valuechain: [`How Is Value Created Across The ${KQ} Value Chain?`],
+      regulatory: [`How Are [Key Regulations] Shaping The ${KQ}?`],
+    };
+    CG.items.filter((it) => it.most && it.area !== "Buyer question").forEach((it) => {
+      let s = sections.find((x) => x.key === it.where);
+      if (!s && EDGE_H2[it.where]) {
+        s = { key: it.where, h2: EDGE_H2[it.where], tier: "should", optional: false, fixed: false, fromGap: false, fromEdge: true,
+          why: `${it.n} of ${it.of} competitors don't have this section — an easy edge`, write: it.add,
+          h3: EDGE_H3[it.where].map((t) => ({ text: t })), h3Note: "", cover: [], tables: [], words: [], also: [], extras: [],
+          notes: [], ptrs: [], gapEdge: [], cgaps: [] };
+        const at = sections.findIndex((x) => x.key === "competitive");
+        sections.splice(at < 0 ? Math.max(0, sections.length - 2) : at, 0, s);
+      }
+      if (!s) s = ov;
+      if (s.optional && it.area === "Section") {
+        s.optional = false;
+        s.tier = "should";
+        s.why = `${it.n} of ${it.of} competitors don't have it — an easy edge`;
+      }
+      (s.cgaps = s.cgaps || []).push(it);
+    });
+  }
 
   // "Our edge" ideas from the AI → the section they fit (else Market Dynamics)
   ((ai && ai.extraActions) || []).forEach((a) => {
@@ -1638,7 +1704,7 @@ function opt(o, lo, hi) {
 }
 
 // GAP — RD pointer, developments and player blocks
-const SRC_CHIP = { gap: "gap analysis", fixed: "fixed slot" };
+const SRC_CHIP = { gap: "gap analysis", fixed: "fixed slot", edge: "no competitor answers" };
 function ptrHtml(p) {
   const src = (p.sources || []).filter((s) => s && s.url)
     .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label || shortUrl(s.url))}</a>`).join(" · ");
@@ -1664,6 +1730,12 @@ function h3Html(s, h) {
     ${h.note ? `<div class="gnote">${esc(h.note)}</div>` : ""}
     ${(h.ptrs || []).map(ptrHtml).join("")}${h.devs && h.devs.length ? devsHtml(h.devs) : ""}${h.players ? playersHtml(h.players) : ""}</li>`;
 }
+// EDGE — "competitors miss this" box inside a skeleton section
+function cmissHtml(list) {
+  if (!list || !list.length) return "";
+  return `<div class="cmiss"><div class="cmk">Competitors miss this — add it to beat them</div><ul>${list.map((it) =>
+    `<li><b>${esc(it.label)}</b> — ${it.n} of ${it.of} don't have it${it.lacks.length ? ` <span class="who">(${esc(namesShort(it.lacks))})</span>` : ""}. ${esc(it.add)}${it.ours != null ? `<span class="oursnote">${esc(oursTxt(it.ours))}</span>` : ""}</li>`).join("")}</ul></div>`;
+}
 
 function skSectionHtml(s, n) {
   const edge = s.gapEdge && s.gapEdge.length ? s.gapEdge : s.extras; // GAP — specific gaps replace generic ideas
@@ -1671,9 +1743,10 @@ function skSectionHtml(s, n) {
   const done = !EXPORTING && S && S.done.has(s.key);
   const box = EXPORTING ? '<span class="box"></span>'
     : `<input type="checkbox" class="tick" data-tick="${esc(s.key)}" aria-label="Mark “${esc(s.h2)}” as written"${done ? " checked" : ""}>`;
-  return `<li class="skh2${s.optional ? " optional" : ""}${done ? " ticked" : ""}" id="sec-${esc(s.key)}" data-toc="${n}. ${esc(s.h2)}" data-key="${esc(s.key)}"${s.optional ? ' data-opt="1"' : ""}><div class="skhead">${box}<span class="skn">${n}</span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.fixed ? '<span class="gtag g-fixed">fixed slot</span>' : ""}${s.fromGap ? '<span class="gtag g-gap">gap analysis</span>' : ""}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
+  return `<li class="skh2${s.optional ? " optional" : ""}${done ? " ticked" : ""}" id="sec-${esc(s.key)}" data-toc="${n}. ${esc(s.h2)}" data-key="${esc(s.key)}"${s.optional ? ' data-opt="1"' : ""}><div class="skhead">${box}<span class="skn">${n}</span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.fixed ? '<span class="gtag g-fixed">fixed slot</span>' : ""}${s.fromGap ? '<span class="gtag g-gap">gap analysis</span>' : ""}${s.fromEdge ? '<span class="gtag g-edge">competitors miss it</span>' : ""}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
     <div class="skbody">
       ${s.write ? `<div class="skw">${esc(s.write)}</div>` : ""}
+      ${cmissHtml(s.cgaps)}
       ${s.h3.length ? `<div class="h3hint">${s.key === "faqs" ? "FAQ questions" : "Suggested H3s — reword to match what your research shows"}</div>
         <ul class="skh3">${s.h3.map((h) => h3Html(s, h)).join("")}</ul>` : ""}
       ${s.cover.length ? `<ul class="skc">${s.cover.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
@@ -1714,7 +1787,7 @@ function skeletonHtml(sk) {
     <ol class="skh2s">${sk.sections.map((s, i) => skSectionHtml(s, i + 1)).join("")}</ol>
     ${sk.leftover.length ? `<div class="skx"><span class="lab">Optional phrases — only if they fit</span>${pills(sk.leftover)}</div>` : ""}
     <div class="callout" id="sk-links" data-toc="Internal links">Add ${sk.linkTarget} links to related Kings Research reports <b>inside sentences</b> in the sections above (not as a list).
-      ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a></li>`).join("")}</ul>` : ""}</div>
+      ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a>${l.why ? ` <span class="muted small">— ${esc(l.why)}</span>` : ""}</li>`).join("")}</ul>` : ""}</div>
     <div class="muted small">Then: Author and Reviewed By bios at the end of the page, as on our other reports.</div>`;
 }
 
@@ -1741,6 +1814,19 @@ function dupesNote(c) {
   const list = d.pages.slice(0, d.verdict === "related" ? 3 : 4).map((p) =>
     `<li><b>${esc(p.role)}:</b> <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a> — ${esc(p.action)}</li>`).join("");
   return `<div class="callout warn"><b>Before you write:</b> ${esc(d.message)}<ul class="plain">${list}</ul></div>`;
+}
+
+// OURS — how our current page compares (found automatically, or the URL given under "Your existing page")
+function ourPageNote(c) {
+  const o = c.ourPage;
+  if (!o || !o.url) return "";
+  const g = c.gaps || {};
+  const miss = (g.missingTopics || []).slice(0, 8);
+  const items = g.items || [];
+  return `<div class="callout"><b>Compared with your current page:</b> <a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(shortUrl(o.url))}</a>${o.auto ? " (found by the existing-page check)" : ""}${o.position ? ` — ranks #${esc(o.position)}` : ""}.
+    <div>${miss.length ? `Sections most competitors have that it doesn't: <b>${esc(miss.join(", "))}</b>.` : "It covers every section most competitors have."}</div>
+    ${items.length ? `<ul class="plain">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    <div class="muted small">See the “You” column in SEO details → What competitors miss and Topics each competitor covers.</div></div>`;
 }
 
 /* ================= GAP — gap-analysis panel and notes ================= */
@@ -1776,7 +1862,7 @@ function gapNotes(c) {
   const flags = [...((FC && FC.flags) || []), ...((G && G.figureCheck && G.figureCheck.flags) || [])].filter((f) => f.level !== "minor");
   let h = "";
   if (G && G.missing.length) {
-    h += `<div class="callout"><b>What competitors miss — our page covers these (gap analysis):</b><ul class="plain">${G.missing.map((m) => `<li><b>${esc(m.topic)}.</b> ${esc(m.detail)}</li>`).join("")}</ul></div>`;
+    h += `<div class="callout"><b>Research team's gap analysis — topics no competitor covers well:</b><ul class="plain">${G.missing.map((m) => `<li><b>${esc(m.topic)}.</b> ${esc(m.detail)}</li>`).join("")}</ul></div>`;
   }
   if (flags.length) {
     h += `<div class="callout warn"><b>Competitor figures that don't add up — don't benchmark against them:</b><ul class="plain">${flags.slice(0, 8).map((f) =>
@@ -1788,6 +1874,30 @@ function gapNotes(c) {
   return h;
 }
 
+// EDGE — "What competitors miss" summary at the top of the skeleton
+function edgeSummaryHtml(c) {
+  const CG = cgOf(c);
+  if (!CG) {
+    return EXPORTING ? "" : `<div class="edgebox slim">What competitors miss isn't available for this brief — generate it again to compare it with every competitor.</div>`;
+  }
+  const most = CG.items.filter((it) => it.most && it.area !== "Buyer question");
+  const qs = CG.unanswered || [];
+  const link = EXPORTING ? "" : ` <button class="linkbtn" data-tab="seo" data-goto="seo-what-competitors-miss">See the full comparison in SEO details</button>`;
+  if (!most.length && !qs.length) {
+    return `<section id="sk-edge" data-toc="What competitors miss"><div class="edgebox"><div class="ebk">What competitors miss</div>
+      <p>Most of the ${CG.N} compared pages cover everything we check — win on fresher numbers, depth and clearer answers.${link}</p></div></section>`;
+  }
+  const list = most.slice(0, 6).map((it) =>
+    `<li><b>${esc(it.label)}</b><span class="ecount">${it.n} of ${it.of} miss it</span><div class="eadd">${esc(it.add)} <span class="who">Missing on: ${esc(namesShort(it.lacks))}.</span>${it.ours != null ? `<span class="oursnote">${esc(oursTxt(it.ours))}</span>` : ""}</div></li>`).join("");
+  const qItem = qs.length
+    ? `<li><b>${qs.length} buyer question${qs.length > 1 ? "s" : ""} no competitor answers</b><span class="ecount">People Also Ask</span><div class="eadd">${esc(qs.slice(0, 3).map((q) => `“${q}”`).join(" · "))} — they're in the FAQ list below, tagged “no competitor answers”.</div></li>`
+    : "";
+  return `<section id="sk-edge" data-toc="What competitors miss"><div class="edgebox"><div class="ebk">What competitors miss — add these to beat them</div>
+    <ol class="elist">${list}${qItem}</ol>
+    ${most.length > 6 ? `<div class="muted small">+${most.length - 6} more in the SEO details tab.</div>` : ""}
+    <div class="small">Compared ${CG.N} competitor pages. Each item is also noted in the skeleton section where it belongs.${link}</div></div></section>`;
+}
+
 function analystHtml(c) {
   const ai = aiOk();
   const sk = buildSkeleton(c, ai);
@@ -1796,13 +1906,14 @@ function analystHtml(c) {
   const med = c.benchmarks.words && c.benchmarks.words.median;
   const lo = med ? round100(med) : t.coverageWords[0];
   const hi = Math.max(lo + 500, t.coverageWords[0]);
-  const before = dupesNote(c) + gapNotes(c); // NAV — grouped under "Before you write"
+  const before = dupesNote(c) + ourPageNote(c) + gapNotes(c); // NAV — grouped under "Before you write"
   const hasPtrs = sk.sections.some((s) => (s.ptrs || []).length || s.h3.some((h) => (h.ptrs || []).length));
   return docHead(c, "Writer's skeleton") +
     gapPanelHtml(c) +
     `<div id="sk-summary" data-toc="Brief summary">` +
     `<div class="job"><div class="jl">Your job</div><p>${esc((G && G.headline) || (ai && ai.howToWin) || defaultJob(c))}</p></div>` +
     `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div></div>` +
+    edgeSummaryHtml(c) + // EDGE
     (before ? `<section id="sk-before" data-toc="Before you write"><h2 class="sec">Before you write</h2>${before}</section>` : "") +
     `<h2 class="sec">Writer's skeleton</h2>` +
     `<p class="muted">Our report format, top to bottom. H3s are suggestions — keep the question style, change the wording to fit your findings.${EXPORTING ? " Tick each H2 off." : " Tick the box on each H2 when it's written; your progress shows in the side menu."}</p>` +
@@ -1837,11 +1948,33 @@ function seoHtml(c) {
     sec(`Google top 10 — ${countryName(c.gl)}`, top10Sec(c)) +
     sec("Your existing pages for this keyword", dupesSec(c)) +
     sec("Competitor scorecard", scoreSec(c)) +
+    sec("What competitors miss", cgSeoSec(c)) + // EDGE
     sec("Keywords competitors target", kwTheySec(c)) +
     sec("Topics each competitor covers", gridSec(c)) +
     sec("Keywords to use", kwSec(c)) +
     sec("Gap analysis — research team", gapSeoSec(c)) + // GAP
     sec(`Google rules (as of ${c.policyBaseline})`, `<ul class="plain">${(c.rules || []).map((r) => `<li>${esc(r)}</li>`).join("")}</ul>`);
+}
+
+// EDGE — has / missing grid per competitor (plus "You" when our page was compared), and who answers
+// each People Also Ask question
+function cgSeoSec(c) {
+  const CG = cgOf(c);
+  if (!CG) return `<p class="muted">Not available for this brief — generate it again to compare what each competitor misses.</p>`;
+  if (!CG.items.length) return `<p class="muted">Every compared competitor covers everything we check.</p>`;
+  const cols = CG.compared || [];
+  const hasOurs = CG.items.some((it) => it.ours === true || it.ours === false);
+  const cell = (v) => (v === true ? '<span class="yes">✓</span>' : v === false ? '<span class="no">✗</span>' : '<span class="nodim">–</span>');
+  const rows = CG.items.map((it) => `<tr class="${it.most ? "edgerow" : ""}"><td><span class="tag src" style="margin-left:0">${esc(it.area)}</span> ${esc(it.label)}${it.most ? `<div class="muted small">${esc(it.add)}</div>` : ""}</td>
+    ${cols.map((k) => `<td class="ctr">${cell(it.cells[k.domain])}</td>`).join("")}${hasOurs ? `<td class="ctr">${cell(it.ours)}</td>` : ""}<td class="mono nowrap">${it.n} of ${it.of}</td></tr>`);
+  let h = `<p class="muted">${CG.N} competitor pages compared${CG.mode === "basic" ? " (basic check — this brief was saved before the full check; generate it again to add bylines, sources, key players, countries, FAQ markup and buyer questions)" : ""}. ` +
+    `✓ has it · ✗ doesn't · – couldn't check${hasOurs ? " · <b>You</b> = your current page" : ""}. <b>Highlighted rows are missing on most pages — adding them is our edge.</b></p>`;
+  h += table(["What", ...cols.map((k) => esc(k.short || k.name)), ...(hasOurs ? ["You"] : []), "Missing on"], rows);
+  if ((CG.questions || []).length) {
+    h += `<h3>Buyer questions (People Also Ask) — who answers them</h3><ul class="plain">${CG.questions.map((q) =>
+      `<li>${esc(q.question)} — ${q.answeredBy.length ? `answered by ${esc(q.answeredBy.join(", "))}` : `<b>nobody</b>; add it to our FAQ`}${q.ours === true ? " · your page answers it" : q.ours === false ? " · your page doesn't" : ""}</li>`).join("")}</ul>`;
+  }
+  return h;
 }
 
 function top10Sec(c) {
@@ -1932,7 +2065,7 @@ function scoreSec(c) {
     const fix = x.blocked ? pasteBtn(x.link, "Paste page") : pasteBtn(x.link || "", x.link ? "Use a different page" : "Add the right page");
     return `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")} ${fix}</td></tr>`;
   });
-  let h = table(["Competitor", "Google rank", "Words", "Tables", "FAQs", "Market size (as stated)", "CAGR", "Period", "Updated"], rows);
+  let h = table(["Competitor", "Google rank", "Words", "Tables", "FAQs", "Market size (base → forecast)", "CAGR", "Period", "Updated"], rows);
   if (FC && FC.line) {
     h += `<div class="callout warn">${esc(FC.line.replace(" (see the SEO tab)", ""))}${F && F.periods[0] ? ` Most use <b>${esc(F.periods[0].label)}</b>.` : ""} Publish our own estimate.</div>`;
   } else if (F && F.cagrMin != null) {
@@ -1942,8 +2075,9 @@ function scoreSec(c) {
     h += `<p class="muted small">Rows marked <b>stale data</b> are still included in the CAGR range and every benchmark — Google still ranks them. A current base year and forecast is our edge over them.</p>`;
   }
   if (FC && FC.flags.some((f) => f.level === "major")) {
-    h += `<p class="muted small">Rows marked <b>figures don't add up</b> are left out of the CAGR range: base → forecast over the period doesn't match the stated CAGR, or the size is 10× away from every other page. Often our first-mention reading picked the wrong number — check the page before quoting it.</p>`;
+    h += `<p class="muted small">Rows marked <b>figures don't add up</b> are left out of the CAGR range: base → forecast over the period doesn't match the stated CAGR, or the size is 10× away from every other page. Check the page before quoting it.</p>`;
   }
+  h += `<p class="muted small">Market size shows each page's value at the start and end of its forecast period, with the year it applies to.</p>`;
   if (c.competitors.some((x) => x.stats && x.stats.approx)) h += `<p class="muted small">~ = approximate (page read via ChatGPT web search).</p>`;
   return h;
 }
@@ -2022,10 +2156,26 @@ function gapSeoSec(c) {
   return h;
 }
 
+// LINKS — internal links for the writer: never the page being updated; related pages the existing-page
+// check found come first, then sitemap matches for the keyword
 function relevantLinks(c) {
   const toks = kwTokens(c.keyword).map(stem);
-  return ((S.internalLinks && S.internalLinks.suggestions) || [])
-    .filter((s) => s.url && toks.some((t) => s.url.toLowerCase().includes(t))).slice(0, 6);
+  const dPages = (c.dupes && Array.isArray(c.dupes.pages)) ? c.dupes.pages : [];
+  const self = [
+    c.ourPage && c.ourPage.url,
+    c.ourRank && c.ourRank.url,
+    ...dPages.filter((p) => /^main/i.test(String(p.role || ""))).map((p) => p.url),
+  ].filter(Boolean);
+  const out = [];
+  const add = (url, why) => {
+    if (!url || self.some((s) => sameUrlC(s, url)) || out.some((o) => sameUrlC(o.url, url))) return;
+    out.push({ url, why: why || "" });
+  };
+  dPages.filter((p) => !/^main/i.test(String(p.role || ""))).forEach((p) => add(p.url, "related page of ours — also link back from it"));
+  ((S.internalLinks && S.internalLinks.suggestions) || [])
+    .filter((s) => s.url && toks.some((t) => s.url.toLowerCase().includes(t)))
+    .forEach((s) => add(s.url));
+  return out.slice(0, 8);
 }
 
 /* ================= CHECK MY DRAFT ================= */
@@ -2097,6 +2247,8 @@ function onAction(e) {
   if (tabBtn && S) {
     S.tab = tabBtn.dataset.tab;
     render();
+    const goto = tabBtn.dataset.goto ? $(tabBtn.dataset.goto) : null; // EDGE — jump straight to a section of the new tab
+    if (goto) { goto.scrollIntoView({ behavior: SMOOTH(), block: "start" }); return; }
     const y = $("out").getBoundingClientRect().top + window.scrollY - 8; // NAV — start the new tab at its top
     if (window.scrollY > y) window.scrollTo({ top: y });
     return;
@@ -2128,8 +2280,9 @@ const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:
 h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
 table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
 .ptag,.tag,.lvl,.gtag{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
-.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote,.skn{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
-.rdp{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.rdk,.rdl{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}.skn{margin-right:4pt}
+.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote,.skn,.eadd,.who{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide,.edgebox{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.rdp,.cmiss{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.cmiss{border-left-color:#c98a22}.rdk,.rdl,.cmk,.ebk{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}.skn{margin-right:4pt}
+.ecount{font-size:8pt;border:1px solid #c98a22;padding:0 3pt;margin-left:4pt}tr.edgerow td{background:#fffaf0}.oursnote{color:#0f5e48}
 .skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
 
 function docHtml() {
