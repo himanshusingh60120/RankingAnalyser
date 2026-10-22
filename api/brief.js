@@ -9,20 +9,21 @@
 //   collect { keyword, gl?, hl?, contentType?, ourUrl?, ourDomain?, manual? } -> { collected }
 //           manual = [{ url, html? }] — competitor pages added by the analyst (html = pasted page)
 //           collected also carries intentMix, keywordCheck, freshness and figureCheck (lib/brief-checks.js)
+//           and competitorGaps — what most competitors miss, which we can add (lib/competitor-gaps.js)
 //   write   { collected } -> { ai, internalLinks }
 //   gap     { keyword, market?, url? | html? | text? } -> { gap }   GAP — reads the research team's gap
 //           analysis (Google Doc link or pasted document) and words its H3s; the UI stores it in
 //           collected.gap so it is saved and reopened with the brief
 //   full    collect + write in one call (scripts only — may pass 60s)
 //   save    { brief: { collected, ai, internalLinks }, html, country } -> Google Doc + JSON in Drive, row in the Sheet
-//           SHEET — also sends meta.sheet (misses, page-1 URLs, tracked competitors' ranks + URLs)
+//           SHEET — also sends meta.sheet (competitor gaps, page-1 URLs, tracked competitors' ranks + URLs)
 //   list    { limit? } -> saved briefs from the Sheet
 //   get     { id } -> one saved brief, to reopen in the tool
 //   check   { collected, title, meta, html } -> draft checker results
 //   ranks   { secret, keyword, gl, hl? } -> current Google ranks (called weekly by the Sheet's Apps Script)
 //           SHEET — also returns trackedUrls (each competitor's ranking URL) and page1 (top-10 URLs)
-//   summary { secret, collected } -> { sheet }   SHEET — misses + page 1 for briefs saved before this
-//           version (the Sheet's "Fill misses for older briefs" menu)
+//   summary { secret, collected } -> { sheet }   SHEET — competitor gaps + page 1 for briefs saved before
+//           this version (the Sheet's "Fill misses for older briefs" menu)
 
 import { searchGoogle, serpProviderName } from "../lib/serp.js";
 import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl, displayName } from "../lib/brief.js";
@@ -35,6 +36,7 @@ import { checkDraft } from "../lib/draft-check.js";
 import { annotateBrief } from "../lib/brief-checks.js"; // search intent, keyword check, stale-data flags, figure check
 import { readGapAnalysis, applyGapPhrasing } from "../lib/gap-analysis.js"; // GAP
 import { sheetSummary, page1List, page1Text, trackedFromResults } from "../lib/sheet-summary.js"; // SHEET
+import { competitorGaps } from "../lib/competitor-gaps.js"; // EDGE
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -156,6 +158,10 @@ async function stageCollect(body, stage) {
   try { annotateBrief(collected, { keyword, serp, pages, ourPage, ourDomain, dupes }); }
   catch (e) { collected.checksError = String(e.message || e); }
 
+  // EDGE — what most competitors miss, checked on the pages we just read (lib/competitor-gaps.js)
+  try { collected.competitorGaps = competitorGaps(collected, pages); }
+  catch (e) { collected.competitorGapsError = String(e.message || e); }
+
   if (stage === "collect") return json({ stage, collected });
 
   const [ai, internalLinks] = await Promise.all([safe(() => writeBriefWithAi(collected)), internalLinkBlock(collected)]);
@@ -203,7 +209,7 @@ async function stageSave(body, request) {
   if (JSON.stringify(brief).length > 3500000) return json({ error: "This brief is too large to save." }, 413);
   let origin = process.env.APP_URL || "";
   if (!origin) { try { origin = new URL(request.url).origin; } catch { origin = ""; } }
-  let sheet = null; // SHEET — misses, page-1 URLs, tracked competitors' ranks + URLs for the tracking sheet
+  let sheet = null; // SHEET — competitor gaps, page-1 URLs, tracked competitors' ranks + URLs for the tracking sheet
   try { sheet = sheetSummary(c); } catch { sheet = null; }
   const r = await callStorage("save", {
     brief,
@@ -255,7 +261,7 @@ async function stageRanks(body) {
   }
 }
 
-// SHEET — misses + page 1 for a brief saved before this version (called by the Sheet's Apps Script).
+// SHEET — competitor gaps + page 1 for a brief saved before this version (called by the Sheet's Apps Script).
 async function stageSummary(body) {
   if (!process.env.STORAGE_SECRET || body.secret !== process.env.STORAGE_SECRET) return json({ error: "Unauthorized" }, 401);
   const c = body.collected;
