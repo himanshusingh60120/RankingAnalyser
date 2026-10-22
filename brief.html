@@ -485,7 +485,7 @@ const TYPE = { ours: "You", tracked: "Tracked competitor", publisher: "Research 
   press: "Press release", news: "News / media", ugc: "Social / UGC", other: "Other" };
 const TIER = { must: "Must have", should: "Good to have", opt: "Optional" };
 const tierTag = (t) => `<span class="ptag ${esc(t)}">${esc(TIER[t] || t)}</span>`;
-const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com", "grandviewresearch.com"];
+const TRACKED_DOMAINS = ["marketsandmarkets.com", "marketresearchfuture.com", "precedenceresearch.com", "futuremarketinsights.com", "fortunebusinessinsights.com", "grandviewresearch.com", "statista.com"];
 const GENERIC = new Set(["market", "markets", "report", "reports", "size", "share", "growth", "industry", "analysis", "global", "forecast", "trends", "outlook", "and", "the", "for"]);
 const stem = (w) => (w.length > 4 && w.endsWith("ies") ? w.slice(0, -3) + "y" : w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w);
 const kwTokens = (k) => String(k || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/[\s-]+/).filter((t) => t.length > 2 && !GENERIC.has(t));
