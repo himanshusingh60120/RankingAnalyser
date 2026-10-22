@@ -7,6 +7,10 @@
 // One-time setup: select "setup" → Run → allow access.
 // Then Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone → copy the /exec URL.
 // If you edit this file later: Deploy → Manage deployments → Edit → Version: New version → Deploy.
+//
+// Rank history gets a row when a brief is saved ("At brief"), every Monday ("Weekly check") and whenever
+// you use Ranking X-Ray → Check ranks now ("Manual check"). Briefs → "Rank check status" shows whether
+// the last check worked, and why not if it failed.
 
 const FOLDER_ID = "1jVJCtd3vS3mZnmcqSPt3XOOLovFsQR7R";
 const SHEET_ID = "1sJpeW6n07ELufCXTxxuADbXdXt6bq8a696hTWcMBrOo";
@@ -16,15 +20,24 @@ const TZ = "Asia/Kolkata";
 const BRIEFS = "Briefs";
 const RANKS = "Rank history";
 const TRACKED = ["MarketsandMarkets", "MRFR", "Precedence Research", "Future Market Insights", "Fortune Business Insights"];
+// Same sites as BRIEF_TRACKED in lib/brief.js — used for the "At brief" row in Rank history.
+const TRACKED_DOMAINS = {
+  "MarketsandMarkets": "marketsandmarkets.com",
+  "MRFR": "marketresearchfuture.com",
+  "Precedence Research": "precedenceresearch.com",
+  "Future Market Insights": "futuremarketinsights.com",
+  "Fortune Business Insights": "fortunebusinessinsights.com",
+};
 
 const BRIEF_HEADERS = [
   "Brief ID", "Created (IST)", "Keyword", "Country", "Country code", "Page type",
   "Your page URL", "Your rank at brief", "Latest rank", "Change", "Last rank check",
   "Track ranks", "Status", "Analyst", "Due date",
   "Brief (Google Doc)", "Open in tool", "Data (JSON)", "Existing pages", "Notes",
+  "Rank check status",
 ];
 const RANK_HEADERS = ["Checked (IST)", "Brief ID", "Keyword", "Country", "Your rank", "Your ranking URL"]
-  .concat(TRACKED, ["#1 result"]);
+  .concat(TRACKED, ["#1 result", "Source"]);
 
 /* ---------------- menu & setup ---------------- */
 
@@ -50,10 +63,11 @@ function setup() {
     "Your page URL": 230, "Your rank at brief": 110, "Latest rank": 100, "Change": 120, "Last rank check": 140,
     "Track ranks": 95, "Status": 110, "Analyst": 130, "Due date": 110,
     "Brief (Google Doc)": 230, "Open in tool": 230, "Data (JSON)": 160, "Existing pages": 300, "Notes": 260,
+    "Rank check status": 280,
   });
   styleSheet_(r, ["Checked (IST)"], {
     "Checked (IST)": 140, "Brief ID": 150, "Keyword": 230, "Country": 130, "Your rank": 90, "Your ranking URL": 280,
-    "#1 result": 320,
+    "#1 result": 320, "Source": 110,
   });
 
   const m = headerMap_(b);
@@ -66,13 +80,16 @@ function setup() {
   b.getRange(2, m["Due date"] + 1, rows).setNumberFormat("dd-mmm-yyyy");
 
   const changeRange = b.getRange(2, m["Change"] + 1, rows);
+  const statusRange = b.getRange(2, m["Rank check status"] + 1, rows);
   b.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenTextStartsWith("▲").setFontColor("#0f7a5c").setBold(true).setRanges([changeRange]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextStartsWith("▼").setFontColor("#b23b2e").setBold(true).setRanges([changeRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextStartsWith("Failed").setFontColor("#b23b2e").setRanges([statusRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextStartsWith("OK").setFontColor("#0f7a5c").setRanges([statusRange]).build(),
   ]);
 
   if (!ScriptApp.getProjectTriggers().some((t) => t.getHandlerFunction() === "weeklyRankCheck")) {
-    ScriptApp.newTrigger("weeklyRankCheck").timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(9).create();
+    ScriptApp.newTrigger("weeklyRankCheck").timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(9).inTimezone(TZ).create();
   }
   DriveApp.getFolderById(FOLDER_ID); // confirms Drive folder access during authorisation
 
@@ -129,12 +146,42 @@ function saveBrief_(b) {
       "Your rank at brief": rank, "Latest rank": rank, "Change": "—", "Last rank check": now,
       "Track ranks": "Yes", "Status": "Brief ready",
       "Brief (Google Doc)": docUrl, "Open in tool": openUrl, "Data (JSON)": jsonFile.getUrl(),
-      "Existing pages": m.dupes || "",
+      "Existing pages": m.dupes || "", "Rank check status": "OK — ranks recorded with the brief",
     });
+
+    // First Rank history row, from the rankings the brief already collected — tracking starts today.
+    try {
+      const base = baselineRanks_(b.brief, m);
+      appendByHeader_(ensureSheet_(RANKS, RANK_HEADERS), Object.assign({
+        "Checked (IST)": now, "Brief ID": id, "Keyword": m.keyword || "", "Country": m.country || "",
+        "Your rank": rank, "Your ranking URL": base.ourUrl, "#1 result": base.top1, "Source": "At brief",
+      }, base.tracked));
+    } catch (e) { /* never block saving the brief */ }
+
     return { ok: true, id: id, docUrl: docUrl, openUrl: openUrl, jsonUrl: jsonFile.getUrl(), sheetUrl: ss_().getUrl() };
   } finally {
     lock.releaseLock();
   }
+}
+
+// Ranks at the moment the brief was made, read from the saved brief data (no extra Google search).
+function baselineRanks_(brief, meta) {
+  const c = (brief && brief.collected) || {};
+  const host = (u) => String(u || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[/?#]/)[0];
+  const onDomain = (h, d) => !!h && (h === d || h.slice(-(d.length + 1)) === "." + d);
+  const tracked = {};
+  TRACKED.forEach((name) => {
+    const d = TRACKED_DOMAINS[name];
+    const hit = (c.competitors || []).find((x) => x && onDomain(String(x.domain || host(x.link)).replace(/^www\./, ""), d));
+    tracked[name] = hit && hit.position ? Number(hit.position) : "—";
+  });
+  const top = ((c.serp && c.serp.organic) || [])[0];
+  const ours = c.ourRank || {};
+  return {
+    tracked: tracked,
+    ourUrl: ours.link || ours.url || (meta && meta.ourUrl) || "",
+    top1: top ? (top.name || host(top.link)) + " — " + (top.link || "") : "",
+  };
 }
 
 function listBriefs_(limit) {
@@ -187,47 +234,57 @@ function createDoc_(folderId, name, html) {
 /* ---------------- weekly rank tracking ---------------- */
 
 function weeklyRankCheck() {
-  runRankCheck_();
+  const r = runRankCheck_("Weekly check");
+  Logger.log(JSON.stringify(r));
 }
 
 function checkRanksNow() {
-  const n = runRankCheck_();
-  try { ss_().toast("Checked " + n + " brief(s).", "Ranking X-Ray"); } catch (e) { /* not in sheet UI */ }
+  const r = runRankCheck_("Manual check");
+  const msg = !r.total
+    ? "No briefs have “Track ranks” set to Yes."
+    : "Checked " + r.checked + " of " + r.total + " brief(s)." +
+      (r.failed ? "\n\n" + r.failed + " failed. First problem — " + r.firstError + "\n\nThe reason is also in the “Rank check status” column." : "") +
+      (r.timedOut ? "\n\nStopped at the 5-minute limit — run it again to finish the rest." : "");
+  try { SpreadsheetApp.getUi().alert("Ranking X-Ray", msg, SpreadsheetApp.getUi().ButtonSet.OK); }
+  catch (e) { Logger.log(msg); }
 }
 
-function runRankCheck_() {
+function runRankCheck_(source) {
   const secret = PropertiesService.getScriptProperties().getProperty("SECRET");
   const sh = ensureSheet_(BRIEFS, BRIEF_HEADERS);
   const rk = ensureSheet_(RANKS, RANK_HEADERS);
+  const result = { total: 0, checked: 0, failed: 0, firstError: "", timedOut: false };
   const last = sh.getLastRow();
-  if (last < 2) return 0;
+  if (last < 2) return result;
   const vals = sh.getRange(1, 1, last, sh.getLastColumn()).getValues();
   const m = {};
   vals[0].forEach((h, i) => { m[h] = i; });
+  const setStatus = (rowIndex, text) => {
+    if (m["Rank check status"] !== undefined) sh.getRange(rowIndex + 1, m["Rank check status"] + 1).setValue(text);
+  };
 
   const cache = {};
   const started = Date.now();
-  let checked = 0;
   for (let i = 1; i < vals.length; i++) {
-    if (Date.now() - started > 5 * 60 * 1000) break; // Apps Script runs are capped at 6 minutes
     const row = vals[i];
     if (String(row[m["Track ranks"]]).trim().toLowerCase() !== "yes") continue;
     const kw = String(row[m["Keyword"]] || "").trim();
     const gl = String(row[m["Country code"]] || "us").trim() || "us";
     if (!kw) continue;
+    result.total++;
+    if (Date.now() - started > 5 * 60 * 1000) { result.timedOut = true; continue; } // Apps Script runs are capped at 6 minutes
 
     const key = kw.toLowerCase() + "|" + gl;
-    if (!cache[key]) {
-      const res = UrlFetchApp.fetch(APP_URL + "/api/brief", {
-        method: "post",
-        contentType: "application/json",
-        muteHttpExceptions: true,
-        payload: JSON.stringify({ stage: "ranks", secret: secret, keyword: kw, gl: gl }),
-      });
-      try { cache[key] = JSON.parse(res.getContentText()); } catch (e) { cache[key] = { error: "Bad response" }; }
-    }
+    if (!cache[key]) cache[key] = fetchRanks_(secret, kw, gl);
     const r = cache[key];
-    if (!r || r.error) continue;
+    const stamp = Utilities.formatDate(new Date(), TZ, "dd-MMM HH:mm");
+    if (!r || r.error) {
+      const why = String((r && r.error) || "No response from the tool");
+      result.failed++;
+      if (!result.firstError) result.firstError = kw + ": " + why;
+      setStatus(i, "Failed " + stamp + " — " + why.slice(0, 220));
+      continue;
+    }
 
     const now = new Date();
     const pos = r.ourPosition ? Number(r.ourPosition) : "Not in top 20";
@@ -235,15 +292,43 @@ function runRankCheck_() {
     TRACKED.forEach((n) => { competitorRanks[n] = r.tracked && r.tracked[n] ? Number(r.tracked[n]) : "—"; });
     appendByHeader_(rk, Object.assign({
       "Checked (IST)": now, "Brief ID": row[m["Brief ID"]], "Keyword": kw, "Country": row[m["Country"]],
-      "Your rank": pos, "Your ranking URL": r.ourUrl || "", "#1 result": r.top1 || "",
+      "Your rank": pos, "Your ranking URL": r.ourUrl || "", "#1 result": r.top1 || "", "Source": source || "",
     }, competitorRanks));
 
     sh.getRange(i + 1, m["Latest rank"] + 1).setValue(pos);
     sh.getRange(i + 1, m["Change"] + 1).setValue(changeText_(row[m["Your rank at brief"]], pos));
     sh.getRange(i + 1, m["Last rank check"] + 1).setValue(now);
-    checked++;
+    setStatus(i, "OK " + stamp + " (" + String(source || "check").toLowerCase() + ")");
+    result.checked++;
   }
-  return checked;
+  return result;
+}
+
+// Calls the tool's rank check (api/brief.js, stage "ranks") and turns any failure into a readable reason.
+function fetchRanks_(secret, kw, gl) {
+  try {
+    const res = UrlFetchApp.fetch(APP_URL + "/api/brief", {
+      method: "post",
+      contentType: "application/json",
+      muteHttpExceptions: true,
+      payload: JSON.stringify({ stage: "ranks", secret: secret, keyword: kw, gl: gl }),
+    });
+    const code = res.getResponseCode();
+    const text = res.getContentText();
+    try {
+      const j = JSON.parse(text);
+      if (code >= 400 && !j.error) j.error = "HTTP " + code;
+      if (j.error === "Unauthorized") j.error = "Unauthorized — STORAGE_SECRET in Vercel doesn't match this script's secret. Run 'Set up / repair sheet' and copy the secret into Vercel again.";
+      return j;
+    } catch (e) {
+      return {
+        error: "The tool didn't return data (HTTP " + code + ")" +
+          (code === 401 || code === 403 ? " — Vercel Deployment Protection may be blocking it; turn it off for the production domain." : ".") ,
+      };
+    }
+  } catch (e) {
+    return { error: "Couldn't reach " + APP_URL + ": " + String((e && e.message) || e) };
+  }
 }
 
 function changeText_(before, now) {
