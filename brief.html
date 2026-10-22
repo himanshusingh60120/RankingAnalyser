@@ -2276,35 +2276,233 @@ function onAction(e) {
   }
 }
 
-const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1b2129;line-height:1.45}
-h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
-table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
-.ptag,.tag,.lvl,.gtag{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
-.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote,.skn,.eadd,.who{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide,.edgebox{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
-.rdp,.cmiss{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.cmiss{border-left-color:#c98a22}.rdk,.rdl,.cmk,.ebk{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}.skn{margin-right:4pt}
-.ecount{font-size:8pt;border:1px solid #c98a22;padding:0 3pt;margin-left:4pt}tr.edgerow td{background:#fffaf0}.oursnote{color:#0f5e48}
-.skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
+/* ================= DOC — Google Docs / Word / clipboard export ================= */
+// Google Docs keeps headings, tables, lists, bold, links and inline colours when it imports HTML, but drops
+// most CSS — so labels ran into words, boxes vanished and the skeleton was numbered twice. docify() rebuilds
+// the on-screen brief as simple HTML: real headings (they show in the Docs outline), shaded single-cell
+// tables for the boxes, spaced labels, " · " between keywords, and inline styles only.
+const DOC_FONT = "font-family:Arial,Helvetica,sans-serif";
+const DOC_TAG = {
+  H1: `${DOC_FONT};font-size:20pt;font-weight:bold;color:#11161c;margin:0 0 4pt 0`,
+  H2: `${DOC_FONT};font-size:15pt;font-weight:bold;color:#0f7a5c;margin:18pt 0 6pt 0`,
+  H3: `${DOC_FONT};font-size:12.5pt;font-weight:bold;color:#11161c;margin:14pt 0 2pt 0`,
+  H4: `${DOC_FONT};font-size:11pt;font-weight:bold;color:#11161c;margin:10pt 0 2pt 0`,
+  P: `${DOC_FONT};font-size:10.5pt;color:#1b2129;margin:3pt 0;line-height:1.35`,
+  LI: `${DOC_FONT};font-size:10.5pt;color:#1b2129;margin:2pt 0;line-height:1.35`,
+  UL: "margin:2pt 0 4pt 0",
+  OL: "margin:2pt 0 4pt 0",
+  TABLE: "border-collapse:collapse;width:100%;margin:6pt 0",
+  TH: `${DOC_FONT};font-size:9pt;font-weight:bold;color:#5a6675;background-color:#f2efe9;border:1px solid #d6d2ca;padding:4pt 6pt;text-align:left;vertical-align:top`,
+  TD: `${DOC_FONT};font-size:9.5pt;color:#1b2129;border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top`,
+  A: "color:#0f7a5c",
+};
+const DOC_CLASS = {
+  "doc-kicker": "font-size:8pt;font-weight:bold;color:#0f7a5c;letter-spacing:1px;margin:0",
+  "doc-meta": "font-size:9pt;color:#5a6675;margin:0 0 10pt 0",
+  muted: "color:#5a6675;font-size:9.5pt",
+  small: "font-size:8.5pt",
+  skbyline: "font-size:9pt;color:#5a6675",
+  skmetaline: "font-size:9pt;color:#5a6675;margin:0 0 4pt 0",
+  skh1: "font-size:14pt;font-weight:bold;color:#11161c;margin:8pt 0 2pt 0",
+  h3para: "margin:4pt 0 1pt 0",
+  gnote: "font-size:9.5pt;color:#3c4652;font-style:italic;margin:0 0 2pt 18pt",
+  eadd: "font-size:9.5pt;color:#5a6675",
+  jl: "font-size:8pt;font-weight:bold;color:#0f7a5c;margin:0 0 3pt 0",
+  h3hint: "font-size:8pt;font-weight:bold;color:#0f7a5c;margin:8pt 0 2pt 0",
+  ebk: "font-size:8pt;font-weight:bold;color:#8a5a00;margin:0 0 3pt 0",
+  cmk: "font-size:8pt;font-weight:bold;color:#8a5a00;margin:0 0 3pt 0",
+  rdk: "font-size:8pt;font-weight:bold;color:#0f7a5c;margin:0",
+  rdt: "font-weight:bold;color:#11161c;margin:1pt 0",
+  kwl: "font-size:8pt;color:#5a6675;margin:0",
+  kwp: "font-size:15pt;font-weight:bold;color:#11161c;margin:2pt 0",
+  yes: "color:#0f7a5c;font-weight:bold",
+  no: "color:#b23b2e;font-weight:bold",
+  nodim: "color:#b8b2a6",
+  ctr: "text-align:center",
+  who: "color:#5a6675",
+  oursnote: "color:#0f5e48",
+};
+// [selector, background, border colour, border width] — inner boxes first
+const DOC_BOX = [
+  [".rdp", "#f6faf8", "#cfe6dc", 1], [".cmiss", "#fffaf0", "#e8c98a", 1], [".kwbox", "#ffffff", "#d6d2ca", 1],
+  [".skdesc", "#ffffff", "#cfc8bb", 1], [".h3guide", "#ffffff", "#d6d2ca", 1], [".callout.warn", "#fbf3e4", "#ecd3a6", 1],
+  [".callout", "#eef6f2", "#cfe6dc", 1], [".job", "#f3faf7", "#0f7a5c", 2], [".edgebox", "#fffaf0", "#e8c98a", 2],
+];
+function docChipColors(el) {
+  const c = el.classList;
+  if (c.contains("lvl")) return c.contains("h3") ? ["#e9e5dd", "#11161c"] : ["#11161c", "#ffffff"];
+  if (c.contains("must") || c.contains("trk") || c.contains("g-reword")) return ["#fde3df", "#a33a2e"];
+  if (c.contains("should") || c.contains("stale")) return ["#fbefd9", "#93621a"];
+  if (c.contains("opt") || c.contains("src")) return ["#e3eef8", "#2c5f8a"];
+  if (c.contains("you") || c.contains("g-gap")) return ["#dff1ea", "#0f7a5c"];
+  if (c.contains("cat") || c.contains("g-fixed")) return ["#efe9f8", "#5b3f8a"];
+  return ["#fff1d6", "#8a5a00"]; // "competitors miss it", "4 of 4 miss it"
+}
+
+function docify(html) {
+  const root = document.createElement("div");
+  root.innerHTML = html;
+  const all = (sel) => [...root.querySelectorAll(sel)];
+  const repeat = (sel, fn) => { for (let i = 0; i < 8; i++) { const l = all(sel); if (!l.length) break; l.forEach((el) => el.isConnected && fn(el)); } };
+  const BLOCK = /^(DIV|SECTION|TABLE|UL|OL|P|H[1-6])$/;
+  const span = (css, text) => { const s = document.createElement("span"); if (css) s.setAttribute("style", css); s.textContent = text; return s; };
+  const appendStyle = (el, css) => el.setAttribute("style", `${el.getAttribute("style") || ""};${css}`);
+  // A list whose items hold blocks (notes, pointers, tables) becomes paragraphs — Docs can't nest those in a list item
+  const listToParas = (list, prefix, cls) => {
+    const frag = document.createDocumentFragment();
+    [...list.children].forEach((li) => {
+      const p = document.createElement("p");
+      if (cls) p.className = cls;
+      if (prefix) p.appendChild(span("color:#b23b2e;font-weight:bold", prefix));
+      frag.appendChild(p);
+      [...li.childNodes].forEach((n) => (n.nodeType === 1 && BLOCK.test(n.tagName) ? frag.appendChild(n) : p.appendChild(n)));
+    });
+    list.replaceWith(frag);
+  };
+
+  // 1. screen-only bits
+  all(".box, .rdmore, button, input, script, .tick").forEach((el) => el.remove());
+
+  // 2. skeleton: each H2 becomes a numbered heading (it shows in the Docs outline) with its tags on a line below
+  all("ol.skh2s").forEach((ol) => {
+    const frag = document.createDocumentFragment();
+    [...ol.children].forEach((li) => {
+      const head = li.querySelector(".skhead");
+      const body = li.querySelector(".skbody");
+      const num = head && head.querySelector(".skn") ? head.querySelector(".skn").textContent.trim() : "";
+      const title = head && head.querySelector("b") ? head.querySelector("b").textContent.trim() : "";
+      const h = document.createElement("h3");
+      h.textContent = `${num ? `${num}. ` : ""}${title}`;
+      frag.appendChild(h);
+      if (head) {
+        const meta = document.createElement("p");
+        meta.className = "skmetaline";
+        head.querySelectorAll(".lvl, .ptag, .gtag").forEach((t) => meta.appendChild(t));
+        const ev = head.querySelector(".ev");
+        if (ev) { meta.appendChild(document.createTextNode(" — ")); meta.appendChild(ev); }
+        if (meta.childNodes.length) frag.appendChild(meta);
+      }
+      if (body) [...body.childNodes].forEach((n) => frag.appendChild(n));
+    });
+    ol.replaceWith(frag);
+  });
+  all("ul.skh3").forEach((ul) => listToParas(ul, "", "h3para"));
+  all("ul.donts").forEach((ul) => listToParas(ul, "✗ "));
+
+  // 3. grids → tables
+  all(".kpis").forEach((k) => {
+    const cells = [...k.querySelectorAll(".kpi")].map((x) =>
+      `<td style="text-align:center;background-color:#ffffff;padding:6pt 8pt"><span style="font-size:15pt;font-weight:bold;color:#11161c">${x.querySelector(".v") ? x.querySelector(".v").innerHTML : ""}</span><br><span style="font-size:8pt;color:#5a6675">${esc((x.querySelector(".l") ? x.querySelector(".l").textContent : "").toUpperCase())}</span></td>`).join("");
+    const t = document.createElement("table");
+    t.innerHTML = `<tbody><tr>${cells}</tr></tbody>`;
+    k.replaceWith(t);
+  });
+  all(".skmeta").forEach((m) => {
+    const rows = [...m.querySelectorAll(".skrow")].map((r) => {
+      const lab = r.querySelector(".lab");
+      const val = r.querySelector(":scope > div");
+      return `<tr><td style="width:16%;background-color:#f6f4ef;font-weight:bold;color:#5a6675;font-size:8.5pt">${esc((lab ? lab.textContent : "").toUpperCase())}</td><td>${val ? val.innerHTML : ""}</td></tr>`;
+    }).join("");
+    const t = document.createElement("table");
+    t.innerHTML = `<tbody>${rows}</tbody>`;
+    m.replaceWith(t);
+  });
+  all(".doc-meta").forEach((m) => { m.textContent = [...m.children].map((s) => s.textContent.trim()).filter(Boolean).join(" · "); });
+
+  // 4. keyword pills → one line separated by " · "
+  const groups = new Map();
+  all(".pill").forEach((p) => { if (!groups.has(p.parentNode)) groups.set(p.parentNode, []); groups.get(p.parentNode).push(p); });
+  groups.forEach((pills) => {
+    pills[0].replaceWith(document.createTextNode(" "), span("", pills.map((p) => p.textContent.trim()).join(" · ")));
+    pills.slice(1).forEach((p) => p.remove());
+  });
+
+  // 5. chips → small highlighted labels with spaces around them
+  all(".ptag, .gtag, .tag, .ecount, .lvl").forEach((el) => {
+    const [bg, fg] = docChipColors(el);
+    const s = document.createElement("span");
+    s.setAttribute("style", `background-color:${bg};color:${fg};font-size:8pt;font-weight:bold`);
+    s.innerHTML = `&nbsp;${esc(el.textContent.trim().toUpperCase())}&nbsp;`;
+    el.replaceWith(document.createTextNode(" "), s, document.createTextNode(" "));
+  });
+  all(".cc").forEach((el) => el.replaceWith(span(`color:${el.classList.contains("bad") ? "#b23b2e" : "#0f7a5c"};font-size:8.5pt`, ` (${el.textContent.trim()})`)));
+  all(".ev").forEach((el) => el.replaceWith(span("color:#5a6675", ` ${el.textContent.trim()}`)));
+  all(".who, .oursnote").forEach((el) => { el.textContent = ` ${el.textContent.trim()}`; });
+  all(".lab, .rdl").forEach((el) => el.replaceWith(span("color:#5a6675;font-size:8.5pt;font-weight:bold", `${el.textContent.trim().toUpperCase()}: `)));
+  all(".jl, .ebk, .cmk, .h3hint, .rdk, .kwl, .doc-kicker").forEach((el) => { el.textContent = el.textContent.trim().toUpperCase(); });
+
+  // 6. blocks inside table cells and list items → line breaks
+  repeat("td div, li div", (d) => {
+    const s = document.createElement("span");
+    s.className = d.className;
+    s.innerHTML = d.innerHTML;
+    const prev = d.previousSibling;
+    const needBreak = prev && (prev.nodeType !== 3 || prev.textContent.trim());
+    d.replaceWith(...(needBreak ? [document.createElement("br"), s] : [s]));
+  });
+
+  // 7. coloured boxes → shaded single-cell tables (Docs keeps cell colour and border)
+  DOC_BOX.forEach(([sel, bg, bd, w]) => repeat(sel, (el) => {
+    const t = document.createElement("table");
+    t.innerHTML = `<tbody><tr><td style="font-size:10.5pt;background-color:${bg};border:${w}px solid ${bd};padding:7pt 10pt"></td></tr></tbody>`;
+    t.querySelector("td").innerHTML = el.innerHTML;
+    el.replaceWith(t);
+  }));
+
+  // 8. table row colours
+  all("tr.trk > td").forEach((td) => appendStyle(td, "background-color:#fdf6f4"));
+  all("tr.ours > td").forEach((td) => appendStyle(td, "background-color:#eef7f2"));
+  all("tr.edgerow > td").forEach((td) => appendStyle(td, "background-color:#fffaf0"));
+  all("tr.dim > td").forEach((td) => appendStyle(td, "color:#5a6675"));
+
+  // 9. leftover wrappers: unwrap the ones holding blocks, turn the rest into paragraphs
+  repeat("div, section", (d) => {
+    if (d.tagName === "SECTION" || [...d.children].some((ch) => BLOCK.test(ch.tagName))) {
+      d.replaceWith(...d.childNodes);
+    } else {
+      const p = document.createElement("p");
+      p.className = d.className;
+      p.innerHTML = d.innerHTML;
+      d.replaceWith(p);
+    }
+  });
+
+  // 10. inline styles everywhere, then drop classes, ids and data attributes
+  root.querySelectorAll("*").forEach((el) => {
+    const css = [DOC_TAG[el.tagName] || "", ...[...el.classList].map((k) => DOC_CLASS[k] || ""), el.getAttribute("style") || ""]
+      .filter(Boolean).join(";");
+    if (css) el.setAttribute("style", css);
+    [...el.attributes].forEach((a) => {
+      if (a.name === "class" || a.name === "id" || a.name === "role" || a.name.startsWith("data-") || a.name.startsWith("aria-")) el.removeAttribute(a.name);
+    });
+  });
+  return root.innerHTML;
+}
 
 function docHtml() {
   const c = S.collected;
+  let writer;
+  let seo;
   EXPORTING = true;
   try {
-    return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + c.keyword)}</title><style>${DOC_CSS}</style></head>` +
-      `<body>${analystHtml(c)}<br><hr><br>${seoHtml(c)}</body></html>`;
+    writer = analystHtml(c);
+    seo = seoHtml(c);
   } finally {
     EXPORTING = false;
   }
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc("Content brief — " + c.keyword)}</title></head>` +
+    `<body style="${DOC_FONT};font-size:10.5pt;color:#1b2129">${docify(writer)}<p style="page-break-before:always;margin:0"></p>${docify(seo)}</body></html>`;
 }
 
-// NAV — copy the export version of this tab: everything expanded, no menus, checkboxes or attach form
+// NAV — copy this tab in the same clean layout, ready to paste into Google Docs or Word
 async function copyBrief() {
-  let html;
+  let raw;
   EXPORTING = true;
-  try { html = S.tab === "seo" ? seoHtml(S.collected) : analystHtml(S.collected); }
+  try { raw = S.tab === "seo" ? seoHtml(S.collected) : analystHtml(S.collected); }
   finally { EXPORTING = false; }
+  const html = `<div style="${DOC_FONT};font-size:10.5pt;color:#1b2129">${docify(raw)}</div>`;
   const tmp = document.createElement("div");
-  tmp.className = "paper";
-  tmp.style.cssText = "position:fixed;left:-9999px;top:0;width:900px";
+  tmp.style.cssText = "position:fixed;left:-9999px;top:0;width:900px;background:#fff;color:#1b2129";
   tmp.innerHTML = html;
   document.body.appendChild(tmp);
   const plain = tmp.innerText;
