@@ -17,18 +17,21 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
 body{background-image:linear-gradient(transparent 0 96%,rgba(77,208,167,.035) 96% 100%),radial-gradient(900px 500px at 80% -10%,rgba(77,208,167,.06),transparent 70%);background-size:100% 26px,100% 100%;line-height:1.5}
-.wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.paper :focus-visible{outline-color:var(--p-accent)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px 90px}
 .ribbon{display:flex;align-items:center;gap:8px;padding:14px 0 0;flex-wrap:wrap}
 .ribbon .brand{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--signal);margin-right:auto;text-decoration:none}
 .ribbon a.tab{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:9px 16px;border-radius:9px;transition:all .15s}
 .ribbon a.tab:hover{color:var(--ink);border-color:var(--signal)}
 .ribbon a.tab.active{background:var(--signal);color:#04130d;font-weight:600;border-color:var(--signal)}
-header{padding:34px 0 20px;border-bottom:1px solid var(--line)}
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--signal);margin:0 0 12px}
-header h1{font-size:clamp(28px,4vw,40px);margin:0;letter-spacing:-.02em;font-weight:650}
-header h1 .x{color:var(--signal)}
-.lede{color:var(--muted);margin:12px 0 0;max-width:68ch;font-size:15px}
-.console{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin:22px 0 16px}
+/* NAV — compact header with Saved briefs on the right */
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:30px 0 18px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--signal);margin:0 0 10px}
+.hero h1{font-size:clamp(28px,4vw,38px);margin:0;letter-spacing:-.02em;font-weight:650}
+.hero h1 .x{color:var(--signal)}
+.lede{color:var(--muted);margin:10px 0 0;max-width:64ch;font-size:15px}
+.console{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin:18px 0 16px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:680px){.grid{grid-template-columns:1fr}}
 .full{grid-column:1/-1}
@@ -36,14 +39,29 @@ header h1 .x{color:var(--signal)}
 .console input[type=text],.console select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:12px 13px;border-radius:9px;font-family:var(--mono);font-size:13.5px;outline:none}
 .console input[type=text]:focus,.console select:focus{border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim)}
 #kw{font-size:16px;padding:14px 15px}
+/* NAV — numbered steps in the form */
+.cstep{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.cstep.sep{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}
+.cnum{flex:none;width:24px;height:24px;border-radius:50%;background:var(--signal-dim);color:var(--signal);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ctitle{font-size:15px;font-weight:600;margin:0}
+.cdim{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
 .seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .seg-btn{background:transparent;border:0;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 18px;border-radius:8px;cursor:pointer}
 .seg-btn:hover{color:var(--ink)}
 .seg-btn.active{background:var(--signal);color:#04130d;font-weight:600}
-.adv{margin-top:14px}
-.adv summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.08em}
-.adv[open] summary{color:var(--signal)}
-.adv .grid{margin-top:14px}
+/* NAV — optional extras as buttons with status badges */
+.xtabs{display:flex;gap:8px;flex-wrap:wrap}
+.xtab{display:inline-flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);font-family:var(--sans);font-size:13.5px;padding:10px 14px;border-radius:10px;cursor:pointer}
+.xtab:hover{border-color:var(--signal)}
+.xtab.on{border-color:var(--signal);background:var(--signal-dim)}
+.xtab .chev{color:var(--dim);font-size:10px;transition:transform .15s}
+.xtab.on .chev{transform:rotate(180deg)}
+.xbadge{display:none;background:var(--signal);color:#04130d;border-radius:999px;font-family:var(--mono);font-size:10.5px;font-weight:700;padding:1px 8px}
+.xbadge.on{display:inline-block}
+.xpanel{margin-top:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px}
+.xpanel[hidden]{display:none !important}
+.xhelp{font-size:13.5px;color:var(--muted);margin:0 0 14px;max-width:80ch}
+.xpanel input[type=text],.xpanel select,.xpanel .mbox{background:var(--bg)}
 .mbox{background:var(--panel-2);border:1px dashed var(--line);border-radius:9px;padding:14px;min-height:70px;color:var(--muted);font-family:var(--mono);font-size:12.5px;outline:none;max-height:120px;overflow:hidden}
 .mbox:focus{border-color:var(--signal)}
 .mbox:empty::before{content:attr(data-ph);color:var(--dim)}
@@ -51,11 +69,12 @@ header h1 .x{color:var(--signal)}
 .chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink);margin:6px 6px 0 0}
 .chip button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px}
 .hint2{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
-.row-actions{display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}
-button.run{background:var(--signal);color:#04130d;border:0;padding:13px 26px;border-radius:9px;font-weight:650;font-size:14px;cursor:pointer;font-family:var(--sans)}
+.row-actions{display:flex;align-items:center;gap:14px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.rhint{margin:0;font-family:var(--sans);font-size:12.5px}
+button.run{background:var(--signal);color:#04130d;border:0;padding:13px 28px;border-radius:9px;font-weight:650;font-size:14.5px;cursor:pointer;font-family:var(--sans)}
 button.run:hover{filter:brightness(1.08)}
 button.run:disabled{opacity:.5;cursor:not-allowed}
-button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:12px 18px;border-radius:9px;font-family:var(--mono);font-size:12.5px;cursor:pointer}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:11px 18px;border-radius:9px;font-family:var(--mono);font-size:12.5px;cursor:pointer}
 button.ghost:hover{border-color:var(--signal)}
 .status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--signal);margin-right:7px;vertical-align:middle;animation:pulse 1.1s infinite}
@@ -66,7 +85,7 @@ button.ghost:hover{border-color:var(--signal)}
 .banner.warnb{background:rgba(224,164,74,.09);border:1px solid rgba(224,164,74,.3);color:#f0d3a2}
 code{font-family:var(--mono);background:var(--panel-2);padding:1px 5px;border-radius:4px;font-size:12px}
 footer.app{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--dim)}
-.steps{display:flex;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.steps{display:flex;gap:10px;margin:0 0 12px;flex-wrap:wrap}
 .steps.hidden{display:none}
 .step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--dim);padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
 .step .sn{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -75,26 +94,91 @@ footer.app{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);fon
 .step.done{color:var(--muted)}
 .step.done .sn{background:var(--signal);color:#04130d;border-color:var(--signal)}
 .step.err{color:var(--crit);border-color:rgba(224,106,90,.45)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
-.panel .ph2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:14px;gap:10px;flex-wrap:wrap}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0}
+.panel .ph2{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;gap:10px;flex-wrap:wrap}
+.ph2r{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .panel a{color:var(--signal)}
+.sfilter{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:8px 11px;border-radius:8px;font-family:var(--mono);font-size:12.5px;min-width:260px;outline:none}
+.sfilter:focus{border-color:var(--signal)}
 .tw{overflow-x:auto;margin:6px 0}
 table.st{width:100%;border-collapse:collapse;font-size:12.5px}
 table.st th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.st td{padding:7px 8px;border-bottom:1px solid #18222d;vertical-align:top}
-.up{color:var(--signal)}.down{color:var(--crit)}.nowrap{white-space:nowrap}.dimtxt{color:var(--dim)}
-.savebar{font-family:var(--mono);font-size:12px;color:var(--muted);margin:6px 0 10px;min-height:18px}
+.up{color:var(--signal)}.down{color:var(--crit)}.nowrap{white-space:nowrap}.dimtxt{color:var(--dim);font-weight:400}
+/* NAV — empty state before the first brief */
+.empty{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:4px 0 30px}
+.empty h2{font-size:16px;margin:0 0 14px;font-weight:600}
+.howto{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.howto li{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--muted)}
+.howto li b{display:block;color:var(--ink);font-size:14.5px;margin:6px 0 4px}
+.howto .hn{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--signal-dim);color:var(--signal);font-family:var(--mono);font-size:11.5px;font-weight:700;align-items:center;justify-content:center}
+.empty .after{font-size:13.5px;color:var(--muted);margin:16px 0 0}
+.empty .after b{color:var(--ink)}
+@media(max-width:760px){.howto{grid-template-columns:1fr}}
+/* NAV — brief bar that stays at the top while you scroll */
+.briefbar{position:sticky;top:0;z-index:30;background:rgba(11,15,20,.96);border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:10px 22px;display:grid;gap:8px}
+.bb-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.bb-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.bb-kw{font-size:17px;font-weight:650;letter-spacing:-.01em}
+.bb-sub{font-size:12.5px;color:var(--muted)}
+.savebar{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.briefbar .savebar{margin-left:auto}
 .savebar a{color:var(--signal)}
 .savebar .bad{color:var(--crit)}
 .linkbtn{background:none;border:0;color:var(--signal);font-family:var(--mono);font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
 .pbtn2{background:#0f7a5c;color:#fff;border:0;border-radius:6px;font-family:var(--mono);font-size:11px;padding:3px 9px;cursor:pointer;margin-left:6px;white-space:nowrap}
-.tabs{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
-.tabbtn{background:var(--panel);border:1px solid var(--line);border-bottom:0;color:var(--muted);font-family:var(--mono);font-size:12.5px;padding:10px 16px;border-radius:10px 10px 0 0;cursor:pointer}
-.tabbtn.on{background:var(--paper);color:#11161c;border-color:var(--paper);font-weight:600}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;padding-bottom:6px}
-.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:7px 11px;border-radius:8px;cursor:pointer}
+.tabs{display:inline-flex;gap:3px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;flex-wrap:wrap}
+.tabbtn{background:transparent;border:0;color:var(--muted);font-family:var(--mono);font-size:12.5px;padding:8px 14px;border-radius:8px;cursor:pointer}
+.tabbtn:hover{color:var(--ink)}
+.tabbtn.on{background:var(--paper);color:#11161c;font-weight:600}
+.bb-tools{display:flex;gap:8px;margin-left:auto;align-items:center}
+.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:7px 11px;border-radius:8px;cursor:pointer;list-style:none}
 .tbtn:hover{border-color:var(--signal)}
-.paper{background:var(--paper);color:var(--p-ink);border-radius:0 14px 14px 14px;padding:40px 50px 46px;margin:0 0 40px;box-shadow:0 24px 60px rgba(0,0,0,.4);font-size:15px;line-height:1.6}
+.menu{position:relative}
+.menu summary{list-style:none}
+.menu summary::-webkit-details-marker{display:none}
+.menu-list{position:absolute;right:0;top:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;min-width:190px;z-index:40;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.menu-list button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:6px;cursor:pointer}
+.menu-list button:hover{background:var(--panel-2)}
+/* NAV — one box for everything to check */
+.checks{background:rgba(224,164,74,.07);border:1px solid rgba(224,164,74,.3);border-radius:12px;margin:0 0 14px;color:#f0d3a2;font-size:13.5px}
+.checks summary{cursor:pointer;padding:11px 15px;list-style:none}
+.checks summary::-webkit-details-marker{display:none}
+.checks summary::before{content:"▸ ";color:var(--warn)}
+.checks[open] summary::before{content:"▾ "}
+.checks ul{margin:0;padding:0 18px 12px 36px}
+.checks li{margin:7px 0}
+/* NAV — side menu + brief */
+.layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:22px;align-items:start}
+.layout.single{grid-template-columns:minmax(0,1fr)}
+.layout.single .toc{display:none}
+.toc{position:sticky;top:112px;max-height:calc(100vh - 128px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 8px;font-size:12.5px}
+.toc-h{font-size:12.5px;font-weight:600;color:var(--ink);margin:2px 8px 8px}
+.toc-prog{font-size:11.5px;color:var(--muted);margin:0 8px 10px}
+.toc-prog .bar{height:5px;background:var(--panel-2);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.toc-prog .bar span{display:block;height:100%;background:var(--signal)}
+.toc ol{list-style:none;margin:0;padding:0}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px 8px;border-radius:7px;line-height:1.35;border-left:2px solid transparent}
+.toc a:hover{color:var(--ink);background:var(--panel-2)}
+.toc a.active{color:var(--ink);border-left-color:var(--signal);background:var(--panel-2)}
+.toc a.aux{font-size:11.5px;color:var(--dim)}
+.toc a.aux.active{color:var(--ink)}
+.toc a.opt{font-style:italic}
+.toc a.done{color:var(--signal)}
+.toc a.done::after{content:" ✓"}
+.toc .toc-top{display:inline-block;margin:8px 8px 2px;font-size:11.5px;color:var(--dim);text-decoration:none}
+.toc .toc-top:hover{color:var(--ink)}
+[data-toc]{scroll-margin-top:128px}
+@media(max-width:900px){
+  .layout{display:block}
+  .toc{position:static;max-height:none;margin:0 0 12px}
+  .toc ol{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .toc li{flex:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line)}
+  .toc .toc-top{display:none}
+  [data-toc]{scroll-margin-top:150px}
+}
+.paper{background:var(--paper);color:var(--p-ink);border-radius:14px;padding:40px 50px 46px;margin:0 0 40px;box-shadow:0 24px 60px rgba(0,0,0,.4);font-size:15px;line-height:1.6;min-width:0}
 @media(max-width:720px){.paper{padding:22px 16px}}
 .paper a{color:var(--p-accent)}
 .doc-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--p-accent)}
@@ -158,12 +242,19 @@ td.ctr{text-align:center}
 .skbyline{font-family:var(--mono);font-size:12px;color:var(--p-muted);margin:6px 0 14px}
 .h3guide{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:10px 14px;margin:10px 0 14px;font-size:13.5px}
 .h3guide b{color:var(--p-head)}
+details.h3guide summary{cursor:pointer}
+.sk-tools{margin:4px 0 10px}
+.sk-tools .linkbtn{color:var(--p-accent)}
 ol.skh2s{list-style:none;padding:0;margin:0}
 .skh2{border:1px solid var(--p-line);background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:10px}
 .skh2.optional{border-style:dashed;background:#fdfdfb}
+.skh2.ticked{border-color:#9fd6c2;background:#f6fbf8}
+.skh2.ticked .skhead b::after{content:" ✓";color:#0f7a5c}
 .skhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .skhead b{font-size:15.5px;color:var(--p-head)}
+.skn{font-family:var(--mono);font-size:11.5px;color:var(--p-muted);min-width:16px}
 .box{width:16px;height:16px;border:2px solid #8a96a3;border-radius:4px;flex:none}
+.tick{width:17px;height:17px;margin:0;flex:none;cursor:pointer;accent-color:#0f7a5c}
 .skbody{margin:4px 0 0 24px;font-size:14px}
 .skw{margin:4px 0}
 .h3hint{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-accent);margin:8px 0 2px}
@@ -203,22 +294,33 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
 .gtag.g-reword{background:#fde3df;color:#a33a2e}
 .rdp{border-left:3px solid var(--p-accent);background:#f6faf8;border-radius:0 8px 8px 0;padding:7px 11px;margin:6px 0 8px;font-size:13px;line-height:1.5}
 .rdp>div{margin:2px 0}
-.rdk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-accent)}
+details.rdp summary{cursor:pointer;list-style:none}
+details.rdp summary::-webkit-details-marker{display:none}
+details.rdp summary .rdt{display:block}
+.rdmore{font-family:var(--mono);font-size:10.5px;color:var(--p-accent)}
+.rdmore::before{content:"▸ "}
+details.rdp[open] .rdmore::before{content:"▾ "}
+details.rdp[open] summary{margin-bottom:4px}
+.rdk{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-accent)}
 .rdt{font-weight:600;color:var(--p-head)}
 .rdl{display:inline-block;min-width:122px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-muted);margin-right:6px}
 .gnote{font-size:12.5px;color:#3c4652;margin:2px 0 4px}
 ul.gnotes li{color:#3c4652}
 .gpanel{border:1px dashed var(--p-accent);border-radius:10px;padding:12px 15px;margin:14px 0;background:#f3faf7;font-size:14px}
 .gpanel.ok{border-style:solid}
+.gpanel.slim{padding:9px 14px;font-size:13.5px;color:var(--p-muted)}
+.gpanel .linkbtn{color:var(--p-accent)}
 .gpanel .gerr{color:#a33a2e;margin-bottom:6px}
 .gform{margin-top:10px}
 .gpaste{min-height:120px;max-height:260px;margin-top:8px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--signal);color:#04130d;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;opacity:0;transition:all .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 @media print{
   html,body{background:#fff !important}
-  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast,.pbtn2,.gpanel{display:none !important}
+  .ribbon,.hero,.console,.steps,#health,#saved,.briefbar,.checks,.toc,.sk-tools,.empty,footer.app,.toast,.pbtn2,.gpanel,.rdmore{display:none !important}
   .wrap{max-width:none;padding:0}
+  .layout{display:block}
   .paper{box-shadow:none;border-radius:0;padding:0;margin:0;background:#fff}
   .skh2,.kpi,.callout,tr{break-inside:avoid}
 }
@@ -234,18 +336,20 @@ ul.gnotes li{color:#3c4652}
     <a class="tab active" href="/brief">Content Brief</a>
   </nav>
 
-  <header>
-    <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
-    <h1>Content <span class="x">Brief</span></h1>
-    <p class="lede">Type a keyword and pick a country. Writers get a skeleton in the Kings Research report format — every H2 with
-      what to write, suggested H3s and the few keywords that belong there. Add the research team's gap analysis and its
-      pointers, facts and sources go straight into the skeleton. The SEO tab has the full competitor analysis.
-      Every brief is saved to Google Drive and the tracking sheet.</p>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
+      <h1>Content <span class="x">Brief</span></h1>
+      <p class="lede">Turn a keyword into a writer's skeleton in the Kings Research report format, with the competitor analysis and a draft checker alongside.</p>
+    </div>
+    <button class="ghost" id="savedBtn" type="button">Saved briefs</button>
   </header>
 
   <div id="health"></div>
+  <div id="saved"></div>
 
   <div class="console">
+    <div class="cstep"><span class="cnum">1</span><h2 class="ctitle">What are you writing?</h2></div>
     <div class="grid">
       <div class="full">
         <label for="kw">Keyword</label>
@@ -271,25 +375,31 @@ ul.gnotes li{color:#3c4652}
         </select>
       </div>
     </div>
-    <details class="adv">
-      <summary>Optional — your existing page &amp; search language</summary>
+
+    <div class="cstep sep"><span class="cnum">2</span><h2 class="ctitle">Add extras<span class="cdim">optional — skip any you don't have</span></h2></div>
+    <div class="xtabs">
+      <button type="button" class="xtab" data-x="gap" aria-expanded="false" aria-controls="gapBox">Gap analysis <span class="xbadge" id="xbGap"></span><span class="chev">▾</span></button>
+      <button type="button" class="xtab" data-x="manual" aria-expanded="false" aria-controls="manualBox">Competitor pages <span class="xbadge" id="xbManual"></span><span class="chev">▾</span></button>
+      <button type="button" class="xtab" data-x="page" aria-expanded="false" aria-controls="pageBox">Your existing page &amp; language <span class="xbadge" id="xbPage"></span><span class="chev">▾</span></button>
+    </div>
+
+    <!-- GAP — the research team's Competitor SEO & Content Gap Analysis -->
+    <div class="xpanel" id="gapBox" data-x="gap" hidden>
+      <p class="xhelp">The research team's Competitor SEO &amp; Content Gap Analysis. Its pointers, facts, sources, new H2s and FAQs go straight into the writer's skeleton. It's used for the next brief only, and you can also add it later from the skeleton.</p>
       <div class="grid">
         <div class="full">
-          <label for="ourUrl">Your current page URL (if you're updating an existing report)</label>
-          <input type="text" id="ourUrl" placeholder="https://www.kingsresearch.com/report/..." />
+          <label for="gUrl">Google Doc link (shared: anyone with the link can view)</label>
+          <input type="text" id="gUrl" placeholder="https://docs.google.com/document/d/…" />
         </div>
-        <div>
-          <label for="hl">Search language</label>
-          <select id="hl">
-            <option value="en">English</option><option value="de">German</option><option value="fr">French</option>
-            <option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ja">Japanese</option>
-            <option value="ko">Korean</option><option value="ar">Arabic</option>
-          </select>
+        <div class="full">
+          <label>…or paste the document</label>
+          <div id="gPaste" class="mbox" contenteditable="true" data-ph="Open the gap analysis → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
         </div>
       </div>
-    </details>
-    <details class="adv" id="manualBox">
-      <summary>Add competitor pages yourself — for pages the tool missed or couldn't read</summary>
+    </div>
+
+    <div class="xpanel" id="manualBox" data-x="manual" hidden>
+      <p class="xhelp">For competitor pages the tool missed or couldn't read. Add the URL, and paste the page only if the site blocks us. Up to 8 pages; they're used every time you generate until you remove them.</p>
       <div class="grid">
         <div class="full">
           <label for="mUrl">Competitor page URL</label>
@@ -304,30 +414,32 @@ ul.gnotes li{color:#3c4652}
           <div id="mList"></div>
         </div>
       </div>
-    </details>
-    <!-- GAP — the research team's Competitor SEO & Content Gap Analysis -->
-    <details class="adv" id="gapBox">
-      <summary>Add the gap analysis — its pointers, facts and new H2s go straight into the writer's skeleton</summary>
+    </div>
+
+    <div class="xpanel" id="pageBox" data-x="page" hidden>
+      <p class="xhelp">Updating a report we already have? Add its URL so the brief checks it against the top 10. Change the search language only for non-English searches.</p>
       <div class="grid">
         <div class="full">
-          <label for="gUrl">Google Doc link (shared: anyone with the link can view)</label>
-          <input type="text" id="gUrl" placeholder="https://docs.google.com/document/d/…" />
+          <label for="ourUrl">Your current page URL</label>
+          <input type="text" id="ourUrl" placeholder="https://www.kingsresearch.com/report/..." />
         </div>
-        <div class="full">
-          <label>…or paste the document</label>
-          <div id="gPaste" class="mbox" contenteditable="true" data-ph="Open the gap analysis → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
-          <div class="hint2">Used for the next brief only. You can also add it later, from the Writer's skeleton tab.</div>
+        <div>
+          <label for="hl">Search language</label>
+          <select id="hl">
+            <option value="en">English</option><option value="de">German</option><option value="fr">French</option>
+            <option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ja">Japanese</option>
+            <option value="ko">Korean</option><option value="ar">Arabic</option>
+          </select>
         </div>
       </div>
-    </details>
+    </div>
+
     <div class="row-actions">
-      <button class="run" id="runBtn">Generate brief</button>
-      <button class="ghost" id="savedBtn">Saved briefs</button>
+      <button class="run" id="runBtn" type="button">Generate brief</button>
       <span class="status" id="status"></span>
+      <span class="hint2 rhint">Takes 30–60 seconds. The brief saves to Google Drive when it's done.</span>
     </div>
   </div>
-
-  <div id="saved"></div>
 
   <div class="steps hidden" id="steps">
     <div class="step" data-s="1"><span class="sn">1</span>Google rankings &amp; competitors</div>
@@ -362,6 +474,7 @@ const countryName = (gl) => { const o = [...$("gl").options].find((x) => x.value
 const sameDomain = (d, base) => !!d && !!base && (d === base || d.endsWith("." + base));
 const pending = () => `<div class="muted">Adding AI suggestions…</div>`;
 const aiOk = () => (S && S.ai && !S.ai.error && !S.ai.skipped ? S.ai : null);
+const SMOOTH = () => (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"); // NAV
 const SMALL = new Set(["a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "vs", "with"]);
 const UPPER = new Set(["us", "uk", "uae", "eu", "usa", "ai", "ev", "iot", "api", "gcc", "apac", "mea"]);
 const niceTitle = (s) => String(s || "").toLowerCase().split(/\s+/).filter(Boolean)
@@ -385,6 +498,7 @@ let MANUAL = [];
 let pendingPaste = null;
 let GAPIN = null;    // GAP — gap analysis pasted in the console box: { html } or { text }
 let GAPPASTE = null; // GAP — gap analysis pasted in the Writer's skeleton panel
+let TOC_OBS = null;  // NAV — highlights the current section in the side menu
 
 function newState(collected, extra = {}) {
   return {
@@ -392,6 +506,7 @@ function newState(collected, extra = {}) {
     saved: null, saveState: "idle", saveError: "",
     tab: "analyst", draft: { title: "", meta: "", html: "", result: null },
     gapPending: false, gapError: "", gapOpen: false, // GAP
+    done: new Set(), checksOpen: true, ptrsOpen: false, // NAV — ticked H2s, "things to check" box, RD pointer details
     ...extra,
   };
 }
@@ -407,7 +522,22 @@ $("kw").addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); 
 $("runBtn").addEventListener("click", generate);
 $("savedBtn").addEventListener("click", toggleSaved);
 $("out").addEventListener("click", onAction);
+$("out").addEventListener("change", onTick); // NAV
 $("saved").addEventListener("click", onAction);
+// NAV — extras buttons, their badges, menus and printing
+document.querySelectorAll(".xtab").forEach((b) => b.addEventListener("click", () => openExtra(b.dataset.x)));
+$("gUrl").addEventListener("input", updateBadges);
+$("ourUrl").addEventListener("input", updateBadges);
+$("hl").addEventListener("change", updateBadges);
+document.addEventListener("click", (e) => {
+  document.querySelectorAll("details.menu[open]").forEach((m) => { if (!m.contains(e.target)) m.open = false; });
+});
+window.addEventListener("beforeprint", () => {
+  document.querySelectorAll("#briefDoc details").forEach((d) => { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; });
+});
+window.addEventListener("afterprint", () => {
+  document.querySelectorAll("#briefDoc details").forEach((d) => { d.open = d.dataset.wasOpen === "1"; });
+});
 (function initPrefs() {
   try {
     const saved = localStorage.getItem("brief.gl");
@@ -420,6 +550,8 @@ $("saved").addEventListener("click", onAction);
   if (qp.get("kw")) $("kw").value = qp.get("kw");
   if (qp.get("url")) $("ourUrl").value = qp.get("url");
   if (qp.get("id")) loadSaved(qp.get("id"));
+  else $("out").innerHTML = emptyState(); // NAV
+  updateBadges();
 })();
 checkHealth();
 
@@ -433,6 +565,38 @@ async function checkHealth() {
     if (!HEALTH.ourDomain) notes.push("Set <code>OUR_DOMAIN</code> so the brief can find your own pages.");
     $("health").innerHTML = notes.map((n) => `<div class="banner warnb">${n}</div>`).join("");
   } catch { /* best effort */ }
+}
+
+/* ================= NAV — form extras ================= */
+function openExtra(name, force = false) {
+  const btn = document.querySelector(`.xtab[data-x="${name}"]`);
+  if (!btn) return;
+  const open = force || !btn.classList.contains("on");
+  document.querySelectorAll(".xtab").forEach((b) => {
+    const on = open && b.dataset.x === name;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-expanded", on ? "true" : "false");
+  });
+  document.querySelectorAll(".xpanel").forEach((p) => { p.hidden = !(open && p.dataset.x === name); });
+}
+
+function updateBadges() {
+  const set = (id, txt) => { const el = $(id); if (!el) return; el.textContent = txt; el.classList.toggle("on", !!txt); };
+  set("xbGap", $("gUrl").value.trim() || GAPIN ? "added" : "");
+  set("xbManual", MANUAL.length ? `${MANUAL.length} added` : "");
+  set("xbPage", $("ourUrl").value.trim() || $("hl").value !== "en" ? "set" : "");
+}
+
+function emptyState() {
+  return `<section class="empty" aria-label="How it works">
+    <h2>Three steps to a brief</h2>
+    <ol class="howto">
+      <li><span class="hn">1</span><b>Type the keyword</b>Pick the Google country you're writing for. Keywords with “market” get our report format.</li>
+      <li><span class="hn">2</span><b>Add extras if you have them</b>The research team's gap analysis, competitor pages the tool can't read, or the report we already have.</li>
+      <li><span class="hn">3</span><b>Generate</b>It takes 30–60 seconds, and the brief saves to Google Drive when it's done.</li>
+    </ol>
+    <p class="after">Each brief has three tabs: <b>Writer's skeleton</b> for the writer, <b>SEO details</b> for the competitor analysis, and <b>Check my draft</b> to score the finished draft. Open older briefs from <b>Saved briefs</b> at the top.</p>
+  </section>`;
 }
 
 /* ================= competitor pages added by hand ================= */
@@ -480,16 +644,16 @@ $("mList").addEventListener("click", (e) => {
 
 function renderManual() {
   $("mList").innerHTML = MANUAL.map((m, i) =>
-    `<span class="chip">${esc(shortUrl(m.url).slice(0, 60))} · ${m.html ? "pasted" : "URL"}<button data-rm="${i}" title="Remove">✕</button></span>`).join("") +
+    `<span class="chip">${esc(shortUrl(m.url).slice(0, 60))} · ${m.html ? "pasted" : "URL"}<button data-rm="${i}" title="Remove" aria-label="Remove">✕</button></span>`).join("") +
     (MANUAL.length ? `<div class="hint2">${MANUAL.length} page(s) will be used the next time you press Generate brief.</div>` : "");
+  updateBadges(); // NAV
 }
 function saveManual() { try { sessionStorage.setItem("brief.manual", JSON.stringify(MANUAL)); } catch { /* too large — kept in memory */ } }
 
 function openManual(url) {
-  const box = $("manualBox");
-  box.open = true;
+  openExtra("manual", true); // NAV
   $("mUrl").value = url || "";
-  box.scrollIntoView({ behavior: "smooth", block: "center" });
+  $("manualBox").scrollIntoView({ behavior: SMOOTH(), block: "center" });
   setTimeout(() => (url ? $("mPaste") : $("mUrl")).focus(), 350);
 }
 const pasteBtn = (url, label = "Paste page") => (EXPORTING ? "" : `<button class="pbtn2" data-act="paste" data-url="${esc(url || "")}">${esc(label)}</button>`);
@@ -507,18 +671,19 @@ function captureGapPaste(e, box, setter) {
     ? `✓ Gap analysis captured (${(val.html || val.text).length.toLocaleString()} characters)`
     : "That looks too short — in the document press Ctrl+A first, then Ctrl+C.";
 }
-$("gPaste").addEventListener("paste", (e) => captureGapPaste(e, $("gPaste"), (v) => { GAPIN = v; GAPPASTE = null; })); // GAP — FIX: one pending gap doc at a time
+$("gPaste").addEventListener("paste", (e) => captureGapPaste(e, $("gPaste"), (v) => { GAPIN = v; GAPPASTE = null; updateBadges(); })); // one pending gap doc at a time
 $("gPaste").addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
 
-// GAP — FIX: a gap doc belongs to one brief — clear the console box once it has been attached
+// A gap doc belongs to one brief — clear the form box once it has been attached
 function clearGapInput() {
   GAPIN = null;
   $("gUrl").value = "";
   $("gPaste").textContent = "";
   $("gPaste").classList.remove("got");
+  updateBadges(); // NAV
 }
 
-// GAP — FIX: warn when the gap analysis looks like it is for a different market than the keyword
+// Warn when the gap analysis looks like it is for a different market than the keyword
 const GAP_TITLE_NOISE = new Set(["competitor", "seo", "content", "gap", "brief", "draft"]);
 function gapMismatch(c) {
   const G = c && c.gap;
@@ -611,11 +776,12 @@ async function generate() {
   const btn = $("runBtn");
   btn.disabled = true;
   S = null;
-  GAPPASTE = null; // GAP — FIX: a paste left in the old brief's panel never carries over to a new brief
+  GAPPASTE = null; // a paste left in the old brief's panel never carries over to a new brief
   closeSaved();
   history.replaceState(null, "", "/brief");
   $("out").innerHTML = "";
   $("steps").classList.remove("hidden");
+  $("steps").scrollIntoView({ behavior: SMOOTH(), block: "nearest" }); // NAV
   [1, 2, 3].forEach((n) => step(n, ""));
   step(1, "active");
   let collectedYet = false;
@@ -650,9 +816,9 @@ async function generate() {
     S.internalLinks = w.internalLinks || null;
     if (g && g.gap) {
       S.collected.gap = g.gap;
-      clearGapInput(); // GAP — FIX: used once — it won't be attached to the next keyword's brief
+      clearGapInput(); // used once — it won't be attached to the next keyword's brief
     } else if (g && g.gapError) {
-      S.gapError = g.gapError; // kept in the console box so you can fix the sharing and try again
+      S.gapError = g.gapError; // kept in the form so you can fix the sharing and try again
     }
     S.gapPending = false;
     S.aiPending = false;
@@ -684,6 +850,7 @@ async function saveBrief() {
     });
     S.saved = r;
     S.saveState = "saved";
+    saveTicks(); // NAV
     history.replaceState(null, "", "/brief?id=" + encodeURIComponent(r.id));
   } catch (e) {
     S.saveState = "error";
@@ -715,10 +882,20 @@ async function toggleSaved() {
   try {
     const r = await post({ stage: "list", limit: 100 });
     const rows = r.briefs || [];
-    box.innerHTML = `<div class="panel"><div class="ph2"><b>Saved briefs</b>${r.sheetUrl ? `<a href="${esc(r.sheetUrl)}" target="_blank" rel="noopener">Open tracking sheet ↗</a>` : ""}</div>` +
+    box.innerHTML = `<div class="panel"><div class="ph2"><b>Saved briefs <span class="dimtxt">(${rows.length})</span></b>
+        <div class="ph2r">${rows.length ? `<input type="text" id="savedFilter" class="sfilter" placeholder="Filter by keyword, country or status" aria-label="Filter saved briefs">` : ""}${r.sheetUrl ? `<a href="${esc(r.sheetUrl)}" target="_blank" rel="noopener">Open tracking sheet ↗</a>` : ""}<button class="linkbtn" data-act="closeSaved">Close</button></div></div>` +
       (rows.length
         ? `<div class="tw"><table class="st"><thead><tr><th>Date</th><th>Keyword</th><th>Country</th><th>Rank at brief</th><th>Latest</th><th>Change</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(savedRow).join("")}</tbody></table></div>`
-        : `<p class="dimtxt">No saved briefs yet — generate one and it saves automatically.</p>`) + `</div>`;
+        : `<p class="dimtxt">No saved briefs yet — generate one and it saves on its own.</p>`) + `</div>`;
+    // NAV — filter the list as you type
+    const f = $("savedFilter");
+    if (f) {
+      f.addEventListener("input", () => {
+        const q = f.value.trim().toLowerCase();
+        box.querySelectorAll("tbody tr").forEach((tr) => { tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none"; });
+      });
+      f.focus();
+    }
   } catch (e) {
     box.innerHTML = `<div class="banner err">${esc(e.message)}</div>`;
   }
@@ -739,7 +916,7 @@ function savedRow(b) {
 
 async function loadSaved(id) {
   closeSaved();
-  GAPPASTE = null; // GAP — FIX: don't carry a paste from the previous brief's panel
+  GAPPASTE = null; // don't carry a paste from the previous brief's panel
   $("status").innerHTML = `<span class="dot"></span>Opening saved brief…`;
   try {
     const r = await post({ stage: "get", id });
@@ -750,6 +927,7 @@ async function loadSaved(id) {
       ai: b.ai || null, aiPending: false, internalLinks: b.internalLinks || null, saveState: "saved",
       saved: { id, docUrl: row["Brief (Google Doc)"] || "", openUrl: row["Open in tool"] || "", sheetUrl: r.sheetUrl || "" },
     });
+    loadTicks(); // NAV
     $("kw").value = b.collected.keyword || "";
     if ([...$("gl").options].some((o) => o.value === b.collected.gl)) $("gl").value = b.collected.gl;
     setType(b.collected.contentType === "blog" ? "blog" : "report");
@@ -762,53 +940,115 @@ async function loadSaved(id) {
   }
 }
 
+/* ================= NAV — ticked sections ================= */
+const tickKey = () => (S && S.saved && S.saved.id ? `brief.done.${S.saved.id}` : "");
+function saveTicks() { const k = tickKey(); if (!k) return; try { localStorage.setItem(k, JSON.stringify([...S.done])); } catch { /* storage full */ } }
+function loadTicks() { const k = tickKey(); if (!k) return; try { S.done = new Set(JSON.parse(localStorage.getItem(k) || "[]")); } catch { /* ignore */ } }
+function onTick(e) {
+  const t = e.target.closest(".tick");
+  if (!t || !S) return;
+  if (t.checked) S.done.add(t.dataset.tick); else S.done.delete(t.dataset.tick);
+  const li = t.closest(".skh2");
+  if (li) li.classList.toggle("ticked", t.checked);
+  saveTicks();
+  buildToc();
+}
+
 /* ================= render ================= */
-// Banners for the keyword check, search intent and stale data (from lib/brief-checks.js)
-function checkBanners(c) {
+// Everything to check, from lib/brief-checks.js and the AI step, in one box above the brief
+function checkItems(c) {
   const out = [];
   const kc = c.keywordCheck && !c.keywordCheck.error ? c.keywordCheck : null;
   if (kc && kc.status === "variant" && kc.suggestedKeyword) {
-    out.push(`<div class="banner warnb"><b>Keyword check:</b> ${esc(kc.message)} <button class="linkbtn" data-kw="${esc(kc.suggestedKeyword)}" onclick="rerunWith(this.dataset.kw)">Re-run with “${esc(kc.suggestedKeyword)}”</button></div>`);
+    out.push(`<b>Keyword check:</b> ${esc(kc.message)} <button class="linkbtn" data-kw="${esc(kc.suggestedKeyword)}" onclick="rerunWith(this.dataset.kw)">Re-run with “${esc(kc.suggestedKeyword)}”</button>`);
   } else if (kc && kc.status === "weak") {
-    out.push(`<div class="banner warnb"><b>Keyword check:</b> ${esc(kc.message)}</div>`);
+    out.push(`<b>Keyword check:</b> ${esc(kc.message)}`);
   }
   const im = c.intentMix && !c.intentMix.error ? c.intentMix : null;
   if (im && im.intent !== "report") {
     const adds = [im.wantsDefinition && "a definition at the top", im.wantsStats && "a statistics table in Key Market Highlights", im.wantsTrends && "Market Trends as a must-have"].filter(Boolean);
     const list = adds.length > 1 ? `${adds.slice(0, -1).join(", ")} and ${adds[adds.length - 1]}` : adds[0];
-    out.push(`<div class="banner warnb"><b>Search intent — ${esc(im.label)}:</b> ${esc(im.detail)}${list ? ` The skeleton adds ${esc(list)}.` : ""}</div>`);
+    out.push(`<b>Search intent — ${esc(im.label)}:</b> ${esc(im.detail)}${list ? ` The skeleton adds ${esc(list)}.` : ""}`);
   }
   const fr = c.freshness && !c.freshness.error ? c.freshness : null;
   if (fr && Array.isArray(fr.stale) && fr.stale.length && fr.message) {
-    out.push(`<div class="banner warnb"><b>Stale data — flagged, still compared:</b> ${esc(fr.message)}</div>`);
+    out.push(`<b>Stale data — flagged, still compared:</b> ${esc(fr.message)}`);
   }
-  return out.join("");
+  (c.warnings || []).forEach((w) => out.push(esc(w)));
+  if (S.ai && S.ai.error) out.push(`<b>AI step:</b> ${esc(S.ai.error)} — templates are shown instead.`);
+  return out;
+}
+function checksHtml(c) {
+  const items = checkItems(c);
+  if (!items.length) return "";
+  return `<details class="checks"${S.checksOpen === false ? "" : " open"}><summary><b>${items.length} thing${items.length > 1 ? "s" : ""} to check before writing</b></summary>
+    <ul>${items.map((i) => `<li>${i}</li>`).join("")}</ul></details>`;
 }
 // One-click re-run with the keyword wording Google actually ranks
 function rerunWith(k) {
   if (!k) return;
   $("kw").value = k;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: SMOOTH() });
   generate();
 }
 
 function render() {
   if (!S) return;
   const c = S.collected;
-  const warns = checkBanners(c) + (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") +
-    (S.ai && S.ai.error ? `<div class="banner warnb">AI step: ${esc(S.ai.error)} — templates are shown instead.</div>` : "");
   const tabs = [["analyst", "Writer's skeleton"], ["seo", "SEO details"], ["draft", "Check my draft"]]
-    .map(([k, l]) => `<button class="tabbtn ${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("");
-  const tools = S.tab === "draft" ? "" : `<div class="toolbar">
-      <button class="tbtn" data-act="copy">Copy this tab</button>
+    .map(([k, l]) => `<button class="tabbtn ${S.tab === k ? "on" : ""}" data-tab="${k}" role="tab" aria-selected="${S.tab === k}">${l}</button>`).join("");
+  const tools = S.tab === "draft" ? "" : `<div class="bb-tools">
+      <button class="tbtn" data-act="copy">Copy tab</button>
       <button class="tbtn" data-act="doc">Download Word</button>
-      <button class="tbtn" data-act="print">Print / PDF</button>
-      <button class="tbtn" data-act="links">Copy top-10 links</button></div>`;
+      <details class="menu"><summary class="tbtn">More ▾</summary><div class="menu-list">
+        <button data-act="print">Print / save as PDF</button>
+        <button data-act="links">Copy top-10 links</button>
+      </div></details></div>`;
   const body = S.tab === "seo" ? seoHtml(c) : S.tab === "draft" ? draftHtml(c) : analystHtml(c);
-  $("out").innerHTML = `<div id="warns">${warns}</div><div id="saveBar" class="savebar">${saveBarHtml()}</div>
-    <div class="tabs">${tabs}${tools}</div><article class="paper" id="briefDoc">${body}</article>`;
+  $("out").innerHTML = `<div class="briefbar">
+      <div class="bb-row"><div class="bb-title"><span class="bb-kw">${esc(niceTitle(c.keyword))}</span><span class="bb-sub">${c.contentType === "blog" ? "Blog post" : "Report page"} for Google ${esc(countryName(c.gl))}</span></div>
+        <div id="saveBar" class="savebar">${saveBarHtml()}</div></div>
+      <div class="bb-row"><div class="tabs" role="tablist">${tabs}</div>${tools}</div>
+    </div>
+    ${checksHtml(c)}
+    <div class="layout" id="layout"><aside class="toc" id="toc" aria-label="On this page"></aside><article class="paper" id="briefDoc">${body}</article></div>`;
+  const ck = document.querySelector("#out details.checks");
+  if (ck) ck.addEventListener("toggle", () => { S.checksOpen = ck.open; });
   if (S.tab === "draft") bindDraft();
   if (S.tab === "analyst") bindGap(); // GAP
+  buildToc(); // NAV
+}
+
+// NAV — side menu built from the sections on the page (data-toc), with ticked-section progress
+function buildToc() {
+  if (TOC_OBS) { TOC_OBS.disconnect(); TOC_OBS = null; }
+  const toc = $("toc");
+  const lay = $("layout");
+  const doc = $("briefDoc");
+  if (!toc || !lay || !doc) return;
+  const items = S && S.tab !== "draft" ? [...doc.querySelectorAll("[data-toc]")] : [];
+  if (items.length < 2) { toc.innerHTML = ""; lay.classList.add("single"); return; }
+  lay.classList.remove("single");
+  const keys = items.filter((el) => el.dataset.key).map((el) => el.dataset.key);
+  const done = keys.filter((k) => S.done.has(k)).length;
+  toc.innerHTML = `<div class="toc-h">On this page</div>` +
+    (keys.length ? `<div class="toc-prog"><div class="bar"><span style="width:${Math.round((done / keys.length) * 100)}%"></span></div>${done} of ${keys.length} sections ticked</div>` : "") +
+    `<ol>${items.map((el) => {
+      const k = el.dataset.key;
+      const cls = [k ? "h2" : "aux", k && S.done.has(k) ? "done" : "", el.dataset.opt ? "opt" : ""].filter(Boolean).join(" ");
+      return `<li><a href="#${esc(el.id)}" data-jump="${esc(el.id)}" class="${cls}">${esc(el.dataset.toc)}</a></li>`;
+    }).join("")}</ol><a class="toc-top" href="#" data-jump="top">↑ Back to top</a>`;
+  if ("IntersectionObserver" in window) {
+    TOC_OBS = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        toc.querySelectorAll("a.active").forEach((a) => a.classList.remove("active"));
+        const a = toc.querySelector(`a[data-jump="${CSS.escape(en.target.id)}"]`);
+        if (a) a.classList.add("active");
+      });
+    }, { rootMargin: "-130px 0px -65% 0px" });
+    items.forEach((el) => TOC_OBS.observe(el));
+  }
 }
 
 function docHead(c, label) {
@@ -820,7 +1060,7 @@ function docHead(c, label) {
       ${S.saved && S.saved.id ? `<span>Brief ${esc(S.saved.id)}</span>` : ""}</div>`;
 }
 const kpi = (v, l) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`;
-const sec = (title, body) => (body ? `<section><h2 class="sec">${esc(title)}</h2>${body}</section>` : "");
+const sec = (title, body) => (body ? `<section id="seo-${slug(title)}" data-toc="${esc(title)}"><h2 class="sec">${esc(title)}</h2>${body}</section>` : ""); // NAV — listed in the side menu
 const pills = (arr) => arr.map((w) => `<span class="pill">${esc(w)}</span>`).join("");
 
 /* ================= relevance filters ================= */
@@ -1400,11 +1640,15 @@ const SRC_CHIP = { gap: "gap analysis", fixed: "fixed slot" };
 function ptrHtml(p) {
   const src = (p.sources || []).filter((s) => s && s.url)
     .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label || shortUrl(s.url))}</a>`).join(" · ");
-  return `<div class="rdp"><div class="rdk">RD pointer · ${esc(p.section || p.kind)}</div><div class="rdt">${esc(p.pointer)}</div>
-    ${p.why ? `<div><span class="rdl">Competitor gap</span>${esc(p.why)}</div>` : ""}
+  const body = `${p.why ? `<div><span class="rdl">Competitor gap</span>${esc(p.why)}</div>` : ""}
     ${p.facts ? `<div><span class="rdl">Facts to verify</span>${esc(p.facts)}</div>` : ""}
     ${src ? `<div><span class="rdl">Sources</span>${src}</div>` : ""}
-    ${(p.searchTerms || []).length ? `<div><span class="rdl">Searches it targets</span>${esc(p.searchTerms.join(" · "))}</div>` : ""}</div>`;
+    ${(p.searchTerms || []).length ? `<div><span class="rdl">Searches it targets</span>${esc(p.searchTerms.join(" · "))}</div>` : ""}`;
+  if (EXPORTING) {
+    return `<div class="rdp"><div class="rdk">RD pointer · ${esc(p.section || p.kind)}</div><div class="rdt">${esc(p.pointer)}</div>${body}</div>`;
+  }
+  // NAV — facts and sources fold away until opened
+  return `<details class="rdp"${S && S.ptrsOpen ? " open" : ""}><summary><span class="rdk">RD pointer · ${esc(p.section || p.kind)}</span><span class="rdt">${esc(p.pointer)}</span><span class="rdmore">facts &amp; sources</span></summary>${body}</details>`;
 }
 function devsHtml(ds) {
   return table(["Date", "Development", "Why it matters"], ds.map((d) =>
@@ -1419,9 +1663,13 @@ function h3Html(s, h) {
     ${(h.ptrs || []).map(ptrHtml).join("")}${h.devs && h.devs.length ? devsHtml(h.devs) : ""}${h.players ? playersHtml(h.players) : ""}</li>`;
 }
 
-function skSectionHtml(s) {
+function skSectionHtml(s, n) {
   const edge = s.gapEdge && s.gapEdge.length ? s.gapEdge : s.extras; // GAP — specific gaps replace generic ideas
-  return `<li class="skh2${s.optional ? " optional" : ""}"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.fixed ? '<span class="gtag g-fixed">fixed slot</span>' : ""}${s.fromGap ? '<span class="gtag g-gap">gap analysis</span>' : ""}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
+  // NAV — a real checkbox per H2 (a plain box in exports), numbered and listed in the side menu
+  const done = !EXPORTING && S && S.done.has(s.key);
+  const box = EXPORTING ? '<span class="box"></span>'
+    : `<input type="checkbox" class="tick" data-tick="${esc(s.key)}" aria-label="Mark “${esc(s.h2)}” as written"${done ? " checked" : ""}>`;
+  return `<li class="skh2${s.optional ? " optional" : ""}${done ? " ticked" : ""}" id="sec-${esc(s.key)}" data-toc="${n}. ${esc(s.h2)}" data-key="${esc(s.key)}"${s.optional ? ' data-opt="1"' : ""}><div class="skhead">${box}<span class="skn">${n}</span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.fixed ? '<span class="gtag g-fixed">fixed slot</span>' : ""}${s.fromGap ? '<span class="gtag g-gap">gap analysis</span>' : ""}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
     <div class="skbody">
       ${s.write ? `<div class="skw">${esc(s.write)}</div>` : ""}
       ${s.h3.length ? `<div class="h3hint">${s.key === "faqs" ? "FAQ questions" : "Suggested H3s — reword to match what your research shows"}</div>
@@ -1436,16 +1684,21 @@ function skSectionHtml(s) {
     </div></li>`;
 }
 
-const H3_GUIDE = `<div class="h3guide"><b>How to write a good H3</b>
-  <ul class="plain">
+// NAV — the H3 guide folds away on screen; exports show it in full
+function h3GuideHtml() {
+  const list = `<ul class="plain">
     <li>Ask the question a buyer would search — “Which…?”, “How is…?”.</li>
     <li>Name the specific driver, segment or region — never just “Drivers” or “Segment Analysis”.</li>
     <li>Answer it in the first sentence underneath, with a number (share %, value or CAGR).</li>
     <li>One idea per H3, under ~15 words. Write AI, M&amp;A, U.S. and R&amp;D correctly.</li>
-  </ul></div>`;
+  </ul>`;
+  return EXPORTING
+    ? `<div class="h3guide"><b>How to write a good H3</b>${list}</div>`
+    : `<details class="h3guide"><summary><b>How to write a good H3</b> <span class="muted small">— four rules</span></summary>${list}</details>`;
+}
 
 function skeletonHtml(sk) {
-  return `<div class="skmeta">
+  return `<div id="sk-meta" data-toc="Title, meta &amp; H1"><div class="skmeta">
       <div class="skrow"><span class="lab">Title tag</span><div>${sk.titles.slice(0, 2).map((t) => opt(t, 50, 60)).join("")}</div></div>
       <div class="skrow"><span class="lab">Meta</span><div>${opt(sk.meta, 140, 160)}</div></div>
       <div class="skrow"><span class="lab">URL</span><div class="mono" style="padding-top:4px">${esc(sk.url)}</div></div>
@@ -1454,11 +1707,11 @@ function skeletonHtml(sk) {
     <div class="skdesc"><span class="lvl">H2</span>${esc(sk.descriptor)}
       <div class="muted small">List the sub-segments in each bracket. Every “By …” here needs an H3 under Segmental Analysis.</div></div>
     <div class="skbyline">Pages · Base Year: 20XX · Release: [Month YYYY] · Author: [Name — linked] · Reviewed By: [Name — linked] · Last Updated: [Month YYYY]</div>
-    ${sk.titleWords.length ? `<div class="skx"><span class="lab">Title / meta / overview</span>${pills(sk.titleWords)}</div>` : ""}
-    ${H3_GUIDE}
-    <ol class="skh2s">${sk.sections.map(skSectionHtml).join("")}</ol>
+    ${sk.titleWords.length ? `<div class="skx"><span class="lab">Title / meta / overview</span>${pills(sk.titleWords)}</div>` : ""}</div>
+    ${h3GuideHtml()}
+    <ol class="skh2s">${sk.sections.map((s, i) => skSectionHtml(s, i + 1)).join("")}</ol>
     ${sk.leftover.length ? `<div class="skx"><span class="lab">Optional phrases — only if they fit</span>${pills(sk.leftover)}</div>` : ""}
-    <div class="callout">Add ${sk.linkTarget} links to related Kings Research reports <b>inside sentences</b> in the sections above (not as a list).
+    <div class="callout" id="sk-links" data-toc="Internal links">Add ${sk.linkTarget} links to related Kings Research reports <b>inside sentences</b> in the sections above (not as a list).
       ${sk.links.length ? `<ul class="plain">${sk.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(shortUrl(l.url))}</a></li>`).join("")}</ul>` : ""}</div>
     <div class="muted small">Then: Author and Reviewed By bios at the end of the page, as on our other reports.</div>`;
 }
@@ -1500,13 +1753,17 @@ function gapPanelHtml(c) {
   const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
   if (S.gapPending) return `<div class="gpanel"><span class="dot"></span>Reading the gap analysis and wording the H3s…</div>`;
   const err = S.gapError ? `<div class="gerr">${esc(S.gapError)}</div>` : "";
-  const mismatch = gapMismatch(c); // GAP — FIX
+  const mismatch = gapMismatch(c);
   const warn = mismatch ? `<div class="gerr">⚠ ${esc(mismatch)}</div>` : "";
   if (G && !S.gapOpen) {
     const n = [`${G.pointers.length} pointers`, G.newSections.length ? `${G.newSections.length} new H2${G.newSections.length > 1 ? "s" : ""}` : "",
       G.developments.length ? `${G.developments.length} developments` : "", G.faqs.length ? `${G.faqs.length} FAQs` : ""].filter(Boolean).join(" · ");
     return `<div class="gpanel ok">${err}${warn}✓ <b>Gap analysis added</b>${G.title ? ` — ${esc(G.title)}` : ""}: ${esc(n)}.${G.h3Note ? ` <span class="muted">${esc(G.h3Note)}</span>` : ""}
       <button class="linkbtn" data-act="gapOpen">Replace</button> · <button class="linkbtn" data-act="gapRemove">Remove</button></div>`;
+  }
+  // NAV — one line until you choose to add one
+  if (!G && !S.gapOpen && !S.gapError) {
+    return `<div class="gpanel slim">No gap analysis attached. <button class="linkbtn" data-act="gapOpen">Add the research team's gap analysis</button> to put its pointers, facts, new H2s and FAQs into this skeleton.</div>`;
   }
   return `<div class="gpanel">${err}${warn}<b>${G ? "Replace the gap analysis" : "Add the Competitor SEO &amp; Content Gap Analysis"}</b> — its pointers, facts, sources, new H2s and FAQs go straight into the skeleton below.${gapForm()}</div>`;
 }
@@ -1537,18 +1794,28 @@ function analystHtml(c) {
   const med = c.benchmarks.words && c.benchmarks.words.median;
   const lo = med ? round100(med) : t.coverageWords[0];
   const hi = Math.max(lo + 500, t.coverageWords[0]);
+  const before = dupesNote(c) + gapNotes(c); // NAV — grouped under "Before you write"
+  const hasPtrs = sk.sections.some((s) => (s.ptrs || []).length || s.h3.some((h) => (h.ptrs || []).length));
   return docHead(c, "Writer's skeleton") +
     gapPanelHtml(c) +
+    `<div id="sk-summary" data-toc="Brief summary">` +
     `<div class="job"><div class="jl">Your job</div><p>${esc((G && G.headline) || (ai && ai.howToWin) || defaultJob(c))}</p></div>` +
-    `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div>` +
-    dupesNote(c) +
-    gapNotes(c) +
+    `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div></div>` +
+    (before ? `<section id="sk-before" data-toc="Before you write"><h2 class="sec">Before you write</h2>${before}</section>` : "") +
     `<h2 class="sec">Writer's skeleton</h2>` +
-    `<p class="muted">Our report format, top to bottom. Tick each H2 off. H3s are suggestions — keep the question style, change the wording to fit your findings.</p>` +
+    `<p class="muted">Our report format, top to bottom. H3s are suggestions — keep the question style, change the wording to fit your findings.${EXPORTING ? " Tick each H2 off." : " Tick the box on each H2 when it's written; your progress shows in the side menu."}</p>` +
+    (!EXPORTING && hasPtrs ? `<div class="sk-tools"><button class="linkbtn" data-act="ptrs">${S.ptrsOpen ? "Hide" : "Show"} facts &amp; sources for every RD pointer</button></div>` : "") +
     (S.aiPending ? pending() : "") +
     skeletonHtml(sk) +
-    `<h2 class="sec">Don't</h2><ul class="donts">${DONTS.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` +
+    `<h2 class="sec" id="sk-donts" data-toc="Don'ts">Don't</h2><ul class="donts">${DONTS.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` +
     `<div class="callout">Finished writing? Open the <b>Check my draft</b> tab and paste it in.</div>`;
+}
+
+// NAV — open or close every RD pointer at once
+function togglePtrs(b) {
+  S.ptrsOpen = !S.ptrsOpen;
+  document.querySelectorAll("#briefDoc details.rdp").forEach((d) => { d.open = S.ptrsOpen; });
+  b.innerHTML = `${S.ptrsOpen ? "Hide" : "Show"} facts &amp; sources for every RD pointer`;
 }
 
 /* ================= SEO DETAILS ================= */
@@ -1763,7 +2030,7 @@ function relevantLinks(c) {
 function draftHtml(c) {
   const d = S.draft;
   return `<div class="doc-kicker">Check my draft</div><h1 class="doc-title">${esc(niceTitle(c.keyword))}</h1>
-    <p class="muted">Paste the full draft from Google Docs or Word — headings and tables are kept. Add the planned title tag and meta description, then press Check.</p>
+    <p class="muted">Paste the full draft from Google Docs or Word — headings and tables are kept. Add the planned title tag and meta description, then press Check draft.</p>
     <label class="pl" for="dTitle">Title tag</label>
     <input id="dTitle" class="pin" type="text" value="${esc(d.title)}" placeholder="${esc(niceTitle(c.keyword))} Size, Share & Growth | Report 20XX">
     <div class="cnt" id="dTitleCnt"></div>
@@ -1796,6 +2063,7 @@ async function runCheck() {
     S.draft.result = r;
     $("dResult").innerHTML = resultHtml(r);
     $("dStatus").textContent = "";
+    $("dResult").scrollIntoView({ behavior: SMOOTH(), block: "start" }); // NAV
   } catch (e) {
     $("dStatus").textContent = e.message;
   }
@@ -1813,13 +2081,30 @@ function resultHtml(r) {
 
 /* ================= actions & export ================= */
 function onAction(e) {
+  // NAV — side-menu jumps
+  const jump = e.target.closest("[data-jump]");
+  if (jump) {
+    e.preventDefault();
+    if (jump.dataset.jump === "top") window.scrollTo({ top: 0, behavior: SMOOTH() });
+    else { const t = $(jump.dataset.jump); if (t) t.scrollIntoView({ behavior: SMOOTH(), block: "start" }); }
+    return;
+  }
   const open = e.target.closest("[data-open]");
   if (open) { e.preventDefault(); loadSaved(open.dataset.open); return; }
   const tabBtn = e.target.closest("[data-tab]");
-  if (tabBtn && S) { S.tab = tabBtn.dataset.tab; render(); return; }
+  if (tabBtn && S) {
+    S.tab = tabBtn.dataset.tab;
+    render();
+    const y = $("out").getBoundingClientRect().top + window.scrollY - 8; // NAV — start the new tab at its top
+    if (window.scrollY > y) window.scrollTo({ top: y });
+    return;
+  }
   const b = e.target.closest("[data-act]");
   if (!b) return;
+  const menu = b.closest("details.menu");
+  if (menu) menu.open = false;
   if (b.dataset.act === "paste") { openManual(b.dataset.url); return; }
+  if (b.dataset.act === "closeSaved") { closeSaved(); return; } // NAV
   if (!S) return;
   const name = `content-brief-${slug(S.collected.keyword)}`;
   switch (b.dataset.act) {
@@ -1833,6 +2118,7 @@ function onAction(e) {
     case "gapAttach": attachGap(); break;                      // GAP
     case "gapRemove": removeGap(); break;                      // GAP
     case "gapOpen": S.gapOpen = !S.gapOpen; render(); break;   // GAP
+    case "ptrs": togglePtrs(b); break;                         // NAV
   }
 }
 
@@ -1840,8 +2126,8 @@ const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:
 h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
 table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
 .ptag,.tag,.lvl,.gtag{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
-.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
-.rdp{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.rdk,.rdl{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}
+.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote,.skn{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.rdp{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.rdk,.rdl{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}.skn{margin-right:4pt}
 .skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
 
 function docHtml() {
@@ -1855,33 +2141,35 @@ function docHtml() {
   }
 }
 
+// NAV — copy the export version of this tab: everything expanded, no menus, checkboxes or attach form
 async function copyBrief() {
-  const live = $("briefDoc");
-  const el = live.cloneNode(true);
-  el.querySelectorAll(".gpanel").forEach((n) => n.remove()); // GAP — the attach form isn't part of the brief
-  // GAP — FIX: plain-text copy keeps its line breaks (innerText of the live page, minus the attach form)
-  const panel = live.querySelector(".gpanel");
-  let plain = live.innerText;
-  if (panel && panel.innerText) plain = plain.replace(panel.innerText, "").replace(/^\s*\n/, "");
+  let html;
+  EXPORTING = true;
+  try { html = S.tab === "seo" ? seoHtml(S.collected) : analystHtml(S.collected); }
+  finally { EXPORTING = false; }
+  const tmp = document.createElement("div");
+  tmp.className = "paper";
+  tmp.style.cssText = "position:fixed;left:-9999px;top:0;width:900px";
+  tmp.innerHTML = html;
+  document.body.appendChild(tmp);
+  const plain = tmp.innerText;
   try {
     await navigator.clipboard.write([new ClipboardItem({
-      "text/html": new Blob([`<meta charset="utf-8">${el.innerHTML}`], { type: "text/html" }),
+      "text/html": new Blob([`<meta charset="utf-8">${html}`], { type: "text/html" }),
       "text/plain": new Blob([plain], { type: "text/plain" }),
     })]);
     toast("Copied — paste into Google Docs or Word");
   } catch {
-    el.style.position = "fixed";
-    el.style.left = "-9999px";
-    document.body.appendChild(el);
     const range = document.createRange();
-    range.selectNode(el);
+    range.selectNode(tmp);
     const sel = getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
     try { document.execCommand("copy"); toast("Copied"); }
     catch { toast("Copy blocked by the browser — use Download Word instead"); }
     sel.removeAllRanges();
-    el.remove();
+  } finally {
+    tmp.remove();
   }
 }
 
@@ -1901,7 +2189,7 @@ function download(filename, content, type) {
 
 function toast(msg) {
   let t = $("toast");
-  if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(t._h);
