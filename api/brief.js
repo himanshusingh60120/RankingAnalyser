@@ -8,8 +8,11 @@
 // POST /api/brief  { stage: ... }
 //   collect { keyword, gl?, hl?, contentType?, ourUrl?, ourDomain?, manual? } -> { collected }
 //           manual = [{ url, html? }] — competitor pages added by the analyst (html = pasted page)
-//           collected also carries intentMix, keywordCheck and freshness (lib/brief-checks.js)
+//           collected also carries intentMix, keywordCheck, freshness and figureCheck (lib/brief-checks.js)
 //   write   { collected } -> { ai, internalLinks }
+//   gap     { keyword, market?, url? | html? | text? } -> { gap }   GAP — reads the research team's gap
+//           analysis (Google Doc link or pasted document) and words its H3s; the UI stores it in
+//           collected.gap so it is saved and reopened with the brief
 //   full    collect + write in one call (scripts only — may pass 60s)
 //   save    { brief: { collected, ai, internalLinks }, html, country } -> Google Doc + JSON in Drive, row in the Sheet
 //   list    { limit? } -> saved briefs from the Sheet
@@ -19,13 +22,14 @@
 
 import { searchGoogle, serpProviderName } from "../lib/serp.js";
 import { collectSerpPages, fetchOurPage, analyseSerp, sameUrl, BRIEF_TRACKED, displayName } from "../lib/brief.js";
-import { writeBriefWithAi } from "../lib/brief-ai.js";
+import { writeBriefWithAi, phraseGapH3s } from "../lib/brief-ai.js";
 import { suggestInternalLinks } from "../lib/internal-links.js";
 import { COMPETITOR_SITES } from "../lib/competitors.js";
 import { callStorage, storageConfigured } from "../lib/storage.js";
 import { findDuplicates, dupesSummary } from "../lib/dupes.js";
 import { checkDraft } from "../lib/draft-check.js";
-import { annotateBrief } from "../lib/brief-checks.js"; // NEW: search intent, keyword check, stale-data flags
+import { annotateBrief } from "../lib/brief-checks.js"; // search intent, keyword check, stale-data flags, figure check
+import { readGapAnalysis, applyGapPhrasing } from "../lib/gap-analysis.js"; // GAP
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -71,6 +75,8 @@ export async function POST(request) {
       return stageCollect(body, stage);
     case "write":
       return stageWrite(body);
+    case "gap":
+      return stageGap(body); // GAP
     case "save":
       return stageSave(body, request);
     case "list": {
@@ -138,8 +144,8 @@ async function stageCollect(body, stage) {
   const collected = analyseSerp({ keyword, contentType, serp, pages, ourDomain, ourPage, ourUrl });
   collected.dupes = dupes;
 
-  // NEW: search intent, keyword-vs-top-10 check and stale-data flags. Flags only — every page stays
-  // in the comparison. Wrapped so a problem here can never break brief generation.
+  // Search intent, keyword-vs-top-10 check, stale-data flags and the competitor figure check.
+  // Flags only — every page stays in the comparison. Wrapped so a problem here can never break generation.
   try { annotateBrief(collected, { keyword, serp, pages, ourPage, ourDomain, dupes }); }
   catch (e) { collected.checksError = String(e.message || e); }
 
@@ -157,6 +163,30 @@ async function stageWrite(body) {
   if (JSON.stringify(c).length > 800000) return json({ error: "'collected' payload too large." }, 413);
   const [ai, internalLinks] = await Promise.all([safe(() => writeBriefWithAi(c)), internalLinkBlock(c)]);
   return json({ stage: "write", ai, internalLinks });
+}
+
+// GAP — read the gap analysis, then word its H3s (one AI call; templates are used if it fails).
+async function stageGap(body) {
+  const keyword = String(body.keyword || "").replace(/\s+/g, " ").trim();
+  if (keyword.length < 2) return json({ error: "Missing 'keyword'." }, 400);
+  const url = /^https?:\/\//i.test(body.url || "") ? String(body.url).trim() : "";
+  const html = typeof body.html === "string" ? body.html : "";
+  const text = typeof body.text === "string" ? body.text : "";
+  if (!url && !html && !text) return json({ error: "Add a Google Doc link or paste the gap analysis." }, 400);
+
+  let gap;
+  try {
+    gap = await readGapAnalysis({ url, html, text, keyword });
+  } catch (e) {
+    return json({ error: String(e.message || e), hint: e.hint || "" }, 422);
+  }
+  const ph = await withDeadline(
+    safe(() => phraseGapH3s(gap, { market: String(body.market || "").slice(0, 160) || keyword })),
+    40000,
+    { error: "H3 wording timed out." }
+  );
+  applyGapPhrasing(gap, ph);
+  return json({ stage: "gap", gap });
 }
 
 async function stageSave(body, request) {
