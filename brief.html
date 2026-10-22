@@ -196,11 +196,28 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
 .r-warn .ri{background:#fbefd9;color:#93621a}
 .r-fail .ri{background:#fde3df;color:#a33a2e}
 .rf{font-size:13px;color:var(--p-muted);margin-top:2px}
+/* GAP — gap-analysis blocks inside the brief */
+.gtag{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:4px;text-transform:uppercase;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.gtag.g-gap{background:#dff1ea;color:#0f7a5c}
+.gtag.g-fixed{background:#efe9f8;color:#5b3f8a}
+.gtag.g-reword{background:#fde3df;color:#a33a2e}
+.rdp{border-left:3px solid var(--p-accent);background:#f6faf8;border-radius:0 8px 8px 0;padding:7px 11px;margin:6px 0 8px;font-size:13px;line-height:1.5}
+.rdp>div{margin:2px 0}
+.rdk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--p-accent)}
+.rdt{font-weight:600;color:var(--p-head)}
+.rdl{display:inline-block;min-width:122px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--p-muted);margin-right:6px}
+.gnote{font-size:12.5px;color:#3c4652;margin:2px 0 4px}
+ul.gnotes li{color:#3c4652}
+.gpanel{border:1px dashed var(--p-accent);border-radius:10px;padding:12px 15px;margin:14px 0;background:#f3faf7;font-size:14px}
+.gpanel.ok{border-style:solid}
+.gpanel .gerr{color:#a33a2e;margin-bottom:6px}
+.gform{margin-top:10px}
+.gpaste{min-height:120px;max-height:260px;margin-top:8px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--signal);color:#04130d;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;opacity:0;transition:all .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
   html,body{background:#fff !important}
-  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast,.pbtn2{display:none !important}
+  .ribbon,header,.console,.steps,#health,#warns,#saved,.savebar,.tabs,footer.app,.toast,.pbtn2,.gpanel{display:none !important}
   .wrap{max-width:none;padding:0}
   .paper{box-shadow:none;border-radius:0;padding:0;margin:0;background:#fff}
   .skh2,.kpi,.callout,tr{break-inside:avoid}
@@ -221,7 +238,8 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
     <p class="eyebrow">Keyword → Google top 10 → writer's skeleton</p>
     <h1>Content <span class="x">Brief</span></h1>
     <p class="lede">Type a keyword and pick a country. Writers get a skeleton in the Kings Research report format — every H2 with
-      what to write, suggested H3s and the few keywords that belong there. The SEO tab has the full competitor analysis.
+      what to write, suggested H3s and the few keywords that belong there. Add the research team's gap analysis and its
+      pointers, facts and sources go straight into the skeleton. The SEO tab has the full competitor analysis.
       Every brief is saved to Google Drive and the tracking sheet.</p>
   </header>
 
@@ -287,6 +305,21 @@ ul.res li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #efece6;fo
         </div>
       </div>
     </details>
+    <!-- GAP — the research team's Competitor SEO & Content Gap Analysis -->
+    <details class="adv" id="gapBox">
+      <summary>Add the gap analysis — its pointers, facts and new H2s go straight into the writer's skeleton</summary>
+      <div class="grid">
+        <div class="full">
+          <label for="gUrl">Google Doc link (shared: anyone with the link can view)</label>
+          <input type="text" id="gUrl" placeholder="https://docs.google.com/document/d/…" />
+        </div>
+        <div class="full">
+          <label>…or paste the document</label>
+          <div id="gPaste" class="mbox" contenteditable="true" data-ph="Open the gap analysis → Ctrl+A → Ctrl+C → click here → Ctrl+V"></div>
+          <div class="hint2">You can also add it later, from the Writer's skeleton tab.</div>
+        </div>
+      </div>
+    </details>
     <div class="row-actions">
       <button class="run" id="runBtn">Generate brief</button>
       <button class="ghost" id="savedBtn">Saved briefs</button>
@@ -338,6 +371,11 @@ const ACR = { ai: "AI", "m&a": "M&A", us: "U.S.", "u.s.": "U.S.", uk: "UK", uae:
   ev: "EV", evs: "EVs", cagr: "CAGR", gcc: "GCC", apac: "APAC", mea: "MEA", "r&d": "R&D", rd: "R&D", ccrcs: "CCRCs", reits: "REITs", saas: "SaaS" };
 const tcAll = (s) => String(s || "").split(/\s+/).filter(Boolean)
   .map((w) => ACR[w.toLowerCase()] || (/^[A-Z0-9&.]{2,}$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
+// GAP — small helpers for the gap-analysis blocks
+const uniqS = (a) => [...new Set((a || []).filter(Boolean))];
+const shortTopic = (p) => String(p || "").replace(/\s*\([^)]*\)/g, "").split(/\s[—–]\s|;\s|:\s/)[0].replace(/["“”‘’']/g, "").trim();
+const coKey = (n) => String(n || "").toLowerCase().replace(/\b(inc|ltd|plc|ag|co|corp|corporation|company|group|holdings?|limited|services|llc|sa|nv)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
+const sameCo = (a, b) => { const x = coKey(a), y = coKey(b); return !!x && !!y && (x.includes(y) || y.includes(x)); };
 
 let pageType = "report";
 let HEALTH = {};
@@ -345,12 +383,15 @@ let S = null;
 let EXPORTING = false;
 let MANUAL = [];
 let pendingPaste = null;
+let GAPIN = null;    // GAP — gap analysis pasted in the console box: { html } or { text }
+let GAPPASTE = null; // GAP — gap analysis pasted in the Writer's skeleton panel
 
 function newState(collected, extra = {}) {
   return {
     collected, ai: null, aiPending: true, internalLinks: null,
     saved: null, saveState: "idle", saveError: "",
     tab: "analyst", draft: { title: "", meta: "", html: "", result: null },
+    gapPending: false, gapError: "", gapOpen: false, // GAP
     ...extra,
   };
 }
@@ -453,6 +494,79 @@ function openManual(url) {
 }
 const pasteBtn = (url, label = "Paste page") => (EXPORTING ? "" : `<button class="pbtn2" data-act="paste" data-url="${esc(url || "")}">${esc(label)}</button>`);
 
+/* ================= GAP — gap analysis input ================= */
+// Keep the pasted gap analysis as HTML (tables, headings and bold survive) or as plain text.
+function captureGapPaste(e, box, setter) {
+  e.preventDefault();
+  const html = e.clipboardData.getData("text/html");
+  const text = e.clipboardData.getData("text/plain");
+  const val = html && html.length > 300 ? { html: html.replace(/<img[^>]*>/gi, "") } : text && text.length > 300 ? { text } : null;
+  setter(val);
+  box.classList.toggle("got", !!val);
+  box.textContent = val
+    ? `✓ Gap analysis captured (${(val.html || val.text).length.toLocaleString()} characters)`
+    : "That looks too short — in the document press Ctrl+A first, then Ctrl+C.";
+}
+$("gPaste").addEventListener("paste", (e) => captureGapPaste(e, $("gPaste"), (v) => { GAPIN = v; }));
+$("gPaste").addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
+
+function gapBody(url, pasted) {
+  if (url) return { url };
+  if (pasted && pasted.html) return { html: pasted.html };
+  if (pasted && pasted.text) return { text: pasted.text };
+  return null;
+}
+
+// Same market wording the skeleton uses, so the AI-worded H3s match it.
+function marketNames(keyword) {
+  const kw = String(keyword || "").trim();
+  const place = placeIn(kw);
+  const isGlobal = !place;
+  const kwNoGlobal = kw.replace(/^global\s+/i, "");
+  const Kshort = niceTitle(kwNoGlobal);
+  const Kfull = isGlobal ? `Global ${Kshort}` : niceTitle(kw);
+  const kwG = (isGlobal ? `global ${kwNoGlobal}` : kw).toLowerCase();
+  return { kw, place, isGlobal, kwNoGlobal, Kshort, Kfull, kwG, KQ: tcAll(Kfull) };
+}
+
+async function attachGap() {
+  if (!S) return;
+  const url = ($("gpUrl") && $("gpUrl").value.trim()) || "";
+  const body = gapBody(url, GAPPASTE);
+  if (!body) { toast("Add the Google Doc link or paste the document first"); return; }
+  S.gapPending = true;
+  S.gapError = "";
+  render();
+  try {
+    const r = await post({ stage: "gap", keyword: S.collected.keyword, market: marketNames(S.collected.keyword).KQ, ...body });
+    S.collected.gap = r.gap;
+    S.gapOpen = false;
+    GAPPASTE = null;
+    if (S.saveState === "saved") S.saveState = "idle";
+    toast("Gap analysis added — press “Save to Google Drive” to keep it with the brief");
+  } catch (e) {
+    S.gapError = e.message + (e.hint ? ` ${e.hint}` : "");
+  }
+  S.gapPending = false;
+  render();
+}
+
+function removeGap() {
+  if (!S || !S.collected) return;
+  delete S.collected.gap;
+  S.gapOpen = false;
+  if (S.saveState === "saved") S.saveState = "idle";
+  render();
+}
+
+function bindGap() {
+  const box = $("gpPaste");
+  if (!box) return;
+  box.addEventListener("paste", (e) => captureGapPaste(e, box, (v) => { GAPPASTE = v; }));
+  box.addEventListener("keydown", (e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); });
+  if (GAPPASTE) { box.classList.add("got"); box.textContent = "✓ Gap analysis captured — press “Add to this brief”"; }
+}
+
 /* ================= run ================= */
 async function post(body) {
   const r = await fetch("/api/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -501,14 +615,22 @@ async function generate() {
     collectedYet = true;
     step(1, "done"); step(2, "done"); step(3, "active");
     S = newState(r1.collected);
+    const gapReq = gapBody($("gUrl").value.trim(), GAPIN); // GAP
+    S.gapPending = !!gapReq;
     render();
-    try {
-      const r2 = await post({ stage: "write", collected: r1.collected });
-      S.ai = r2.ai;
-      S.internalLinks = r2.internalLinks;
-    } catch (e) {
-      S.ai = { error: e.message };
-    }
+    // GAP — the AI write-up and the gap analysis run side by side (each call has its own 60 s)
+    const [w, g] = await Promise.all([
+      post({ stage: "write", collected: r1.collected }).catch((e) => ({ ai: { error: e.message } })),
+      gapReq
+        ? post({ stage: "gap", keyword: r1.collected.keyword, market: marketNames(r1.collected.keyword).KQ, ...gapReq })
+          .catch((e) => ({ gapError: e.message + (e.hint ? ` ${e.hint}` : "") }))
+        : Promise.resolve(null),
+    ]);
+    S.ai = w.ai;
+    S.internalLinks = w.internalLinks || null;
+    if (g && g.gap) S.collected.gap = g.gap;
+    else if (g && g.gapError) S.gapError = g.gapError;
+    S.gapPending = false;
     S.aiPending = false;
     render();
     if (HEALTH.storage !== false) await saveBrief();
@@ -616,7 +738,7 @@ async function loadSaved(id) {
 }
 
 /* ================= render ================= */
-// NEW — banners for the keyword check, search intent and stale data (from lib/brief-checks.js)
+// Banners for the keyword check, search intent and stale data (from lib/brief-checks.js)
 function checkBanners(c) {
   const out = [];
   const kc = c.keywordCheck && !c.keywordCheck.error ? c.keywordCheck : null;
@@ -637,7 +759,7 @@ function checkBanners(c) {
   }
   return out.join("");
 }
-// NEW — one-click re-run with the keyword wording Google actually ranks
+// One-click re-run with the keyword wording Google actually ranks
 function rerunWith(k) {
   if (!k) return;
   $("kw").value = k;
@@ -648,7 +770,7 @@ function rerunWith(k) {
 function render() {
   if (!S) return;
   const c = S.collected;
-  const warns = checkBanners(c) + (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") + // NEW: checkBanners
+  const warns = checkBanners(c) + (c.warnings || []).map((w) => `<div class="banner warnb">${esc(w)}</div>`).join("") +
     (S.ai && S.ai.error ? `<div class="banner warnb">AI step: ${esc(S.ai.error)} — templates are shown instead.</div>` : "");
   const tabs = [["analyst", "Writer's skeleton"], ["seo", "SEO details"], ["draft", "Check my draft"]]
     .map(([k, l]) => `<button class="tabbtn ${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("");
@@ -661,6 +783,7 @@ function render() {
   $("out").innerHTML = `<div id="warns">${warns}</div><div id="saveBar" class="savebar">${saveBarHtml()}</div>
     <div class="tabs">${tabs}${tools}</div><article class="paper" id="briefDoc">${body}</article>`;
   if (S.tab === "draft") bindDraft();
+  if (S.tab === "analyst") bindGap(); // GAP
 }
 
 function docHead(c, label) {
@@ -808,9 +931,7 @@ function dimTitle(label) {
   return tcAll(m[label] || label);
 }
 
-// NEW — H3 grammar: "Is/Are" and "Does/Do" follow the head noun of the idea.
-// "Regulatory Challenges" → Are/Do · "Rising Digital Adoption" → Is/Does
-// "Expansion In Emerging Markets" → Is (head noun "Expansion") · "Mergers & Acquisitions" → Are
+// H3 grammar: "Is/Are" and "Does/Do" follow the head noun of the idea.
 const SINGULAR_S_WORDS = new Set(["logistics", "economics", "analytics", "mathematics", "physics", "ethics", "politics",
   "news", "series", "species", "means", "diabetes", "measles", "gas", "lens", "bus", "status", "consensus", "census",
   "focus", "bonus", "access", "business", "process", "progress", "success", "awareness", "wellness", "fitness", "address"]);
@@ -830,14 +951,7 @@ const doesDo = (p) => (isPluralIdea(p) ? "Do" : "Does");
 
 function buildSkeleton(c, ai) {
   const isReport = c.contentType !== "blog";
-  const kw = String(c.keyword || "").trim();
-  const place = placeIn(kw);
-  const isGlobal = !place;
-  const kwNoGlobal = kw.replace(/^global\s+/i, "");
-  const Kshort = niceTitle(kwNoGlobal);
-  const Kfull = isGlobal ? `Global ${Kshort}` : niceTitle(kw);
-  const kwG = (isGlobal ? `global ${kwNoGlobal}` : kw).toLowerCase();
-  const KQ = tcAll(Kfull);                                   // used inside question-style H3s
+  const { kw, place, isGlobal, kwNoGlobal, Kshort, Kfull, kwG, KQ } = marketNames(c.keyword); // GAP — shared with the gap request
   const N = c.topics.pagesCompared || 0;
   const kwTok = kwTokens(kw);
   const F = c.figures || {};
@@ -853,7 +967,17 @@ function buildSkeleton(c, ai) {
     return best && N ? `${best.count} of ${N} competitors cover this` : "";
   };
 
-  // NEW — search intent, keyword check and freshness (computed server-side in lib/brief-checks.js)
+  // GAP — research team's gap analysis (lib/gap-analysis.js) and the competitor figure check (lib/brief-checks.js)
+  const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
+  const FC = c.figureCheck && !c.figureCheck.error ? c.figureCheck : null;
+  const gp = (id) => (G ? G.pointers.find((p) => p.id === id) || null : null);
+  const gps = (ids) => (ids || []).map(gp).filter(Boolean);
+  const gpOf = (fn) => (G ? G.pointers.filter(fn) : []);
+  const gNotes = (id) => (G ? (G.structure || []).filter((s) => s.id === id).map((s) => `Gap analysis · ${s.key}: ${s.value}`) : []);
+  const whys = (ps) => uniqS(ps.map((p) => p.why)).slice(0, 4);
+  const Y = new Date(c.generatedAt || Date.now()).getFullYear();
+
+  // Search intent, keyword check and freshness (computed server-side in lib/brief-checks.js)
   const IM = c.intentMix && !c.intentMix.error ? c.intentMix : null;
   const KC = c.keywordCheck && !c.keywordCheck.error ? c.keywordCheck : null;
   const FR = c.freshness && !c.freshness.error ? c.freshness : null;
@@ -873,7 +997,8 @@ function buildSkeleton(c, ai) {
 
   const sections = [];
   const mk = (key, h2, extra = {}) => {
-    const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false, ...extra };
+    const s = { key, h2, tier: "must", why: "", write: "", h3: [], h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], optional: false,
+      notes: [], ptrs: [], gapEdge: [], fixed: false, fromGap: false, ...extra }; // GAP — notes, pointers, edge, slot tags
     sections.push(s);
     return s;
   };
@@ -882,19 +1007,32 @@ function buildSkeleton(c, ai) {
 
   // 1. Overview
   const ov = mk("overview", `${Kshort} Overview`, { why: evidence(["Market overview & definition", "Market size & forecast"]) || "our standard first section" });
-  const definitionFirst = explainerSerp && IM.wantsDefinition; // NEW
+  const definitionFirst = explainerSerp && IM.wantsDefinition;
   ov.write = definitionFirst
     ? "Start with a plain-English definition (2–3 sentences), then our headline numbers, then what's driving demand and what's changing (technology, regulation, buyer behaviour)."
     : "Open with our numbers in the first sentence, then two short paragraphs: what's driving demand, and what's changing (technology, regulation, buyer behaviour).";
-  if (definitionFirst) ov.h3 = [{ text: `What Is ${topicNoun}?` }]; // NEW
+  if (definitionFirst) ov.h3 = [{ text: `What Is ${topicNoun}?` }];
+  // GAP — the CAGR range leaves out competitors whose figures don't add up
+  const oldCagr = F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}% — if ours is outside that range, explain why in one line` : null;
+  const fcCagr = FC ? (FC.line || (FC.leftOut && FC.leftOut.length ? "None of the competitor CAGRs we found add up (see the SEO tab) — set ours from our own model and explain the scope in one line." : null)) : null;
+  const gapCagr = G && G.figureCheck && G.figureCheck.line ? `From the gap analysis's benchmark — ${G.figureCheck.line.replace(" (see the SEO tab)", "")}` : null;
   ov.cover = [
-    kwVariant ? `Keyword: ${kwVariant.message} Use “${kwVariant.suggestedKeyword}” in the title, H1 and first sentence — or re-run the brief with it (button at the top).` : null, // NEW
-    definitionFirst ? `Definition first: answer “What is ${topicNoun}?” in 40–50 words under that H3 — ${ofTopIs("guide", "an explainer", "explainers")}${exNames("guide")}, and searchers ask it in People Also Ask.` : null, // NEW
+    kwVariant ? `Keyword: ${kwVariant.message} Use “${kwVariant.suggestedKeyword}” in the title, H1 and first sentence — or re-run the brief with it (button at the top).` : null,
+    definitionFirst ? `Definition first: answer “What is ${topicNoun}?” in 40–50 words under that H3 — ${ofTopIs("guide", "an explainer", "explainers")}${exNames("guide")}, and searchers ask it in People Also Ask.` : null,
     `${definitionFirst ? "Then the house-style sentence" : "First sentence (house style)"}: "According to Kings Research analysis, the ${kwG} size was recorded at USD [X] billion in 20XX and is projected to reach USD [Y] billion by 20XX, growing at a CAGR of [Z]% over the forecast period from 20XX to 20XX."`,
-    F.cagrMin != null ? `Competitors quote CAGRs of ${F.cagrMin}%–${F.cagrMax}% — if ours is outside that range, explain why in one line` : null,
-    staleOthers.length ? `Old data among the pages compared (still included — they rank or are tracked): ${staleOthers.slice(0, 4).map((i) => `${i.name}${i.position ? ` #${i.position}` : ""} — ${i.reasons.join("; ")}`).join(" · ")}. Publish our current base year and a forecast to 20XX so ours is the freshest page.` : null, // NEW
-    staleOurs ? `Your current page is out of date (${staleOurs.reasons.join("; ")}) — update its base year and forecast too.` : null, // NEW
+    fcCagr || gapCagr || oldCagr,
+    staleOthers.length ? `Old data among the pages compared (still included — they rank or are tracked): ${staleOthers.slice(0, 4).map((i) => `${i.name}${i.position ? ` #${i.position}` : ""} — ${i.reasons.join("; ")}`).join(" · ")}. Publish our current base year and a forecast to 20XX so ours is the freshest page.` : null,
+    staleOurs ? `Your current page is out of date (${staleOurs.reasons.join("; ")}) — update its base year and forecast too.` : null,
   ].filter(Boolean);
+  // GAP — scope box when the gap analysis asks for one, or competitor sizes are 3×+ apart
+  const defP = gpOf((p) => p.kind === "definition");
+  const wide = FC && FC.spread && FC.spread.ratio > 3 ? FC.spread : null;
+  if (defP.length || wide) {
+    ov.cover.push(`Scope box (must have): under the opening paragraph, 3–4 lines on what we count, what we leave out, and why our number differs from other publishers.${wide ? ` Competitor base-year sizes run from ${wide.minRaw} to ${wide.maxRaw} (${wide.ratio}×) — they are not measuring the same thing.` : ""}`);
+    ov.ptrs = defP;
+    ov.gapEdge = whys(defP);
+  }
+  ov.notes = gNotes("overview");
   addTable(ov, "Market size by year, base year → forecast year (an HTML table next to the chart — Google can't read numbers inside images)");
 
   // 2. Key Market Highlights
@@ -909,15 +1047,15 @@ function buildSkeleton(c, ai) {
     dimNames[2] ? `Leading ${dimNames[2].toLowerCase()} segment: share and value` : null,
     "Fastest-growing region: CAGR",
   ].filter(Boolean);
-  // NEW — statistics pages rank for this search: turn the highlights into a sourced statistics table
   if (explainerSerp && IM.wantsStats) {
     hi.why = `our standard section · ${ofTopIs("stats", "a statistics page", "statistics pages")}${exNames("stats")}`;
     hi.write = "Make this a table, not bullets: 8–10 headline statistics, each with the value, the year and its source. Statistics pages rank for this search, so readers expect the numbers at a glance.";
     hi.cover.push("One adoption or penetration figure from an official source — cite it", "The largest companies by revenue or share — cite the source");
     addTable(hi, "Key statistics — statistic, value, year, source");
   }
+  hi.notes = gNotes("highlights"); // GAP
 
-  // 3. Market Dynamics — suggested question H3s (NEW: verb agreement)
+  // 3. Market Dynamics — suggested question H3s
   const dy = mk("dynamics", "Market Dynamics", { why: evidence(["Market dynamics & growth drivers", "Restraints & challenges", "Opportunities"]) || "our standard section" });
   dy.write = "One H3 each for the main driver, restraint and opportunity.";
   const dIdea = idea(ideas.driver, "Main Growth Driver");
@@ -929,6 +1067,25 @@ function buildSkeleton(c, ai) {
     { text: `How ${isAre(oIdea)} ${oIdea} Creating Growth Opportunities For The ${KQ}?`, tip: "opportunity" },
   ];
   dy.cover = ["Back each H3 with a cited source (government, association or company filing) and one dated example: \"For instance, in [Month YYYY], [Company] …\""];
+  // GAP — for each kind the gap analysis covers, its pointers replace the generic H3
+  const dynP = (k) => gpOf((p) => p.kind === k && p.target === "dynamics");
+  const ptrH3 = (p) => {
+    const t = tcAll(shortTopic(p.pointer));
+    const fb = p.kind === "driver" ? `How ${isAre(t)} ${t} Driving Market Growth?`
+      : p.kind === "restraint" ? `How ${doesDo(t)} ${t} Restrain The Development Of The ${KQ}?`
+        : p.kind === "opportunity" ? `How ${isAre(t)} ${t} Creating Growth Opportunities For The ${KQ}?`
+          : `What Risks ${doesDo(t)} ${t} Pose To The ${KQ}?`;
+    return { text: p.h3 || fb, tip: p.kind, src: "gap", reword: !p.h3, ptrs: [p],
+      note: p.alsoIn ? "Keep this H3 short and point readers to the new H2 below, where the full story goes." : "" };
+  };
+  if (gpOf((p) => p.target === "dynamics").length) {
+    dy.h3 = [["driver", dy.h3[0]], ["restraint", dy.h3[1]], ["opportunity", dy.h3[2]]]
+      .flatMap(([k, h]) => (dynP(k).length ? dynP(k).map(ptrH3) : [h]))
+      .concat(dynP("risk").map(ptrH3));
+    dy.write = "One H3 per driver, restraint and opportunity. Those marked “gap analysis” come with facts and sources — verify each and add our own data.";
+    dy.gapEdge = whys(gpOf((p) => p.target === "dynamics"));
+  }
+  dy.notes = gNotes("dynamics");
 
   // 4. Market Segmentation
   const sg = mk("segmentation", "Market Segmentation", { why: evidence(["Segmentation overview"]) || "our standard section" });
@@ -936,6 +1093,10 @@ function buildSkeleton(c, ai) {
   sg.cover = ["Build it as a real HTML table — not a bulleted list or an image",
     `Rows: ${dimNames.map((d) => `By ${d}`).join(" · ")} · By Region (with key countries)`];
   addTable(sg, `Segmentation — ${dimNames.map((d) => `By ${d}`).join(", ")}, By Region`);
+  sg.notes = gNotes("segmentation"); // GAP
+  if (G && (G.structure || []).some((s) => s.id === "segmentation" && /\(/.test(s.value))) {
+    sg.notes.push(`The subtitle above uses: ${dimNames.join(", ")}. Agree the final splits with the data team before writing — every “By …” needs its own H3 under Segmental Analysis.`);
+  }
 
   // 5. Segmental Analysis — one suggested H3 per split
   const sa = mk("segmental", "Segmental Analysis", { why: dims.length && N ? `competitors split by ${dims.map((d) => `${dimTitle(d.label).toLowerCase()} (${d.count}/${N})`).join(", ")}` : "our standard section" });
@@ -974,8 +1135,17 @@ function buildSkeleton(c, ai) {
     ].filter(Boolean);
     addTable(ra, "Market share by region");
   }
+  // GAP — countries from the gap analysis, plus one line per region on the rules that matter
+  if (G) {
+    if ((G.countries || []).length) ra.cover.push(`Countries / blocs the gap analysis says to cover: ${G.countries.join(", ")}`);
+    if (G.regulatory && G.regulatory.required) ra.cover.push(`Give each region one line on the rules that matter; the detail goes in “${tcAll(G.regulatory.title)}”.`);
+    ra.ptrs = gpOf((p) => p.kind === "regional");
+    ra.gapEdge = whys(ra.ptrs);
+    ra.notes = gNotes("regional");
+  }
 
   // 7. Optional H2s — sections competitors have that our format doesn't
+  const GR = G && G.regulatory ? G.regulatory : null;
   const optional = [
     ["trends", "Market trends & innovation", "Market Trends", () => [{ text: `Which Trends Are Shaping The ${KQ}?` }]],
     ["macro", "Macro impact (tariffs, geopolitics, AI…)", "Impact Of Tariffs, Policy & AI", () => [{ text: `How Are [Tariffs / AI / Policy Changes] Impacting The ${KQ}?` }]],
@@ -983,7 +1153,6 @@ function buildSkeleton(c, ai) {
     ["regulatory", "Regulatory landscape", "Regulatory Landscape", () => [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }]],
     ["valuechain", "Value chain & industry analysis", "Value Chain Analysis", () => [{ text: `How Is Value Created Across The ${KQ} Value Chain?` }]],
   ];
-  // NEW — trend pieces rank for this search: Market Trends becomes a must-have
   const trendsMust = explainerSerp && IM.wantsTrends;
   if (trendsMust) {
     const t = topicMap["Market trends & innovation"];
@@ -992,33 +1161,71 @@ function buildSkeleton(c, ai) {
     s.h3 = [{ text: `Which Trends Are Shaping The ${KQ}?` }, { text: "How Is [Trend] Changing [Buying Behaviour / Supply / Pricing]?" }];
   }
   optional.forEach(([key, label, h2, h3s]) => {
-    if (key === "trends" && trendsMust) return; // NEW — already added as a must-have
+    if (key === "trends" && trendsMust) return;
+    if (key === "regulatory" && (isReport || GR)) return; // GAP — Regulatory Landscape is a fixed slot (added below)
     const t = topicMap[label];
     if (!t || t.tier === "differentiator") return;
     const s = mk(key, h2, { tier: "opt", optional: true, why: `${t.count} of ${N} competitors have it — optional in our format` });
     s.write = "Add only if our research has something specific to say.";
     s.h3 = h3s();
   });
+  // GAP — trend pointers from the gap analysis
+  const trP = gpOf((p) => p.target === "trends");
+  if (trP.length) {
+    const tr = sections.find((s) => s.key === "trends");
+    if (tr) { tr.ptrs = trP; tr.gapEdge = whys(trP); } else dy.ptrs = dy.ptrs.concat(trP);
+  }
 
-  // 8. Competitive Landscape (NEW: verb agreement in the first H3)
+  // 8. Competitive Landscape
   const cl = mk("competitive", "Competitive Landscape", { why: evidence(["Competitive landscape & key players", "Recent developments"]) || "our standard section" });
-  cl.write = "How competition works in this market, then the key players.";
   const cIdea = idea(ideas.competition, "Main Competitive Strategy, e.g. Mergers & Acquisitions");
-  cl.h3 = [
-    { text: `How ${isAre(cIdea)} ${cIdea} Reshaping Competition In The ${KQ}?` },
-    { text: `Who Are The Key Players In The ${KQ}?` },
-  ];
-  cl.cover = [
-    "Under the first H3: 3 dated developments as bullets — month, year, company, what happened",
-    companies.length ? `Key players list (15–20 companies), e.g. ${companies.slice(0, 8).map((x) => x.name).join(", ")}` : "Key players list (15–20 companies)",
-  ];
+  if (isReport) {
+    // GAP — M&A / partnerships and Latest Developments are fixed H3s, so the tool's own idea can't replace them
+    const DEAL_RE = /m&a|merger|acqui|partner|collaborat|alliance|joint venture|licens|funding/i;
+    const devs = G ? G.developments || [] : [];
+    const pl = G && G.players ? G.players : null;
+    cl.write = "How competition works in this market, then M&A and partnerships, the latest developments and the key players.";
+    cl.h3 = [
+      ...(ideas.competition && !DEAL_RE.test(ideas.competition) ? [{ text: `How ${isAre(cIdea)} ${cIdea} Reshaping Competition In The ${KQ}?` }] : []),
+      { text: `How Are M&A, Partnerships And Funding Reshaping Competition In The ${KQ}?`, src: "fixed", ptrs: G ? gps(G.deals) : [],
+        note: "One bullet per deal: month, year, companies, value. Deals stay here, not under Latest Developments." },
+      { text: `What Are The Latest Developments In The ${KQ}?`, src: "fixed", devs,
+        note: devs.length ? "From the gap analysis, newest first — check each against its source before publishing."
+          : (G && G.developmentsNote) || `Collect 4–5 dated items from late ${Y - 1}–${Y} — launches, approvals, partnerships, funding — newest first: month, year, company, what happened.` },
+      ...(G && (G.capex || []).length ? [{ text: `Where Are Leading Companies Investing To Expand Capacity In The ${KQ}?`, src: "gap", ptrs: gps(G.capex) }] : []),
+      { text: `Who Are The Key Players In The ${KQ}?`, players: pl, ptrs: G ? gps(G.playerPtrs) : [] },
+    ];
+    const toolCos = companies.map((x) => x.name);
+    const plNames = pl ? pl.groups.flatMap((g) => g.names) : [];
+    const matched = toolCos.filter((n) => plNames.some((m) => sameCo(n, m)));
+    const extraCos = toolCos.filter((n) => !plNames.some((m) => sameCo(n, m)));
+    cl.cover = [
+      pl ? "Key players list (15–20 companies), grouped by role as in the gap analysis — the groups are under the last H3."
+        : companies.length ? `Key players list (15–20 companies), e.g. ${companies.slice(0, 8).map((x) => x.name).join(", ")}` : "Key players list (15–20 companies)",
+      pl && toolCos.length && !matched.length ? `Check before using: none of the companies auto-extracted from page 1 (${toolCos.slice(0, 6).join(", ")}) appear in the gap analysis — that list probably comes from a different market.` : null,
+      pl && matched.length && extraCos.length ? `Also profiled on competitor pages (check they fit): ${extraCos.slice(0, 8).join(", ")}` : null,
+    ].filter(Boolean);
+    cl.gapEdge = whys(gpOf((p) => p.kind === "competition"));
+    cl.notes = gNotes("competitive");
+  } else {
+    cl.write = "How competition works in this market, then the key players.";
+    cl.h3 = [
+      { text: `How ${isAre(cIdea)} ${cIdea} Reshaping Competition In The ${KQ}?` },
+      { text: `Who Are The Key Players In The ${KQ}?` },
+    ];
+    cl.cover = [
+      "Under the first H3: 3 dated developments as bullets — month, year, company, what happened",
+      companies.length ? `Key players list (15–20 companies), e.g. ${companies.slice(0, 8).map((x) => x.name).join(", ")}` : "Key players list (15–20 companies)",
+    ];
+  }
 
   // 9. Research Methodology
   const rm = mk("methodology", "Research Methodology", { why: evidence(["Report scope & methodology"]) || "our standard section" });
   rm.h3 = [{ text: "How We Gather This Information" }, { text: "Why Kings Research?" }];
   rm.cover = ["Keep the standard text, but add 1–2 lines naming the main sources used for THIS market (government statistics, associations, company filings) — so it isn't identical on every report"];
+  if (G && (G.sources || []).length) rm.cover.push(`Main sources for this market (gap analysis): ${uniqS(G.sources.map((s) => s.label)).slice(0, 8).join(", ")}`); // GAP
 
-  // 10. FAQs — house-standard questions first, then real searcher questions about this market
+  // 10. FAQs — house questions, then the gap analysis's questions, then real searcher questions (max 12)
   const fq = mk("faqs", "Frequently Asked Questions", { why: "our standard section" });
   fq.write = "Use each question as written and answer in 2–3 sentences with our numbers.";
   const base = [
@@ -1030,11 +1237,76 @@ function buildSkeleton(c, ai) {
     `Who are the key players in the ${kwG}?`,
   ];
   const seenQ = new Set(base.map(normQ));
+  const kwStems = kwTok.map(stem);
+  const qKey = (q) => new Set(normQ(q).split(" ").map(stem).filter((w) => w.length > 2 && !Q_STOP.has(w) && !GENERIC.has(w) && w !== "key" && !kwStems.includes(w)));
+  const qKeys = base.map(qKey);
+  const keepQ = (q) => {
+    const k = normQ(q);
+    if (!k || seenQ.has(k)) return false;
+    const a = qKey(q);
+    const dup = qKeys.some((b) => { if (!a.size || !b.size) return false; let i = 0; a.forEach((x) => { if (b.has(x)) i++; }); return i / (a.size + b.size - i) >= 0.5; });
+    if (dup) return false;
+    seenQ.add(k);
+    qKeys.push(a);
+    return true;
+  };
+  const gapQ = (G ? G.faqs || [] : []).filter((q) => goodQuestion(kw, q)).filter(keepQ).slice(0, 6); // GAP
   const extraQ = [...(c.serp.peopleAlsoAsk || []).map((p) => p.question), ...((ai && ai.faqs) || [])]
     .filter((q) => goodQuestion(kw, q))
-    .filter((q) => { const k = normQ(q); if (!k || seenQ.has(k)) return false; seenQ.add(k); return true; })
-    .slice(0, informational ? 4 : mixed ? 3 : 2); // NEW — more real searcher questions when explainers rank
-  fq.h3 = [...base, ...extraQ].map((t) => ({ text: t, plain: true }));
+    .filter(keepQ)
+    .slice(0, Math.max(0, Math.min(informational ? 4 : mixed ? 3 : 2, 12 - base.length - gapQ.length)));
+  fq.h3 = [
+    ...base.map((t) => ({ text: t, plain: true })),
+    ...gapQ.map((t) => ({ text: t, plain: true, src: "gap" })),
+    ...extraQ.map((t) => ({ text: t, plain: true })),
+  ];
+
+  // GAP — fixed Regulatory Landscape slot + the new H2s from the gap analysis, placed where the gap analysis puts them
+  const ANCH = (a) => ({ segmentation: "segmental", faq: "faqs" }[a] || a || "regional");
+  const inserts = [];
+  if (isReport || GR) {
+    const regT = topicMap["Regulatory landscape"];
+    const fromGap = !!(GR && GR.required);
+    const required = fromGap || !!(regT && regT.tier === "must");
+    const regPs = GR ? gps(GR.pointerIds) : [];
+    inserts.push({
+      after: ANCH(fromGap ? GR.after : "regional"), order: fromGap ? GR.order : 99,
+      s: {
+        key: "regulatory", h2: fromGap ? tcAll(GR.title) : "Regulatory Landscape",
+        tier: required ? "must" : "opt", optional: !required, fixed: true, fromGap: false,
+        why: fromGap ? "no competitor page covers regulation properly (gap analysis)"
+          : regT && N ? `${regT.count} of ${N} competitors have it` : "keep it if laws, approvals, pricing or trade rules shape this market",
+        write: fromGap && GR.desc ? `Cover: ${GR.desc}. One H3 per country or bloc — the rule, its date, and what it changes for buyers.`
+          : "One H3 per key country or bloc — the rule, its date, and what it changes for buyers. Cite the regulator or the official journal. Delete this section only if regulation doesn't shape demand.",
+        h3: GR && GR.jurisdictions.length
+          ? GR.jurisdictions.map((j) => ({ text: j.h3 || `How Do ${j.name} Rules Shape The ${KQ}?`, src: "gap", note: j.facts ? `Facts to verify: ${j.facts}` : "" }))
+          : [{ text: `How Are [Key Regulations] Shaping The ${KQ}?` }],
+        h3Note: "", cover: [], tables: [], words: [], also: [], extras: [], notes: [], ptrs: regPs, gapEdge: whys(regPs),
+      },
+    });
+  }
+  (G ? G.newSections || [] : []).forEach((ns) => {
+    const ps = gps(ns.pointerIds);
+    inserts.push({
+      after: ANCH(ns.after), order: ns.order,
+      s: {
+        key: ns.id, h2: tcAll(ns.title), tier: "must", optional: false, fixed: false, fromGap: true,
+        why: "our edge — none of the competitor pages has this section",
+        write: ns.desc ? `Cover: ${ns.desc}.` : "",
+        h3: (ns.h3s || []).map((t) => ({ text: t, src: "gap" })),
+        h3Note: "", cover: (ns.h3s || []).length ? [] : ["Write 2–3 question H3s for this section — see “How to write a good H3” above."],
+        tables: [], words: [], also: [], extras: [], notes: [], ptrs: ps, gapEdge: whys(ps),
+      },
+    });
+  });
+  inserts.sort((a, b) => a.order - b.order);
+  const lastAfter = {};
+  inserts.forEach((ins) => {
+    let i = sections.findIndex((s) => s.key === (lastAfter[ins.after] || ins.after));
+    if (i < 0) i = sections.findIndex((s) => s.key === "regional");
+    sections.splice(i + 1, 0, ins.s);
+    lastAfter[ins.after] = ins.s.key;
+  });
 
   // "Our edge" ideas from the AI → the section they fit (else Market Dynamics)
   ((ai && ai.extraActions) || []).forEach((a) => {
@@ -1071,7 +1343,6 @@ function buildSkeleton(c, ai) {
   let houseTitle = `${Kfull} Size, Share & Growth | Report 20XX`;
   if (houseTitle.length > 60) houseTitle = `${Kshort} Size, Share & Growth | Report 20XX`;
   const titles = [{ text: houseTitle, len: houseTitle.length, house: true }];
-  // NEW — keyword check: offer the house title with the wording Google actually ranks
   if (kwVariant) {
     const sk = String(kwVariant.suggestedKeyword).trim();
     const skNoGlobal = sk.replace(/^global\s+/i, "");
@@ -1099,15 +1370,42 @@ function opt(o, lo, hi) {
   return `<div class="opt">${esc(o.text)}<span class="cc ${o.len >= lo && o.len <= hi ? "ok" : "bad"}">${o.len} chars</span>${o.house ? `<span class="ev"> · our house format</span>` : ""}${o.note ? `<span class="ev"> · ${esc(o.note)}</span>` : ""}</div>`;
 }
 
+// GAP — RD pointer, developments and player blocks
+const SRC_CHIP = { gap: "gap analysis", fixed: "fixed slot" };
+function ptrHtml(p) {
+  const src = (p.sources || []).filter((s) => s && s.url)
+    .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label || shortUrl(s.url))}</a>`).join(" · ");
+  return `<div class="rdp"><div class="rdk">RD pointer · ${esc(p.section || p.kind)}</div><div class="rdt">${esc(p.pointer)}</div>
+    ${p.why ? `<div><span class="rdl">Competitor gap</span>${esc(p.why)}</div>` : ""}
+    ${p.facts ? `<div><span class="rdl">Facts to verify</span>${esc(p.facts)}</div>` : ""}
+    ${src ? `<div><span class="rdl">Sources</span>${src}</div>` : ""}
+    ${(p.searchTerms || []).length ? `<div><span class="rdl">Searches it targets</span>${esc(p.searchTerms.join(" · "))}</div>` : ""}</div>`;
+}
+function devsHtml(ds) {
+  return table(["Date", "Development", "Why it matters"], ds.map((d) =>
+    `<tr><td class="nowrap">${esc(d.date)}</td><td>${esc(d.text)}${(d.sources || []).map((s) => ` <a href="${esc(s.url)}" target="_blank" rel="noopener">↗</a>`).join("")}</td><td>${esc(d.why || "")}</td></tr>`));
+}
+function playersHtml(pl) {
+  return `<div class="rdp"><div class="rdk">Key players by role · gap analysis</div>${pl.groups.map((g) => `<div><span class="rdl">${esc(g.role)}</span>${esc(g.names.join(", "))}</div>`).join("")}</div>`;
+}
+function h3Html(s, h) {
+  return `<li><span class="lvl h3">${s.key === "faqs" ? "Q" : "H3"}</span>${esc(h.text)}${h.src ? `<span class="gtag g-${esc(h.src)}">${esc(SRC_CHIP[h.src] || h.src)}</span>` : ""}${h.reword ? '<span class="gtag g-reword">reword</span>' : ""}
+    ${h.note ? `<div class="gnote">${esc(h.note)}</div>` : ""}
+    ${(h.ptrs || []).map(ptrHtml).join("")}${h.devs && h.devs.length ? devsHtml(h.devs) : ""}${h.players ? playersHtml(h.players) : ""}</li>`;
+}
+
 function skSectionHtml(s) {
-  return `<li class="skh2${s.optional ? " optional" : ""}"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
+  const edge = s.gapEdge && s.gapEdge.length ? s.gapEdge : s.extras; // GAP — specific gaps replace generic ideas
+  return `<li class="skh2${s.optional ? " optional" : ""}"><div class="skhead"><span class="box"></span><span class="lvl">H2</span><b>${esc(s.h2)}</b>${tierTag(s.tier)}${s.fixed ? '<span class="gtag g-fixed">fixed slot</span>' : ""}${s.fromGap ? '<span class="gtag g-gap">gap analysis</span>' : ""}${s.why ? `<span class="ev">${esc(s.why)}</span>` : ""}</div>
     <div class="skbody">
       ${s.write ? `<div class="skw">${esc(s.write)}</div>` : ""}
       ${s.h3.length ? `<div class="h3hint">${s.key === "faqs" ? "FAQ questions" : "Suggested H3s — reword to match what your research shows"}</div>
-        <ul class="skh3">${s.h3.map((h) => `<li><span class="lvl h3">${s.key === "faqs" ? "Q" : "H3"}</span>${esc(h.text)}</li>`).join("")}</ul>` : ""}
+        <ul class="skh3">${s.h3.map((h) => h3Html(s, h)).join("")}</ul>` : ""}
       ${s.cover.length ? `<ul class="skc">${s.cover.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${(s.notes || []).length ? `<ul class="skc gnotes">${s.notes.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${(s.ptrs || []).map(ptrHtml).join("")}
       ${s.tables.map((t) => `<div class="skx"><span class="lab">Table</span>${esc(t)}</div>`).join("")}
-      ${s.extras.length ? `<div class="skx edge"><span class="lab">Our edge</span>${esc(s.extras.join(" · "))}</div>` : ""}
+      ${edge.length ? `<div class="skx edge"><span class="lab">Our edge</span>${esc(edge.join(" · "))}</div>` : ""}
       ${s.words.length ? `<div class="skx"><span class="lab">Keywords (once each)</span>${pills(s.words)}</div>` : ""}
       ${s.also.length ? `<div class="skx"><span class="lab">Also cover</span>${pills(s.also)}</div>` : ""}
     </div></li>`;
@@ -1165,17 +1463,59 @@ function dupesNote(c) {
   return `<div class="callout warn"><b>Before you write:</b> ${esc(d.message)}<ul class="plain">${list}</ul></div>`;
 }
 
+/* ================= GAP — gap-analysis panel and notes ================= */
+function gapForm() {
+  return `<div class="gform"><input id="gpUrl" class="pin" type="text" placeholder="Google Doc link — shared as “Anyone with the link can view”">
+    <div id="gpPaste" class="pastebox gpaste" contenteditable="true" data-ph="…or paste the whole document here: in the doc press Ctrl+A, Ctrl+C, then click here and press Ctrl+V. Tables are kept."></div>
+    <div class="prow"><button class="pbtn" data-act="gapAttach">Add to this brief</button>${S && S.gapOpen ? ' <button class="linkbtn" data-act="gapOpen">Cancel</button>' : ""}</div></div>`;
+}
+
+function gapPanelHtml(c) {
+  if (EXPORTING || !S) return "";
+  const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
+  if (S.gapPending) return `<div class="gpanel"><span class="dot"></span>Reading the gap analysis and wording the H3s…</div>`;
+  const err = S.gapError ? `<div class="gerr">${esc(S.gapError)}</div>` : "";
+  if (G && !S.gapOpen) {
+    const n = [`${G.pointers.length} pointers`, G.newSections.length ? `${G.newSections.length} new H2${G.newSections.length > 1 ? "s" : ""}` : "",
+      G.developments.length ? `${G.developments.length} developments` : "", G.faqs.length ? `${G.faqs.length} FAQs` : ""].filter(Boolean).join(" · ");
+    return `<div class="gpanel ok">${err}✓ <b>Gap analysis added</b>${G.title ? ` — ${esc(G.title)}` : ""}: ${esc(n)}.${G.h3Note ? ` <span class="muted">${esc(G.h3Note)}</span>` : ""}
+      <button class="linkbtn" data-act="gapOpen">Replace</button> · <button class="linkbtn" data-act="gapRemove">Remove</button></div>`;
+  }
+  return `<div class="gpanel">${err}<b>${G ? "Replace the gap analysis" : "Add the Competitor SEO &amp; Content Gap Analysis"}</b> — its pointers, facts, sources, new H2s and FAQs go straight into the skeleton below.${gapForm()}</div>`;
+}
+
+function gapNotes(c) {
+  const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
+  const FC = c.figureCheck && !c.figureCheck.error ? c.figureCheck : null;
+  const flags = [...((FC && FC.flags) || []), ...((G && G.figureCheck && G.figureCheck.flags) || [])].filter((f) => f.level !== "minor");
+  let h = "";
+  if (G && G.missing.length) {
+    h += `<div class="callout"><b>What competitors miss — our page covers these (gap analysis):</b><ul class="plain">${G.missing.map((m) => `<li><b>${esc(m.topic)}.</b> ${esc(m.detail)}</li>`).join("")}</ul></div>`;
+  }
+  if (flags.length) {
+    h += `<div class="callout warn"><b>Competitor figures that don't add up — don't benchmark against them:</b><ul class="plain">${flags.slice(0, 8).map((f) =>
+      `<li><b>${esc(f.name)}:</b> ${esc(f.msg)}${f.level === "major" ? " <i>(left out of the CAGR range)</i>" : ""}</li>`).join("")}</ul></div>`;
+  }
+  if (G && G.rdEdits.length) h += `<div class="callout warn"><b>Edits to the RD sheet:</b> ${G.rdEdits.map(esc).join(" ")}</div>`;
+  if (G && G.verify.length) h += `<div class="callout"><b>Verify before publishing:</b> ${G.verify.map(esc).join(" ")}</div>`;
+  if (G && G.titleTag) h += `<div class="callout"><b>Title tag suggested by the gap analysis:</b> ${esc(G.titleTag)} <span class="cc ${G.titleTag.length <= 60 ? "ok" : "bad"}">${G.titleTag.length} chars</span></div>`;
+  return h;
+}
+
 function analystHtml(c) {
   const ai = aiOk();
   const sk = buildSkeleton(c, ai);
+  const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null; // GAP
   const t = c.targets;
   const med = c.benchmarks.words && c.benchmarks.words.median;
   const lo = med ? round100(med) : t.coverageWords[0];
   const hi = Math.max(lo + 500, t.coverageWords[0]);
   return docHead(c, "Writer's skeleton") +
-    `<div class="job"><div class="jl">Your job</div><p>${esc((ai && ai.howToWin) || defaultJob(c))}</p></div>` +
+    gapPanelHtml(c) +
+    `<div class="job"><div class="jl">Your job</div><p>${esc((G && G.headline) || (ai && ai.howToWin) || defaultJob(c))}</p></div>` +
     `<div class="kpis">${kpi(`${fmt(lo)}–${fmt(hi)}`, "Words")}${kpi(sk.coreCount + (sk.optCount ? ` <span style="font-size:12px">+${sk.optCount} opt.</span>` : ""), "H2 sections")}${kpi(sk.tableCount, "Data tables")}${kpi(sk.faqCount, "FAQs")}</div>` +
     dupesNote(c) +
+    gapNotes(c) +
     `<h2 class="sec">Writer's skeleton</h2>` +
     `<p class="muted">Our report format, top to bottom. Tick each H2 off. H3s are suggestions — keep the question style, change the wording to fit your findings.</p>` +
     (S.aiPending ? pending() : "") +
@@ -1185,7 +1525,7 @@ function analystHtml(c) {
 }
 
 /* ================= SEO DETAILS ================= */
-// NEW — stale-data flag for a row (from lib/brief-checks.js). Flag only: the row stays in every comparison.
+// Stale-data flag for a row (from lib/brief-checks.js). Flag only: the row stays in every comparison.
 function staleItem(c, x) {
   const st = c.freshness && !c.freshness.error && Array.isArray(c.freshness.stale) ? c.freshness.stale : [];
   if (!st.length || !x) return null;
@@ -1204,6 +1544,7 @@ function seoHtml(c) {
     sec("Keywords competitors target", kwTheySec(c)) +
     sec("Topics each competitor covers", gridSec(c)) +
     sec("Keywords to use", kwSec(c)) +
+    sec("Gap analysis — research team", gapSeoSec(c)) + // GAP
     sec(`Google rules (as of ${c.policyBaseline})`, `<ul class="plain">${(c.rules || []).map((r) => `<li>${esc(r)}</li>`).join("")}</ul>`);
 }
 
@@ -1276,13 +1617,19 @@ const rankTxt = (x) => (x.position ? `#${x.position}` : x.onPage1 ? "—" : "Not
 const useTxt = (k) => (k ? ["Title", "H1", "Meta"].map((l, i) => `${[k.title, k.h1, k.meta][i] ? '<span class="yes">✓</span>' : '<span class="no">✗</span>'} ${l}`).join(" &nbsp;") : "—");
 
 function scoreSec(c) {
+  const F = c.figures;
+  const FC = c.figureCheck && !c.figureCheck.error ? c.figureCheck : null; // GAP
+  const fcRow = (x) => (FC ? FC.rows.find((r) => (r.link && x.link && r.link === x.link) || r.name === x.name) : null);
   const rows = c.competitors.map((x) => {
     if (x.fetched) {
       const ap = x.stats.approx ? "~" : "";
-      const si = staleItem(c, x); // NEW — flag only; the row stays in every comparison
+      const si = staleItem(c, x);
+      const fr = fcRow(x); // GAP — figure check
+      const fl = fr && fr.flags.length
+        ? `<div><span class="tag stale">${fr.bad ? "figures don't add up" : "check figures"}</span></div><div class="muted small">${esc(fr.flags.map((f) => f.msg).join(" "))}</div>` : "";
       return `<tr><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td class="mono">${ap}${fmt(x.stats.words)}</td>
         <td class="mono">${ap}${x.stats.tables}</td><td class="mono">${x.stats.faq}</td>
-        <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}</td>
+        <td>${esc(x.stats.values.slice(0, 2).join(" → ") || "—")}${fl}</td>
         <td class="mono">${x.stats.cagr != null ? esc(x.stats.cagr) + "%" : "—"}</td>
         <td class="mono">${esc(x.stats.period || "—")}</td><td class="mono">${esc(x.stats.lastUpdated || "—")}${si ? `<div>${staleTag(c, x)}</div><div class="muted small">${esc(si.reasons.join("; "))}</div>` : ""}</td></tr>`;
     }
@@ -1290,13 +1637,16 @@ function scoreSec(c) {
     return `<tr class="dim"><td>${nameCell(x)}</td><td class="mono">${rankTxt(x)}</td><td colspan="7">${esc(x.note || "Not analysed")} ${fix}</td></tr>`;
   });
   let h = table(["Competitor", "Google rank", "Words", "Tables", "FAQs", "Market size (as stated)", "CAGR", "Period", "Updated"], rows);
-  const F = c.figures;
-  if (F && F.cagrMin != null) {
+  if (FC && FC.line) {
+    h += `<div class="callout warn">${esc(FC.line.replace(" (see the SEO tab)", ""))}${F && F.periods[0] ? ` Most use <b>${esc(F.periods[0].label)}</b>.` : ""} Publish our own estimate.</div>`;
+  } else if (F && F.cagrMin != null) {
     h += `<div class="callout warn">Competitor CAGRs range from <b>${esc(F.cagrMin)}%</b> to <b>${esc(F.cagrMax)}%</b>${F.periods[0] ? `; most use <b>${esc(F.periods[0].label)}</b>` : ""}. Publish our own estimate and explain in one line why it differs.</div>`;
   }
-  // NEW — stale rows are flagged, never dropped
   if (c.competitors.some((x) => x.fetched && staleItem(c, x))) {
     h += `<p class="muted small">Rows marked <b>stale data</b> are still included in the CAGR range and every benchmark — Google still ranks them. A current base year and forecast is our edge over them.</p>`;
+  }
+  if (FC && FC.flags.some((f) => f.level === "major")) {
+    h += `<p class="muted small">Rows marked <b>figures don't add up</b> are left out of the CAGR range: base → forecast over the period doesn't match the stated CAGR, or the size is 10× away from every other page. Often our first-mention reading picked the wrong number — check the page before quoting it.</p>`;
   }
   if (c.competitors.some((x) => x.stats && x.stats.approx)) h += `<p class="muted small">~ = approximate (page read via ChatGPT web search).</p>`;
   return h;
@@ -1354,6 +1704,25 @@ function kwSec(c) {
   if (rel.length) h += `<h3>Google related searches</h3><div>${pills(rel.map((g) => g.phrase))}</div>`;
   const paa = K.google.filter((g) => g.source === "People Also Ask");
   if (paa.length) h += `<h3>People Also Ask</h3><ul class="plain">${paa.map((g) => `<li>${esc(g.phrase)}${goodQuestion(c.keyword, g.phrase) ? "" : ' <span class="muted small">(not used — off-topic or news)</span>'}</li>`).join("")}</ul>`;
+  return h;
+}
+
+// GAP — the research team's competitor benchmark, with the figure check, and the market-fact sources
+function gapSeoSec(c) {
+  const G = c.gap && Array.isArray(c.gap.pointers) ? c.gap : null;
+  if (!G) return "";
+  const fc = G.figureCheck;
+  const rowFor = (name) => (fc ? fc.rows.find((r) => r.name === name) : null);
+  let h = `<p class="muted">From the gap analysis${G.title ? ` “${esc(G.title)}”` : ""}${G.source && G.source.readOn ? ` — pages read on ${esc(G.source.readOn)}` : ""}${G.source && G.source.url ? ` · <a href="${esc(G.source.url)}" target="_blank" rel="noopener">open the doc</a>` : ""}.</p>`;
+  if (G.competitors.length) {
+    h += table(["Publisher", "Scope", "Market size & CAGR", "Updated", "Main weaknesses", "Figure check"], G.competitors.map((x) => {
+      const r = rowFor(x.publisher);
+      const check = r && r.flags.length ? r.flags.map((f) => esc(f.msg)).join("<br>") : r && r.implied != null ? '<span class="yes">✓</span> adds up' : "—";
+      return `<tr><td>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.publisher)}</a>` : esc(x.publisher)}</td><td>${esc(x.scope || "—")}</td>
+        <td>${esc(x.size || "—")}</td><td class="mono">${esc(x.updated || "—")}</td><td>${esc(x.weaknesses || "—")}</td><td>${check}</td></tr>`;
+    }));
+  }
+  if (G.sources.length) h += `<h3>Market-fact sources</h3><ul class="plain">${G.sources.map((s) => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join("")}</ul>`;
   return h;
 }
 
@@ -1434,14 +1803,18 @@ function onAction(e) {
     case "save": saveBrief(); break;
     case "share": if (S.saved && S.saved.id) copyText(`${location.origin}/brief?id=${encodeURIComponent(S.saved.id)}`, "Share link copied"); break;
     case "check": runCheck(); break;
+    case "gapAttach": attachGap(); break;                      // GAP
+    case "gapRemove": removeGap(); break;                      // GAP
+    case "gapOpen": S.gapOpen = !S.gapOpen; render(); break;   // GAP
   }
 }
 
 const DOC_CSS = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1b2129;line-height:1.45}
 h1{font-size:22pt;margin:0 0 6pt}h2{font-size:15pt;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt}h3{font-size:12pt;margin:10pt 0 4pt}
 table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #d6d2ca;padding:4pt 6pt;vertical-align:top;font-size:10pt}th{background:#f2efe9;text-align:left}
-.ptag,.tag,.lvl{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
-.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.ptag,.tag,.lvl,.gtag{font-size:8pt;font-weight:bold;text-transform:uppercase;border:1px solid #999;padding:0 3pt;margin-right:4pt}
+.muted,.doc-meta,.doc-kicker,.ev,.lab,.h3hint,.skbyline,.rdk,.rdl,.gnote{color:#5a6675}.callout,.opt,.kpi,.kwbox,.job,.skh2,.skmeta,.skdesc,.h3guide{border:1px solid #d6d2ca;padding:6pt 8pt;margin:6pt 0}
+.rdp{border-left:3px solid #0f7a5c;padding:3pt 8pt;margin:4pt 0}.rdk,.rdl{font-size:8pt;text-transform:uppercase;margin-right:6pt}.rdt{font-weight:bold}
 .skh1{font-size:16pt;font-weight:bold;margin:10pt 0 4pt}.kpi .v{font-size:14pt;font-weight:bold}.pill{border:1px solid #d6d2ca;padding:1pt 5pt;margin-right:4pt}.yes{color:#0f7a5c}.no{color:#b23b2e}`;
 
 function docHtml() {
@@ -1456,14 +1829,18 @@ function docHtml() {
 }
 
 async function copyBrief() {
-  const el = $("briefDoc");
+  const el = $("briefDoc").cloneNode(true);
+  el.querySelectorAll(".gpanel").forEach((n) => n.remove()); // GAP — the attach form isn't part of the brief
   try {
     await navigator.clipboard.write([new ClipboardItem({
       "text/html": new Blob([`<meta charset="utf-8">${el.innerHTML}`], { type: "text/html" }),
-      "text/plain": new Blob([el.innerText], { type: "text/plain" }),
+      "text/plain": new Blob([el.textContent], { type: "text/plain" }),
     })]);
     toast("Copied — paste into Google Docs or Word");
   } catch {
+    el.style.position = "fixed";
+    el.style.left = "-9999px";
+    document.body.appendChild(el);
     const range = document.createRange();
     range.selectNode(el);
     const sel = getSelection();
@@ -1472,6 +1849,7 @@ async function copyBrief() {
     try { document.execCommand("copy"); toast("Copied"); }
     catch { toast("Copy blocked by the browser — use Download Word instead"); }
     sel.removeAllRanges();
+    el.remove();
   }
 }
 
