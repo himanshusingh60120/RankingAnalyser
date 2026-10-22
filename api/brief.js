@@ -10,6 +10,7 @@
 //           manual = [{ url, html? }] — competitor pages added by the analyst (html = pasted page)
 //           collected also carries intentMix, keywordCheck, freshness and figureCheck (lib/brief-checks.js)
 //           and competitorGaps — what most competitors miss, which we can add (lib/competitor-gaps.js)
+//           OURS — no ourUrl given: the main page the existing-page check finds is compared automatically
 //   write   { collected } -> { ai, internalLinks }
 //   gap     { keyword, market?, url? | html? | text? } -> { gap }   GAP — reads the research team's gap
 //           analysis (Google Doc link or pasted document) and words its H3s; the UI stores it in
@@ -139,19 +140,32 @@ async function stageCollect(body, stage) {
   }
 
   const ourInSerp = ourUrl && serp.organic.some((r) => sameUrl(r.link, ourUrl));
-  const [pages, ourPage, dupes] = await Promise.all([
-    collectSerpPages(serp, { ourDomain, manual }),
-    ourUrl && !ourInSerp ? fetchOurPage(ourUrl) : Promise.resolve(null),
-    withDeadline(
-      findDuplicates({ keyword, gl, hl, ourDomain, ourUrl, serpOrganic: serp.organic })
-        .catch((e) => ({ checked: false, reason: String(e.message || e), pages: [], queries: [] })),
-      20000,
-      { checked: false, reason: "Existing-page check timed out.", pages: [], queries: [] }
-    ),
-  ]);
+  const dupesJob = withDeadline(
+    findDuplicates({ keyword, gl, hl, ourDomain, ourUrl, serpOrganic: serp.organic })
+      .catch((e) => ({ checked: false, reason: String(e.message || e), pages: [], queries: [] })),
+    20000,
+    { checked: false, reason: "Existing-page check timed out.", pages: [], queries: [] }
+  );
+  // OURS — no URL given: compare with the main page the existing-page check finds (unless it's already on page 1,
+  // where it's read with the other results). Runs alongside the page reading, so it adds little time.
+  const ourJob = ourUrl
+    ? (ourInSerp ? Promise.resolve(null) : fetchOurPage(ourUrl))
+    : dupesJob.then((d) => {
+        const main = mainPageOf(d);
+        if (!main || serp.organic.some((r) => sameUrl(r.link, main))) return null;
+        return withDeadline(fetchOurPage(main).catch(() => null), 18000, null)
+          .then((p) => (p ? { ...p, auto: true } : { link: main, fetched: false, auto: true }));
+      });
+  const [pages, ourRaw, dupes] = await Promise.all([collectSerpPages(serp, { ourDomain, manual }), ourJob, dupesJob]);
 
-  const collected = analyseSerp({ keyword, contentType, serp, pages, ourDomain, ourPage, ourUrl });
+  const autoOur = !!(ourRaw && ourRaw.auto);
+  const ourPage = autoOur && !ourRaw.fetched ? null : ourRaw;
+  const collected = analyseSerp({ keyword, contentType, serp, pages, ourDomain, ourPage, ourUrl: ourUrl || (ourPage && ourPage.link) || null });
   collected.dupes = dupes;
+  if (autoOur) {
+    if (collected.ourPage) collected.ourPage.auto = true;
+    else collected.warnings.push(`The existing-page check found your main page (${ourRaw.link}), but we couldn't read it, so it isn't compared. Add its URL under “Your existing page & language” to try again.`);
+  }
 
   // Search intent, keyword-vs-top-10 check, stale-data flags and the competitor figure check.
   // Flags only — every page stays in the comparison. Wrapped so a problem here can never break generation.
@@ -159,7 +173,7 @@ async function stageCollect(body, stage) {
   catch (e) { collected.checksError = String(e.message || e); }
 
   // EDGE — what most competitors miss, checked on the pages we just read (lib/competitor-gaps.js)
-  try { collected.competitorGaps = competitorGaps(collected, pages); }
+  try { collected.competitorGaps = competitorGaps(collected, pages, { ourPage }); }
   catch (e) { collected.competitorGapsError = String(e.message || e); }
 
   if (stage === "collect") return json({ stage, collected });
@@ -275,6 +289,13 @@ async function stageSummary(body) {
 }
 
 /* ---------------- helpers ---------------- */
+
+// OURS — the "Main page" the existing-page check (lib/dupes.js) found for this keyword, if any
+function mainPageOf(d) {
+  const list = d && d.checked && Array.isArray(d.pages) ? d.pages : [];
+  const main = list.find((p) => p && /^main/i.test(String(p.role || "")) && /^https?:\/\//i.test(String(p.url || "")));
+  return main ? main.url : null;
+}
 
 // Competitor pages the analyst added: [{ url, html? }]. Max 8 pages, ~1.5 MB each, ~3.5 MB total.
 function cleanManual(list) {
